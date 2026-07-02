@@ -34,10 +34,14 @@ export default function Progress() {
   const weeklyKpis = useProgressStore((s) => s.weeklyKpis);
   const { radarData, trends, kpiScores, weeklyHistory } = useKPICalc();
   const plateau = usePlateauDetector();
-  const currentFargoRating = useSettingsStore((s) => s.profile.currentFargoRating);
+  const profile = useSettingsStore((s) => s.profile);
 
   const { estimatedCurrent, projectedIn4Weeks, confidence, confidenceRange, confidenceLabel, diagnostics } = useFargoEstimate({
-    currentFargoRating,
+    currentFargoRating: profile.currentFargoRating,
+    lastOfficialFargoRating: profile.lastOfficialFargoRating,
+    lastOfficialFargoDate: profile.lastOfficialFargoDate,
+    historicalPeakFargoRating: profile.historicalPeakFargoRating,
+    yearsAwayFromCompetition: profile.yearsAwayFromCompetition,
     fargoHistory: history,
     logs,
     weeklyHistory,
@@ -53,14 +57,14 @@ export default function Progress() {
   const chartData = useMemo(() => {
     const base = sortedHistory.length
       ? sortedHistory.map((point) => ({ date: point.date, rating: point.rating, estimatedRating: null as number | null }))
-      : [{ date: 'Baseline', rating: currentFargoRating, estimatedRating: null as number | null }];
+      : [{ date: 'Baseline', rating: profile.currentFargoRating, estimatedRating: null as number | null }];
 
     return [
       ...base,
       { date: 'Now (Est.)', rating: null, estimatedRating: estimatedCurrent },
       { date: '+4 Weeks', rating: null, estimatedRating: projectedIn4Weeks },
     ];
-  }, [sortedHistory, currentFargoRating, estimatedCurrent, projectedIn4Weeks]);
+  }, [sortedHistory, profile.currentFargoRating, estimatedCurrent, projectedIn4Weeks]);
 
   const trendByKpi = useMemo(() => {
     return new Map(trends.map((entry) => [entry.kpiId, entry.trend]));

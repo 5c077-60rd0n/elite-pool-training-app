@@ -157,6 +157,50 @@ export default function Settings() {
           onChange={(event) => setProfile({ currentFargoRating: Number(event.target.value) })}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
+
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Last Official Fargo Rating</label>
+        <input
+          type="number"
+          min={200}
+          max={850}
+          value={profile.lastOfficialFargoRating ?? ''}
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            setProfile({ lastOfficialFargoRating: raw ? Number(raw) : undefined });
+          }}
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Last Official Fargo Date</label>
+        <input
+          type="date"
+          value={profile.lastOfficialFargoDate ?? ''}
+          onChange={(event) => setProfile({ lastOfficialFargoDate: event.target.value })}
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Historical Peak Fargo Rating</label>
+        <input
+          type="number"
+          min={200}
+          max={850}
+          value={profile.historicalPeakFargoRating ?? ''}
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            setProfile({ historicalPeakFargoRating: raw ? Number(raw) : undefined });
+          }}
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Years Away From Competition</label>
+        <input
+          type="number"
+          min={0}
+          max={40}
+          value={profile.yearsAwayFromCompetition ?? 0}
+          onChange={(event) => setProfile({ yearsAwayFromCompetition: Number(event.target.value) })}
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
       </Card>
       <Card title="Notifications">
         <p className="mb-3 text-ivory-200">Permission: {permission}</p>

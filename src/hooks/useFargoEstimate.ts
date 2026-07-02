@@ -35,6 +35,10 @@ interface TrendSummary {
 
 interface FargoEstimateInput {
   currentFargoRating: number;
+  lastOfficialFargoRating?: number;
+  lastOfficialFargoDate?: string;
+  historicalPeakFargoRating?: number;
+  yearsAwayFromCompetition?: number;
   fargoHistory: FargoPoint[];
   logs: SessionLogSummary[];
   weeklyHistory: Array<{ kpiId: string; week: number; value: number }>;
@@ -83,10 +87,27 @@ function dateOrFallback(date: string): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function getAnchorRating(history: FargoPoint[], currentFargoRating: number): number {
+function getAnchorRating(history: FargoPoint[], currentFargoRating: number, lastOfficialFargoRating?: number): number {
   if (!history.length) return currentFargoRating;
   const sorted = [...history].sort((a, b) => dateOrFallback(a.date) - dateOrFallback(b.date));
-  return sorted[sorted.length - 1].rating;
+  const latestLogged = sorted[sorted.length - 1].rating;
+
+  if (!Number.isFinite(lastOfficialFargoRating)) {
+    return latestLogged;
+  }
+
+  return round(clamp(latestLogged * 0.85 + (lastOfficialFargoRating as number) * 0.15, 300, 850));
+}
+
+function getOfficialRecencyWeight(lastOfficialFargoDate?: string): number {
+  if (!lastOfficialFargoDate) return 0;
+  const ageMs = Date.now() - dateOrFallback(lastOfficialFargoDate);
+  if (ageMs <= 0) return 0.2;
+  const ageWeeks = ageMs / (1000 * 60 * 60 * 24 * 7);
+  if (ageWeeks <= 26) return 0.35;
+  if (ageWeeks <= 52) return 0.3;
+  if (ageWeeks <= 104) return 0.2;
+  return 0.12;
 }
 
 function impliedRatingFromKpi(
@@ -284,10 +305,26 @@ function getConfidenceLabel(confidence: number): 'Low' | 'Medium' | 'High' {
 }
 
 export function useFargoEstimate(input: FargoEstimateInput): FargoEstimate {
-  const { currentFargoRating, fargoHistory, logs, weeklyHistory, kpiScores, trends } = input;
+  const {
+    currentFargoRating,
+    lastOfficialFargoRating,
+    lastOfficialFargoDate,
+    historicalPeakFargoRating,
+    yearsAwayFromCompetition,
+    fargoHistory,
+    logs,
+    weeklyHistory,
+    kpiScores,
+    trends,
+  } = input;
 
   return useMemo(() => {
-    const anchor = getAnchorRating(fargoHistory, currentFargoRating);
+    const rawAnchor = getAnchorRating(fargoHistory, currentFargoRating, lastOfficialFargoRating);
+    const officialWeight = Number.isFinite(lastOfficialFargoRating) ? getOfficialRecencyWeight(lastOfficialFargoDate) : 0;
+    const anchor =
+      Number.isFinite(lastOfficialFargoRating) && fargoHistory.length === 0
+        ? round(clamp(rawAnchor * (1 - officialWeight) + (lastOfficialFargoRating as number) * officialWeight, 300, 850))
+        : rawAnchor;
     const targetRateRecent = getRecentTargetRate(logs);
     const targetRatePrior = getPriorTargetRate(logs);
     const targetRateTrend = targetRateRecent - targetRatePrior;
@@ -308,7 +345,14 @@ export function useFargoEstimate(input: FargoEstimateInput): FargoEstimate {
 
     const targetRateAdjustment = (targetRateRecent - 0.5) * 44;
     const trendAdjustment = targetRateTrend * 28 + momentumIndex * 10;
-    const rawModelRating = clamp(kpiEvidenceRating + targetRateAdjustment + trendAdjustment, 350, 850);
+    const evidenceDepth = clamp(logs.length / 80 + fargoHistory.length / 6, 0, 1);
+    const yearsAway = Number.isFinite(yearsAwayFromCompetition) ? (yearsAwayFromCompetition as number) : 0;
+    const timeOffPenalty = clamp(yearsAway * 1.1, 0, 30) * (1 - evidenceDepth);
+
+    const peak = Number.isFinite(historicalPeakFargoRating) ? (historicalPeakFargoRating as number) : undefined;
+    const peakPull = peak && peak > 0 ? clamp((peak - kpiEvidenceRating) * 0.07, -10, 18) * evidenceDepth : 0;
+
+    const rawModelRating = clamp(kpiEvidenceRating + targetRateAdjustment + trendAdjustment + peakPull - timeOffPenalty, 350, 850);
     const calibratedModelRating = clamp(rawModelRating * calibration.slope + calibration.intercept, 350, 850);
 
     const totalDrillResults = logs.reduce((sum, log) => sum + log.drillResults.length, 0);
@@ -351,5 +395,16 @@ export function useFargoEstimate(input: FargoEstimateInput): FargoEstimate {
         calibrationPoints: calibrationPairs.x.length,
       },
     };
-  }, [currentFargoRating, fargoHistory, logs, weeklyHistory, kpiScores, trends]);
+  }, [
+    currentFargoRating,
+    lastOfficialFargoRating,
+    lastOfficialFargoDate,
+    historicalPeakFargoRating,
+    yearsAwayFromCompetition,
+    fargoHistory,
+    logs,
+    weeklyHistory,
+    kpiScores,
+    trends,
+  ]);
 }

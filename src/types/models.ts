@@ -26,6 +26,10 @@ export interface UserProfile {
   name: string;
   currentFargoRating: number;
   targetFargoRating: number;
+  lastOfficialFargoRating?: number;
+  lastOfficialFargoDate?: string;
+  historicalPeakFargoRating?: number;
+  yearsAwayFromCompetition?: number;
   programStartDate: string;
   currentPhase: ProgramPhaseId;
   currentWeek: number;
