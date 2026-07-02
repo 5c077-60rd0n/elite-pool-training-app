@@ -9,6 +9,22 @@ Offline-first training companion for structured one-hour daily pool practice.
 - `npm run build` - Type-check and create production build.
 - `npm run preview` - Serve production build locally.
 - `npm run preview:host` - Serve production build on your LAN for install testing.
+- `npm run ci` - Run lint and build together (same baseline used in CI).
+
+## Production Readiness
+
+### Automated Guardrails
+
+- GitHub Actions CI runs on every push and pull request via [.github/workflows/ci.yml](.github/workflows/ci.yml).
+- Dependabot is configured for npm packages and GitHub Actions via [.github/dependabot.yml](.github/dependabot.yml).
+
+### Release Checklist
+
+1. Run `npm ci`.
+2. Run `npm run ci`.
+3. Smoke-test install/update flows on iOS Safari and Chrome (Android/Desktop).
+4. Verify offline behavior by loading once online, then disabling network.
+5. Ship with semantic versioning (`npm version patch|minor|major`) and push tags.
 
 ## Run On Desktop and Phone
 
@@ -75,6 +91,7 @@ The app uses `vite-plugin-pwa` with Workbox and precaches static assets for offl
 - PWA install prompts on Android/Desktop generally require HTTPS or localhost.
 - iOS supports Add to Home Screen via Safari Share menu.
 - After each release, open the app once online so new assets are cached for offline use.
+- Keep your host configured for SPA route fallback to `index.html`.
 
 ## Project Notes
 
