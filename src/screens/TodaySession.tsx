@@ -9,6 +9,7 @@ import { useSessionStore } from '../store/useSessionStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { formatClockTime, getTodayDayKey, isoDate } from '../utils/date';
 import type { Drill, DrillResult } from '../types/models';
+import { getSessionFeedback } from '../utils/gamification';
 
 function scoreFromFields(fieldValues: Record<string, number | string | boolean>, maxScore: number): number {
   const numericValues = Object.values(fieldValues).filter((value) => typeof value === 'number') as number[];
@@ -37,6 +38,7 @@ export default function TodaySession() {
   const saveDrillResult = useSessionStore((s) => s.saveDrillResult);
   const markComplete = useSessionStore((s) => s.markComplete);
   const addSessionLog = useProgressStore((s) => s.addSessionLog);
+  const logs = useProgressStore((s) => s.logs);
 
   const sessionDrills = useMemo(() => {
     const ids = Array.from(new Set(daySession.segments.flatMap((segment) => segment.drillIds)));
@@ -79,6 +81,28 @@ export default function TodaySession() {
     drillResults.length > 0
       ? Math.round(drillResults.reduce((sum, result) => sum + result.calculatedScore, 0) / drillResults.length)
       : 0;
+
+  const feedback = useMemo(() => {
+    if (!drillResults.length) return null;
+    return getSessionFeedback(
+      {
+        date: isoDate(),
+        week: weekPlan.week,
+        phase: weekPlan.phase,
+        dayOfWeek: todayKey,
+        focusArea: daySession.focusArea,
+        sessionStartTime: new Date(Date.now() - (3600 - timeRemaining) * 1000).toISOString(),
+        sessionEndTime: new Date().toISOString(),
+        totalDurationMinutes: Math.round((3600 - timeRemaining) / 60),
+        completed: true,
+        drillResults,
+        sessionNotes,
+        mentalGameRating,
+        energyLevel,
+      },
+      logs,
+    );
+  }, [daySession.focusArea, drillResults, energyLevel, logs, mentalGameRating, sessionNotes, timeRemaining, todayKey, weekPlan.phase, weekPlan.week]);
 
   function updateField(drillId: string, fieldId: string, value: number | string | boolean): void {
     setFieldValues((prev) => ({
@@ -247,6 +271,19 @@ export default function TodaySession() {
             />
           </label>
         </div>
+        {feedback ? (
+          <div className="mb-3 rounded-xl border border-cue-600/50 bg-felt-800/80 p-3">
+            <p className="text-sm text-chalk-300">Reward Preview</p>
+            <p className="text-base text-ivory-100">+{feedback.projectedXp} XP · Quality {feedback.projectedQuality}</p>
+            {feedback.hints.length ? (
+              <ul className="mt-2 space-y-1 text-xs text-cue-300">
+                {feedback.hints.map((hint) => (
+                  <li key={hint}>- {hint}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        ) : null}
         <Button className="w-full" onClick={saveSession}>Save Session</Button>
       </Card>
     </PageWrapper>
