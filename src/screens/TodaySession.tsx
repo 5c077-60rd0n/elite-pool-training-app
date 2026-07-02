@@ -48,7 +48,7 @@ export default function TodaySession() {
 
   const ringStyle = useMemo(
     () => ({
-      background: `conic-gradient(#e0bf6b ${(1 - timeRemaining / 3600) * 360}deg, #1a3d24 0deg)`,
+      background: `conic-gradient(#c9a84c ${(1 - timeRemaining / 3600) * 360}deg, #0d1b2a 0deg)`,
     }),
     [timeRemaining],
   );

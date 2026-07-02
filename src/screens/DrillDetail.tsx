@@ -122,8 +122,8 @@ export default function DrillDetail() {
             </label>
           </div>
 
-          <svg viewBox="0 0 100 100" className="w-full rounded-xl border border-felt-600 bg-emerald-950 p-2" aria-label="Break zone table">
-            <rect x="4" y="4" width="92" height="92" rx="4" fill="#0f2a1a" stroke="#1f4d2c" />
+          <svg viewBox="0 0 100 100" className="w-full rounded-xl border border-felt-600 bg-felt-900 p-2" aria-label="Break zone table">
+            <rect x="4" y="4" width="92" height="92" rx="4" fill="#0a1628" stroke="#0097cc" />
             {breakZones.map((zone) => {
               const count = zoneCounts[zone.id] ?? 0;
               const heatOpacity = breakEntriesForDrill.length >= 10 ? Math.min(0.85, 0.12 + count * 0.08) : 0.16;
@@ -135,12 +135,12 @@ export default function DrillDetail() {
                     width="20"
                     height="12"
                     rx="2"
-                    fill={`rgba(224, 191, 107, ${heatOpacity})`}
-                    stroke="#f5f0e8"
+                    fill={`rgba(201, 168, 76, ${heatOpacity})`}
+                    stroke="#e8e8e8"
                     className="cursor-pointer"
                     onClick={() => logZone(zone.id)}
                   />
-                  <text x={zone.x + 10} y={zone.y + 8} textAnchor="middle" fontSize="6" fill="#f5f0e8">
+                  <text x={zone.x + 10} y={zone.y + 8} textAnchor="middle" fontSize="6" fill="#e8e8e8">
                     {zone.id}
                   </text>
                 </g>
