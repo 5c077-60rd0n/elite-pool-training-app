@@ -19,6 +19,8 @@ import { useKPICalc } from '../hooks/useKPICalc';
 import { drills } from '../data/drills';
 import { isoDate } from '../utils/date';
 import { usePlateauDetector } from '../hooks/usePlateauDetector';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { useFargoEstimate } from '../hooks/useFargoEstimate';
 
 type Tab = 'fargo' | 'kpi' | 'scorecard';
 
@@ -27,18 +29,38 @@ export default function Progress() {
   const [entryDate, setEntryDate] = useState(isoDate());
   const [entryRating, setEntryRating] = useState(550);
   const history = useProgressStore((s) => s.fargoHistory);
+  const logs = useProgressStore((s) => s.logs);
   const addFargoPoint = useProgressStore((s) => s.addFargoPoint);
   const weeklyKpis = useProgressStore((s) => s.weeklyKpis);
-  const { radarData, trends, kpiScores } = useKPICalc();
+  const { radarData, trends, kpiScores, weeklyHistory } = useKPICalc();
   const plateau = usePlateauDetector();
+  const currentFargoRating = useSettingsStore((s) => s.profile.currentFargoRating);
 
-  const chartData = history.length
-    ? history
-    : [
-        { date: 'W1', rating: 550 },
-        { date: 'W2', rating: 556 },
-        { date: 'W3', rating: 560 },
-      ];
+  const { estimatedCurrent, projectedIn4Weeks, confidence, confidenceRange, confidenceLabel, diagnostics } = useFargoEstimate({
+    currentFargoRating,
+    fargoHistory: history,
+    logs,
+    weeklyHistory,
+    kpiScores,
+    trends,
+  });
+
+  const sortedHistory = useMemo(
+    () => [...history].sort((a, b) => Date.parse(a.date || '') - Date.parse(b.date || '')),
+    [history],
+  );
+
+  const chartData = useMemo(() => {
+    const base = sortedHistory.length
+      ? sortedHistory.map((point) => ({ date: point.date, rating: point.rating, estimatedRating: null as number | null }))
+      : [{ date: 'Baseline', rating: currentFargoRating, estimatedRating: null as number | null }];
+
+    return [
+      ...base,
+      { date: 'Now (Est.)', rating: null, estimatedRating: estimatedCurrent },
+      { date: '+4 Weeks', rating: null, estimatedRating: projectedIn4Weeks },
+    ];
+  }, [sortedHistory, currentFargoRating, estimatedCurrent, projectedIn4Weeks]);
 
   const trendByKpi = useMemo(() => {
     return new Map(trends.map((entry) => [entry.kpiId, entry.trend]));
@@ -73,6 +95,27 @@ export default function Progress() {
 
       {tab === 'fargo' ? (
         <Card title="Fargo Journey">
+          <div className="mb-3 rounded-xl border border-felt-600 bg-felt-800/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-chalk-300">Estimated Fargo (Practice Model)</p>
+            <p className="text-2xl font-semibold text-cue-400">{estimatedCurrent}</p>
+            <p className="text-sm text-ivory-200">
+              Confidence range: {confidenceRange[0]}-{confidenceRange[1]} · Confidence: {Math.round(confidence * 100)}% ({confidenceLabel})
+            </p>
+            <p className="text-xs text-chalk-300">Projection in 4 weeks: {projectedIn4Weeks} · Based on KPI-to-Fargo benchmark inversion and recent target rates.</p>
+          </div>
+
+          <div className="mb-3 rounded-xl border border-felt-600 bg-felt-800/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-chalk-300">Model Diagnostics</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-ivory-100 sm:grid-cols-2">
+              <p>Data sufficiency: {diagnostics.dataSufficiency}%</p>
+              <p>Calibration fit: {diagnostics.calibrationFitQuality}%</p>
+              <p>Sessions used: {diagnostics.contributingSessions}</p>
+              <p>Drill results used: {diagnostics.contributingDrillResults}</p>
+              <p>KPI signals used: {diagnostics.contributingKpis}</p>
+              <p>Calibration points: {diagnostics.calibrationPoints}</p>
+            </div>
+          </div>
+
           <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
             <input
               type="date"
@@ -94,7 +137,17 @@ export default function Progress() {
                 <XAxis dataKey="date" stroke="#d0eaf5" />
                 <YAxis stroke="#d0eaf5" />
                 <Tooltip />
-                <Line type="monotone" dataKey="rating" stroke="#e0bf6b" strokeWidth={3} dot={false} />
+                <Line type="monotone" dataKey="rating" name="Logged Fargo" stroke="#e0bf6b" strokeWidth={3} dot={false} />
+                <Line
+                  type="monotone"
+                  dataKey="estimatedRating"
+                  name="Estimated Fargo"
+                  stroke="#5fc5ff"
+                  strokeWidth={2}
+                  strokeDasharray="6 4"
+                  dot={{ r: 3 }}
+                  connectNulls={false}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
