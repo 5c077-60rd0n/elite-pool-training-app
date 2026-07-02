@@ -23,14 +23,18 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
+        id: '/',
         name: 'Fargo Climb - Elite Pool Training',
         short_name: 'Fargo Climb',
         description: 'One-hour-per-day training program from 550 to 800+ Fargo rating',
         theme_color: '#0f2a1a',
         background_color: '#0a1a10',
+        lang: 'en',
+        scope: '/',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        categories: ['sports', 'education', 'productivity'],
         icons: [
           {
             src: '/icons/pwa-192.png',
@@ -59,8 +63,39 @@ export default defineConfig({
             type: 'image/svg+xml',
           },
         ],
+        shortcuts: [
+          {
+            name: 'Today Session',
+            short_name: 'Session',
+            url: '/session/today',
+            description: 'Jump directly into your current training session',
+            icons: [
+              {
+                src: '/icons/pwa-192.png',
+                sizes: '192x192',
+                type: 'image/png',
+              },
+            ],
+          },
+          {
+            name: 'Drill Library',
+            short_name: 'Drills',
+            url: '/drills',
+            description: 'Browse all drills by category and phase',
+            icons: [
+              {
+                src: '/icons/pwa-192.png',
+                sizes: '192x192',
+                type: 'image/png',
+              },
+            ],
+          },
+        ],
       },
       workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
         navigateFallback: '/index.html',
         runtimeCaching: [
           {

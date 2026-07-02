@@ -60,6 +60,22 @@ Planned Settings actions:
 
 The app uses `vite-plugin-pwa` with Workbox and precaches static assets for offline use after first load.
 
+## PWA Best Practices Implemented
+
+- Service worker update flow with in-app "Update now" prompt.
+- In-app install prompt (supported browsers) with graceful fallback.
+- Offline-ready notification after initial asset caching.
+- PNG + maskable icons for install compatibility across Android/Desktop.
+- Apple touch icon and iOS web app metadata for home screen behavior.
+- Workbox cache maintenance (`cleanupOutdatedCaches`) and immediate client takeover.
+- Manifest shortcuts for fast access to core app flows.
+
+## Production Deployment Notes
+
+- PWA install prompts on Android/Desktop generally require HTTPS or localhost.
+- iOS supports Add to Home Screen via Safari Share menu.
+- After each release, open the app once online so new assets are cached for offline use.
+
 ## Project Notes
 
 - Main app shell uses React 18 + TypeScript + React Router v6.

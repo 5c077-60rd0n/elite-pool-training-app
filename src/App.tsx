@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { BottomNav } from './components/layout/BottomNav';
 import { Header } from './components/layout/Header';
+import { PwaExperience } from './components/pwa/PwaExperience';
 import AppRouter from './router/AppRouter';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
         <Header />
         <AppRouter />
         <BottomNav />
+        <PwaExperience />
       </div>
     </BrowserRouter>
   );
