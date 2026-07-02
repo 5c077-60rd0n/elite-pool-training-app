@@ -2,6 +2,8 @@ interface RewardCueOptions {
   xpEarned: number;
   leveledUp?: boolean;
   questCompleted?: boolean;
+  soundEnabled?: boolean;
+  hapticsEnabled?: boolean;
 }
 
 let audioContext: AudioContext | null = null;
@@ -67,10 +69,15 @@ function playRewardTones(options: RewardCueOptions): void {
 
 export function triggerRewardCue(options: RewardCueOptions): void {
   const hasBigWin = Boolean(options.questCompleted || options.leveledUp);
-  if (hasBigWin) {
-    vibrate([35, 22, 35]);
-  } else {
-    vibrate(24);
+  if (options.hapticsEnabled !== false) {
+    if (hasBigWin) {
+      vibrate([35, 22, 35]);
+    } else {
+      vibrate(24);
+    }
   }
-  playRewardTones(options);
+
+  if (options.soundEnabled !== false) {
+    playRewardTones(options);
+  }
 }

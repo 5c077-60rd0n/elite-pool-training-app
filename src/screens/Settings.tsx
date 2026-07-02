@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSessionStore } from '../store/useSessionStore';
+import { useGamificationStore } from '../store/useGamificationStore';
 
 export default function Settings() {
   const profile = useSettingsStore((s) => s.profile);
@@ -18,6 +19,10 @@ export default function Settings() {
   const setReminderTime = useNotificationStore((s) => s.setReminderTime);
   const progress = useProgressStore();
   const session = useSessionStore();
+  const soundEnabled = useGamificationStore((s) => s.soundEnabled);
+  const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
+  const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
+  const setHapticsEnabled = useGamificationStore((s) => s.setHapticsEnabled);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState('');
 
@@ -28,6 +33,10 @@ export default function Settings() {
       notifications: {
         enabled: useNotificationStore.getState().enabled,
         reminderTime: useNotificationStore.getState().reminderTime,
+      },
+      gamification: {
+        soundEnabled: useGamificationStore.getState().soundEnabled,
+        hapticsEnabled: useGamificationStore.getState().hapticsEnabled,
       },
       progress: {
         fargoHistory: progress.fargoHistory,
@@ -64,6 +73,7 @@ export default function Settings() {
       const parsed = JSON.parse(text) as {
         settings?: typeof profile;
         notifications?: { enabled?: boolean; reminderTime?: string };
+        gamification?: { soundEnabled?: boolean; hapticsEnabled?: boolean };
         progress?: {
           fargoHistory?: typeof progress.fargoHistory;
           logs?: typeof progress.logs;
@@ -88,6 +98,13 @@ export default function Settings() {
           ...state,
           enabled: parsed.notifications?.enabled ?? state.enabled,
           reminderTime: parsed.notifications?.reminderTime ?? state.reminderTime,
+        }));
+      }
+      if (parsed.gamification) {
+        useGamificationStore.setState((state) => ({
+          ...state,
+          soundEnabled: parsed.gamification?.soundEnabled ?? state.soundEnabled,
+          hapticsEnabled: parsed.gamification?.hapticsEnabled ?? state.hapticsEnabled,
         }));
       }
       if (parsed.progress) {
@@ -120,6 +137,7 @@ export default function Settings() {
   function resetAllData(): void {
     useSettingsStore.setState((state) => ({ profile: { ...state.profile, onboardingComplete: false, currentWeek: 1, currentPhase: 1 } }));
     useNotificationStore.setState((state) => ({ ...state, enabled: false, reminderTime: '19:00' }));
+    useGamificationStore.setState((state) => ({ ...state, soundEnabled: true, hapticsEnabled: true }));
     useProgressStore.setState((state) => ({
       ...state,
       fargoHistory: [],
@@ -215,6 +233,28 @@ export default function Settings() {
           className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
         <Button onClick={() => void scheduleReminder()}>Request Notification Permission</Button>
+      </Card>
+
+      <Card className="mt-4" title="Gamification Effects">
+        <p className="mb-3 text-sm text-chalk-300">Control reward sounds and haptic feedback for XP and quest unlocks.</p>
+        <label className="mb-2 flex min-h-11 items-center gap-2 text-sm text-ivory-200">
+          <input
+            type="checkbox"
+            checked={soundEnabled}
+            onChange={(event) => setSoundEnabled(event.target.checked)}
+            className="h-4 w-4"
+          />
+          Reward sound cues
+        </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm text-ivory-200">
+          <input
+            type="checkbox"
+            checked={hapticsEnabled}
+            onChange={(event) => setHapticsEnabled(event.target.checked)}
+            className="h-4 w-4"
+          />
+          Haptic feedback
+        </label>
       </Card>
 
       <Card className="mt-4" title="Data Management">

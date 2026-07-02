@@ -8,6 +8,7 @@ import { useDrillTimer } from '../hooks/useDrillTimer';
 import { drills } from '../data/drills';
 import { useSessionStore } from '../store/useSessionStore';
 import { useProgressStore } from '../store/useProgressStore';
+import { useGamificationStore } from '../store/useGamificationStore';
 import { formatClockTime, getTodayDayKey, isoDate } from '../utils/date';
 import type { Drill, DrillResult } from '../types/models';
 import { getGamificationSnapshot, getSessionFeedback } from '../utils/gamification';
@@ -48,6 +49,8 @@ export default function TodaySession() {
   const markComplete = useSessionStore((s) => s.markComplete);
   const addSessionLog = useProgressStore((s) => s.addSessionLog);
   const logs = useProgressStore((s) => s.logs);
+  const soundEnabled = useGamificationStore((s) => s.soundEnabled);
+  const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
 
   useEffect(() => {
     if (!celebration) return;
@@ -169,6 +172,8 @@ export default function TodaySession() {
       xpEarned,
       leveledUp,
       questCompleted: completedQuests.length > 0,
+      soundEnabled,
+      hapticsEnabled,
     });
   }
 

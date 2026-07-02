@@ -30,6 +30,15 @@ export default function Dashboard() {
       </motion.div>
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.05 }}>
+        <Card title="Today's Session" className="mb-4">
+          <p className="mb-3 text-ivory-100">{week.dailySessions.monday.focusArea} · 60 minutes</p>
+          <Link to="/session/today">
+            <Button>Start Session</Button>
+          </Link>
+        </Card>
+      </motion.div>
+
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.1 }}>
         <Card title="Training XP" className="mb-4">
           <div className="mb-2 flex items-end justify-between">
             <p className="text-3xl font-semibold text-ivory-100">Level {game.level}</p>
@@ -59,7 +68,7 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.1 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.15 }}>
         <Card title="Weekly Quests" className="mb-4">
           <div className="space-y-3">
             {game.weeklyQuests.map((quest, index) => {
@@ -94,7 +103,7 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.15 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.2 }}>
         <Card title="Player Identity" className="mb-4">
           <p className="text-sm text-chalk-300">Current title</p>
           <p className="text-xl text-ivory-100">{game.title}</p>
@@ -119,16 +128,7 @@ export default function Dashboard() {
         </Card>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.18 }}>
-        <Card title="Today's Session" className="mb-4">
-          <p className="mb-3 text-ivory-100">{week.dailySessions.monday.focusArea} · 60 minutes</p>
-          <Link to="/session/today">
-            <Button>Start Session</Button>
-          </Link>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.2 }}>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.24 }}>
         <Card title="Mental Game Tip">
           <p className="text-sm text-chalk-300">{tip.title}</p>
           <p className="text-ivory-100">{tip.content}</p>
