@@ -21,14 +21,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'icons/apple-touch-icon.png', 'brand/flash-gordon-logo.png'],
       manifest: {
         id: '/',
         name: 'Fargo Climb - Elite Pool Training',
         short_name: 'Fargo Climb',
         description: 'One-hour-per-day training program from 550 to 800+ Fargo rating',
-        theme_color: '#0f2a1a',
-        background_color: '#0a1a10',
+        theme_color: '#080f18',
+        background_color: '#080f18',
         lang: 'en',
         scope: '/',
         display: 'standalone',

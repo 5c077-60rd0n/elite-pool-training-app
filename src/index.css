@@ -1,11 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color: #f5f0e8;
-  background-color: #0a1a10;
-  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  color: #f3f5f8;
+  background-color: #080f18;
+  font-family: 'Rajdhani', 'Manrope', 'Segoe UI', sans-serif;
   text-rendering: geometricPrecision;
   -webkit-font-smoothing: antialiased;
 }
@@ -19,12 +21,31 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% -20%, rgba(31, 77, 44, 0.45), transparent 50%),
-    radial-gradient(circle at 90% 10%, rgba(126, 200, 227, 0.18), transparent 30%),
-    #0a1a10;
+    radial-gradient(circle at 8% -18%, rgba(0, 191, 255, 0.2), transparent 40%),
+    radial-gradient(circle at 94% 9%, rgba(201, 168, 76, 0.18), transparent 30%),
+    radial-gradient(circle at 50% 120%, rgba(0, 191, 255, 0.12), transparent 45%),
+    linear-gradient(140deg, #080f18 0%, #0a1628 52%, #0d1b2a 100%);
+  background-attachment: fixed;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+#root {
+  position: relative;
+}
+
+#root::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 28px 28px;
+  opacity: 0.15;
+  z-index: 0;
 }
