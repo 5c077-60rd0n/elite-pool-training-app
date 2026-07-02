@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { PageWrapper } from '../components/layout/PageWrapper';
@@ -9,7 +10,14 @@ import { useSessionStore } from '../store/useSessionStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { formatClockTime, getTodayDayKey, isoDate } from '../utils/date';
 import type { Drill, DrillResult } from '../types/models';
-import { getSessionFeedback } from '../utils/gamification';
+import { getGamificationSnapshot, getSessionFeedback } from '../utils/gamification';
+import { triggerRewardCue } from '../utils/rewardEffects';
+
+interface CelebrationState {
+  xpEarned: number;
+  leveledUp: boolean;
+  completedQuests: string[];
+}
 
 function scoreFromFields(fieldValues: Record<string, number | string | boolean>, maxScore: number): number {
   const numericValues = Object.values(fieldValues).filter((value) => typeof value === 'number') as number[];
@@ -35,10 +43,17 @@ export default function TodaySession() {
   const [energyLevel, setEnergyLevel] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [mentalGameRating, setMentalGameRating] = useState<1 | 2 | 3 | 4 | 5>(3);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [celebration, setCelebration] = useState<CelebrationState | null>(null);
   const saveDrillResult = useSessionStore((s) => s.saveDrillResult);
   const markComplete = useSessionStore((s) => s.markComplete);
   const addSessionLog = useProgressStore((s) => s.addSessionLog);
   const logs = useProgressStore((s) => s.logs);
+
+  useEffect(() => {
+    if (!celebration) return;
+    const timeout = window.setTimeout(() => setCelebration(null), 4200);
+    return () => window.clearTimeout(timeout);
+  }, [celebration]);
 
   const sessionDrills = useMemo(() => {
     const ids = Array.from(new Set(daySession.segments.flatMap((segment) => segment.drillIds)));
@@ -117,7 +132,9 @@ export default function TodaySession() {
   function saveSession(): void {
     drillResults.forEach((result) => saveDrillResult(result));
     markComplete();
-    addSessionLog({
+
+    const before = getGamificationSnapshot(logs);
+    const newLog = {
       id: `session-${Date.now()}`,
       date: isoDate(),
       week: weekPlan.week,
@@ -132,6 +149,26 @@ export default function TodaySession() {
       sessionNotes,
       mentalGameRating,
       energyLevel,
+    };
+
+    addSessionLog(newLog);
+
+    const after = getGamificationSnapshot([newLog, ...logs]);
+    const completedQuests = after.weeklyQuests
+      .filter((quest) => quest.completed && !before.weeklyQuests.find((oldQuest) => oldQuest.id === quest.id)?.completed)
+      .map((quest) => quest.name);
+    const leveledUp = after.level > before.level;
+    const xpEarned = after.latestSession?.xpEarned ?? feedback?.projectedXp ?? 0;
+
+    setCelebration({
+      xpEarned,
+      leveledUp,
+      completedQuests,
+    });
+    triggerRewardCue({
+      xpEarned,
+      leveledUp,
+      questCompleted: completedQuests.length > 0,
     });
   }
 
@@ -284,6 +321,24 @@ export default function TodaySession() {
             ) : null}
           </div>
         ) : null}
+        <AnimatePresence>
+          {celebration ? (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.22 }}
+              className="mb-3 rounded-xl border border-flash-500/60 bg-gradient-to-r from-felt-700 to-felt-800 p-3"
+            >
+              <p className="text-sm uppercase tracking-wide text-flash-300">Reward Unlocked</p>
+              <p className="text-lg text-ivory-100">+{celebration.xpEarned} XP</p>
+              {celebration.leveledUp ? <p className="text-sm text-cue-300">Level up achieved.</p> : null}
+              {celebration.completedQuests.map((quest) => (
+                <p key={quest} className="text-sm text-cue-300">Quest complete: {quest}</p>
+              ))}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
         <Button className="w-full" onClick={saveSession}>Save Session</Button>
       </Card>
     </PageWrapper>
