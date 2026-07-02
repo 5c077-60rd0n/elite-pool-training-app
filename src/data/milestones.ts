@@ -1,0 +1,40 @@
+import type { MonthlyMilestone } from '../types/models';
+
+export const monthlyMilestones: MonthlyMilestone[] = [
+  {
+    month: 1,
+    phase: 1,
+    weekRange: [1, 4],
+    fargoTarget: 570,
+    cbControlKPI: 'Stop shots: 6/10 accuracy',
+    patternKPI: '3-ball runouts: 4/10',
+    safetyKPI: 'Basic thin safe: 4/10',
+    breakKPI: 'CB in target zone: 30%',
+    mentalKPI: 'Pre-shot commitment: 3/5',
+    description: 'Build a repeatable stroke and basic cue ball awareness.',
+  },
+  {
+    month: 6,
+    phase: 2,
+    weekRange: [22, 26],
+    fargoTarget: 670,
+    cbControlKPI: 'L-Drill: 6/9 zones',
+    patternKPI: '3-ball runouts: 7/10',
+    safetyKPI: 'Snooker outcomes: 6/10',
+    breakKPI: 'Ball made + zone control: 55%',
+    mentalKPI: 'Reset quality average: 4/5',
+    description: 'Pattern confidence and defensive maturity in match simulations.',
+  },
+  {
+    month: 12,
+    phase: 4,
+    weekRange: [49, 52],
+    fargoTarget: 800,
+    cbControlKPI: 'L-Drill: 9/9 zones',
+    patternKPI: '3-ball runouts: 9.5/10',
+    safetyKPI: 'No-shot outcomes: 9/10',
+    breakKPI: 'Target zone + ball made: 88%',
+    mentalKPI: 'Pressure routine quality: 4.5/5',
+    description: 'Integrate all disciplines into elite-level tournament execution.',
+  },
+];
