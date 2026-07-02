@@ -5,10 +5,33 @@ Offline-first training companion for structured one-hour daily pool practice.
 ## Scripts
 
 - `npm run dev` - Start Vite dev server with HMR.
+- `npm run dev:host` - Start dev server on your LAN so your phone can open it.
 - `npm run build` - Type-check and create production build.
 - `npm run preview` - Serve production build locally.
+- `npm run preview:host` - Serve production build on your LAN for install testing.
+
+## Run On Desktop and Phone
+
+1. Install dependencies: `npm install`
+2. Build the app: `npm run build`
+3. Start LAN preview: `npm run preview:host`
+4. On your desktop, open the local URL shown in terminal.
+5. On your phone (same Wi-Fi), open `http://<your-mac-ip>:4173`
+
+Find your Mac IP with: `ipconfig getifaddr en0`
+
+Important notes:
+
+- For full install prompts on Android/desktop, prefer HTTPS or localhost.
+- iOS Safari supports Add to Home Screen without requiring the same install prompt model as Chrome.
 
 ## PWA Install
+
+### Desktop (Chrome/Edge)
+
+1. Open the app URL.
+2. Click the install icon in the address bar (or browser app menu).
+3. Install to launch as a standalone app.
 
 ### iOS (Safari)
 

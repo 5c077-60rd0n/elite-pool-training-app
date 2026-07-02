@@ -21,7 +21,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico'],
+      includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: 'Fargo Climb - Elite Pool Training',
         short_name: 'Fargo Climb',
@@ -32,6 +32,22 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: '/',
         icons: [
+          {
+            src: '/icons/pwa-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+          },
+          {
+            src: '/icons/pwa-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
+          {
+            src: '/icons/pwa-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
           {
             src: '/icons/pwa-192.svg',
             sizes: '192x192',
