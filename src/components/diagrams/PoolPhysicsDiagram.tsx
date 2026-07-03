@@ -203,6 +203,49 @@ interface ShotGeometry {
   cutAngleDeg: number;
 }
 
+interface ProgressionPhaseSpec {
+  phase: 1 | 2 | 3 | 4;
+  objectBallShiftLong: number;
+  objectBallShiftShort: number;
+  cutAngleDeltaDeg: number;
+  cueDistanceDeltaDiamonds: number;
+}
+
+interface ProgressionShot {
+  phase: 1 | 2 | 3 | 4;
+  shot: ShotGeometry;
+}
+
+const progressionDrillIds = new Set<string>([
+  'slow-motion-stroke-drill',
+  'cut-shot-matrix',
+  'fractional-ball-drill',
+  'thin-cut-practice',
+  'l-drill',
+  'five-position-drill',
+  'rail-control-drill',
+  'stop-shot-matrix',
+  'speed-control-5-zone-drill',
+  'cross-side-bank-matrix',
+  'one-rail-kick-drill',
+  'two-rail-kick-system',
+  'break-ball-drill',
+]);
+
+const progressionPhaseSpecs: ProgressionPhaseSpec[] = [
+  { phase: 1, objectBallShiftLong: -0.35, objectBallShiftShort: 0, cutAngleDeltaDeg: -8, cueDistanceDeltaDiamonds: -0.2 },
+  { phase: 2, objectBallShiftLong: -0.1, objectBallShiftShort: -0.05, cutAngleDeltaDeg: -3, cueDistanceDeltaDiamonds: 0 },
+  { phase: 3, objectBallShiftLong: 0.15, objectBallShiftShort: 0.08, cutAngleDeltaDeg: 3, cueDistanceDeltaDiamonds: 0.25 },
+  { phase: 4, objectBallShiftLong: 0.35, objectBallShiftShort: 0.15, cutAngleDeltaDeg: 8, cueDistanceDeltaDiamonds: 0.4 },
+];
+
+const phaseColors: Record<1 | 2 | 3 | 4, { cb: string; ob: string; pos: string; text: string }> = {
+  1: { cb: '#8de4af', ob: '#66cdaa', pos: '#9ef0bf', text: '#8de4af' },
+  2: { cb: '#8dc7ff', ob: '#6aa8ff', pos: '#a8d4ff', text: '#8dc7ff' },
+  3: { cb: '#c5adff', ob: '#b78bff', pos: '#d9c7ff', text: '#c5adff' },
+  4: { cb: '#ff9eb5', ob: '#ff7fa2', pos: '#ffc4d3', text: '#ff9eb5' },
+};
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -320,6 +363,18 @@ function getLayoutForDrill(drill: Drill): DrillLayoutPreset {
   return fallbackLayout(drill);
 }
 
+function clampLayout(layout: DrillLayoutPreset): DrillLayoutPreset {
+  return {
+    ...layout,
+    objectBallDiamond: {
+      long: clamp(layout.objectBallDiamond.long, 0.2, 7.8),
+      short: clamp(layout.objectBallDiamond.short, 0.2, 3.8),
+    },
+    cutAngleDeg: clamp(layout.cutAngleDeg, 3, 80),
+    cueDistanceDiamonds: clamp(layout.cueDistanceDiamonds, 1.8, 3.8),
+  };
+}
+
 function rayToTableEdge(origin: Vec2, direction: Vec2): Vec2 {
   const dir = normalize(direction);
   const tCandidates: number[] = [];
@@ -364,8 +419,7 @@ function reflectFromRails(origin: Vec2, direction: Vec2, steps: number): Vec2[] 
   return points;
 }
 
-function buildShotGeometry(drill: Drill): ShotGeometry {
-  const layout = getLayoutForDrill(drill);
+function buildShotGeometryFromLayout(layout: DrillLayoutPreset): ShotGeometry {
   const pocket = pocketPosById(layout.pocketId);
   const objectBall = diamondToTable(layout.objectBallDiamond);
 
@@ -418,6 +472,34 @@ function buildShotGeometry(drill: Drill): ShotGeometry {
   };
 }
 
+function buildShotGeometry(drill: Drill): ShotGeometry {
+  const layout = clampLayout(getLayoutForDrill(drill));
+  return buildShotGeometryFromLayout(layout);
+}
+
+function buildProgressionShots(drill: Drill): ProgressionShot[] {
+  if (!progressionDrillIds.has(drill.id)) {
+    return [];
+  }
+
+  const base = getLayoutForDrill(drill);
+  return progressionPhaseSpecs.map((spec) => {
+    const phasedLayout = clampLayout({
+      ...base,
+      objectBallDiamond: {
+        long: base.objectBallDiamond.long + spec.objectBallShiftLong,
+        short: base.objectBallDiamond.short + spec.objectBallShiftShort,
+      },
+      cutAngleDeg: base.cutAngleDeg + spec.cutAngleDeltaDeg,
+      cueDistanceDiamonds: base.cueDistanceDiamonds + spec.cueDistanceDeltaDiamonds,
+    });
+    return {
+      phase: spec.phase,
+      shot: buildShotGeometryFromLayout(phasedLayout),
+    };
+  });
+}
+
 function polyline(points: Vec2[]): string {
   return points
     .map((point) => {
@@ -454,7 +536,10 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
   const [showSpeedTiers, setShowSpeedTiers] = useState(true);
   const [showDiamondGrid, setShowDiamondGrid] = useState(false);
   const [showTargetZones, setShowTargetZones] = useState(true);
+  const [showProgression, setShowProgression] = useState(true);
   const shot = useMemo(() => buildShotGeometry(drill), [drill]);
+  const progressionShots = useMemo(() => buildProgressionShots(drill), [drill]);
+  const supportsProgression = progressionShots.length > 0;
   const targetOverlay = targetZonesByDrill[drill.id];
 
   const svgCueStart = tableToSvg(shot.cueStart);
@@ -535,6 +620,15 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
           className={`rounded-md border px-2 py-1 ${showTargetZones ? 'border-cue-400 bg-cue-900/40 text-cue-200' : 'border-felt-600 text-chalk-300'}`}
         >
           Target Zones
+                {supportsProgression ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowProgression((value) => !value)}
+                    className={`rounded-md border px-2 py-1 ${showProgression ? 'border-cue-400 bg-cue-900/40 text-cue-200' : 'border-felt-600 text-chalk-300'}`}
+                  >
+                    Progression Phases
+                  </button>
+                ) : null}
         </button>
       </div>
 
@@ -679,6 +773,42 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
           markerEnd={`url(#arrow-${drill.id})`}
         />
 
+        {supportsProgression && showProgression
+          ? progressionShots.map(({ phase, shot: phaseShot }) => {
+              const colors = phaseColors[phase];
+              return (
+                <g key={`phase-${phase}`}>
+                  <polyline
+                    points={polyline([phaseShot.cueStart, phaseShot.ghostBall])}
+                    fill="none"
+                    stroke={colors.cb}
+                    strokeWidth="0.34"
+                    strokeDasharray="0.85 0.9"
+                  />
+                  <polyline
+                    points={polyline(phaseShot.cuePostPath)}
+                    fill="none"
+                    stroke={colors.cb}
+                    strokeOpacity="0.88"
+                    strokeWidth="0.32"
+                    strokeDasharray="0.9 0.95"
+                  />
+                  <polyline
+                    points={polyline([phaseShot.objectBall, phaseShot.pocket])}
+                    fill="none"
+                    stroke={colors.ob}
+                    strokeOpacity="0.85"
+                    strokeWidth="0.3"
+                    strokeDasharray="0.85 0.95"
+                  />
+                  <circle cx={tableToSvg(phaseShot.cueStart).x} cy={tableToSvg(phaseShot.cueStart).y} r={0.63} fill={colors.pos} opacity="0.88" />
+                  <circle cx={tableToSvg(phaseShot.objectBall).x} cy={tableToSvg(phaseShot.objectBall).y} r={0.63} fill={colors.ob} opacity="0.84" />
+                  <text x={tableToSvg(phaseShot.cueStart).x + 0.62} y={tableToSvg(phaseShot.cueStart).y - 0.62} fontSize="1.55" fill={colors.text}>P{phase}</text>
+                </g>
+              );
+            })
+          : null}
+
         {showSpeedTiers ? (
           <>
             <polyline points={polyline(speedSoft)} fill="none" stroke="#8de4af" strokeWidth="0.45" strokeDasharray="1.1 1.1" />
@@ -741,6 +871,12 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         <text x={MARGIN + 1.5} y={MARGIN + TABLE_WIDTH_IN + 7.6} fontSize="2.15" fill="#b9d4c7">
           OB D({obDiamond.long.toFixed(2)}, {obDiamond.short.toFixed(2)}) snap ({snapDiamond(obDiamond.long).toFixed(1)}, {snapDiamond(obDiamond.short).toFixed(1)})
         </text>
+
+        {supportsProgression && showProgression ? (
+          <text x={MARGIN + 47.5} y={MARGIN + TABLE_WIDTH_IN + 3.1} fontSize="2" fill="#d9dfda" textAnchor="start">
+            P1-P4 overlays: CB+OB positions and paths
+          </text>
+        ) : null}
       </svg>
 
       <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] text-ivory-200">
@@ -771,6 +907,11 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         <p>
           <span className="font-semibold text-chalk-300">Target zones:</span> drill-specific landing or contact zones
         </p>
+        {supportsProgression ? (
+          <p>
+            <span className="font-semibold text-chalk-300">Progression:</span> P1-P4 cue/object positions and path layers
+          </p>
+        ) : null}
       </div>
     </div>
   );
