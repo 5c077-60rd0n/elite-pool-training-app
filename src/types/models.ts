@@ -105,49 +105,6 @@ export interface Drill {
   proTip: string;
   videoReference?: string;
   tableLayoutDescription: string;
-  diagram?: DrillDiagram;
-}
-
-export interface DrillDiagramPoint {
-  x: number;
-  y: number;
-}
-
-export interface DrillDiagramBall {
-  id: string;
-  label: string;
-  role: 'cue' | 'object' | 'target' | 'marker';
-  x: number;
-  y: number;
-}
-
-export interface DrillDiagramZone {
-  id: string;
-  label?: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  role: 'target' | 'window' | 'danger';
-}
-
-export interface DrillDiagramPath {
-  id: string;
-  label?: string;
-  role: 'aim' | 'cue-path' | 'object-path' | 'route';
-  from: DrillDiagramPoint;
-  to: DrillDiagramPoint;
-  via?: DrillDiagramPoint[];
-  dashed?: boolean;
-}
-
-export interface DrillDiagram {
-  tableSize: '9ft';
-  pocketMouthInches: 4.5;
-  balls: DrillDiagramBall[];
-  paths: DrillDiagramPath[];
-  zones?: DrillDiagramZone[];
-  notes?: string[];
 }
 
 export interface ScoringMethod {
