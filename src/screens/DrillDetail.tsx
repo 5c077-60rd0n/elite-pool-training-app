@@ -6,7 +6,6 @@ import { PoolPhysicsDiagram } from '../components/diagrams/PoolPhysicsDiagram';
 import { drills } from '../data/drills';
 import { useProgressStore } from '../store/useProgressStore';
 import { Button } from '../components/ui/Button';
-import { shouldRenderDrillDiagram } from '../utils/diagramEligibility';
 
 const breakZones: Array<{ id: 'A' | 'B' | 'C' | 'D' | 'E' | 'F'; x: number; y: number }> = [
   { id: 'A', x: 16, y: 24 },
@@ -76,13 +75,7 @@ export default function DrillDetail() {
         <p className="text-ivory-100">{drill.setup}</p>
       </Card>
       <Card title="Table Layout" className="mb-4">
-        {shouldRenderDrillDiagram(drill.id) ? (
-          <PoolPhysicsDiagram drill={drill} />
-        ) : (
-          <p className="mb-2 rounded-lg border border-felt-600 bg-felt-800/70 p-2 text-xs text-chalk-300">
-            No fixed snapshot diagram for this drill. Use setup and instructions as the primary reference.
-          </p>
-        )}
+        <PoolPhysicsDiagram drill={drill} />
         <pre className="whitespace-pre-wrap rounded-lg bg-felt-800 p-3 text-sm text-ivory-200">{drill.tableLayoutDescription}</pre>
       </Card>
       <Card title="Instructions">

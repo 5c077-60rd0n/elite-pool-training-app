@@ -14,7 +14,6 @@ import type { Drill, DrillResult } from '../types/models';
 import { getGamificationSnapshot, getSessionFeedback } from '../utils/gamification';
 import { triggerRewardCue } from '../utils/rewardEffects';
 import { PoolPhysicsDiagram } from '../components/diagrams/PoolPhysicsDiagram';
-import { shouldRenderDrillDiagram } from '../utils/diagramEligibility';
 
 interface CelebrationState {
   xpEarned: number;
@@ -232,15 +231,9 @@ export default function TodaySession() {
                   </div>
                   <div>
                     <p className="font-semibold text-chalk-300">Table Layout</p>
-                    {shouldRenderDrillDiagram(drill.id) ? (
-                      <div className="mb-2 mt-1">
-                        <PoolPhysicsDiagram drill={drill} />
-                      </div>
-                    ) : (
-                      <p className="mb-2 mt-1 rounded-lg border border-felt-600 bg-felt-900/60 p-2 text-xs text-chalk-300">
-                        No fixed snapshot diagram for this drill. Follow setup and instruction steps directly.
-                      </p>
-                    )}
+                    <div className="mb-2 mt-1">
+                      <PoolPhysicsDiagram drill={drill} />
+                    </div>
                     <p>{drill.tableLayoutDescription}</p>
                   </div>
                   <div className="rounded-lg border border-felt-600 bg-felt-900/60 p-2">
