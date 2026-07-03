@@ -482,9 +482,9 @@ export const drills: Drill[] = [
         { id: 'ob', label: 'OB', role: 'object', x: 80, y: 40 },
       ],
       paths: [
-        { id: 'aim', role: 'aim', from: { x: 34, y: 28 }, to: { x: 80, y: 40 }, label: 'Aim line thin hit' },
+        { id: 'aim', role: 'aim', from: { x: 34, y: 28 }, to: { x: 80, y: 40 }, label: 'Thin contact' },
         { id: 'ob-path', role: 'object-path', from: { x: 80, y: 40 }, to: { x: 92, y: 43 }, label: 'OB stays near rail' },
-        { id: 'cb-after-contact', role: 'cue-path', from: { x: 80, y: 40 }, to: { x: 12, y: 2.6 }, via: [{ x: 60, y: 20 }], label: 'CB post-contact to short rail' },
+        { id: 'cb-path', role: 'cue-path', from: { x: 34, y: 28 }, to: { x: 12, y: 2.6 }, via: [{ x: 18, y: 10 }], label: 'CB to short rail' },
       ],
       zones: [{ id: 'safe', role: 'window', label: 'Safe zone', x: 12, y: 7, width: 12, height: 8 }],
       notes: ['Favor half-tip outside spin to reduce OB speed.', 'Goal is no direct return shot.'],
