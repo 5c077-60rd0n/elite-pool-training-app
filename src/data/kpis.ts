@@ -50,7 +50,7 @@ export const kpis: KPI[] = [
     id: 'break-effectiveness',
     name: 'Break Effectiveness',
     category: 'break-optimization',
-    description: 'Pocketed balls + cue ball zone control.',
+    description: 'Wing-ball pocketing with center-table cue-ball control consistency.',
     measurementUnit: '%',
     benchmarks: { fargo550: 30, fargo600: 42, fargo650: 55, fargo700: 67, fargo750: 78, fargo800: 88 },
     relatedDrillIds: ['9-ball-break-zone-chart'],
