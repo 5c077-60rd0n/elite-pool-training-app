@@ -13,6 +13,7 @@ import { formatClockTime, getTodayDayKey, isoDate } from '../utils/date';
 import type { Drill, DrillResult } from '../types/models';
 import { getGamificationSnapshot, getSessionFeedback } from '../utils/gamification';
 import { triggerRewardCue } from '../utils/rewardEffects';
+import { PoolPhysicsDiagram } from '../components/diagrams/PoolPhysicsDiagram';
 
 interface CelebrationState {
   xpEarned: number;
@@ -230,6 +231,9 @@ export default function TodaySession() {
                   </div>
                   <div>
                     <p className="font-semibold text-chalk-300">Table Layout</p>
+                    <div className="mb-2 mt-1">
+                      <PoolPhysicsDiagram drill={drill} />
+                    </div>
                     <p>{drill.tableLayoutDescription}</p>
                   </div>
                   <div className="rounded-lg border border-felt-600 bg-felt-900/60 p-2">
