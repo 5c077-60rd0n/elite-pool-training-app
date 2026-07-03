@@ -23,9 +23,9 @@ export const kpis: KPI[] = [
     id: 'cb-control',
     name: 'CB Control',
     category: 'cue-ball-control',
-    description: 'L-Drill target zone consistency.',
-    measurementUnit: 'zones/9',
-    benchmarks: { fargo550: 4, fargo600: 5, fargo650: 6, fargo700: 7, fargo750: 8, fargo800: 9 },
+    description: 'L-Drill rack completion rate while staying on the correct side of the line.',
+    measurementUnit: '%',
+    benchmarks: { fargo550: 55, fargo600: 65, fargo650: 74, fargo700: 82, fargo750: 89, fargo800: 95 },
     relatedDrillIds: ['l-drill'],
   },
   {
