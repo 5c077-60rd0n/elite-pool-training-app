@@ -264,8 +264,15 @@ export default function TodaySession() {
                     ) : (
                       <input
                         type="number"
-                        value={Number(fieldValues[drill.id]?.[field.id] ?? 0)}
-                        onChange={(event) => updateField(drill.id, field.id, Number(event.target.value))}
+                        value={
+                          typeof fieldValues[drill.id]?.[field.id] === 'number'
+                            ? Number(fieldValues[drill.id]?.[field.id])
+                            : ''
+                        }
+                        onChange={(event) => {
+                          const raw = event.target.value.trim();
+                          updateField(drill.id, field.id, raw ? Number(raw) : '');
+                        }}
                         className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
                       />
                     )}
@@ -297,7 +304,11 @@ export default function TodaySession() {
               min={1}
               max={5}
               value={mentalGameRating}
-              onChange={(event) => setMentalGameRating(Math.max(1, Math.min(5, Number(event.target.value))) as 1 | 2 | 3 | 4 | 5)}
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                if (!raw) return;
+                setMentalGameRating(Math.max(1, Math.min(5, Number(raw))) as 1 | 2 | 3 | 4 | 5);
+              }}
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
           </label>
@@ -308,7 +319,11 @@ export default function TodaySession() {
               min={1}
               max={5}
               value={energyLevel}
-              onChange={(event) => setEnergyLevel(Math.max(1, Math.min(5, Number(event.target.value))) as 1 | 2 | 3 | 4 | 5)}
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                if (!raw) return;
+                setEnergyLevel(Math.max(1, Math.min(5, Number(raw))) as 1 | 2 | 3 | 4 | 5);
+              }}
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
           </label>

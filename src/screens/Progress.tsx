@@ -27,7 +27,7 @@ type Tab = 'fargo' | 'kpi' | 'scorecard';
 export default function Progress() {
   const [tab, setTab] = useState<Tab>('fargo');
   const [entryDate, setEntryDate] = useState(isoDate());
-  const [entryRating, setEntryRating] = useState(550);
+  const [entryRating, setEntryRating] = useState<string>('550');
   const history = useProgressStore((s) => s.fargoHistory);
   const logs = useProgressStore((s) => s.logs);
   const addFargoPoint = useProgressStore((s) => s.addFargoPoint);
@@ -86,7 +86,9 @@ export default function Progress() {
   }, [weeklyKpis]);
 
   function logFargo(): void {
-    addFargoPoint({ date: entryDate, rating: entryRating });
+    const parsedRating = Number(entryRating);
+    if (!Number.isFinite(parsedRating)) return;
+    addFargoPoint({ date: entryDate, rating: parsedRating });
   }
 
   return (
@@ -130,7 +132,7 @@ export default function Progress() {
             <input
               type="number"
               value={entryRating}
-              onChange={(event) => setEntryRating(Number(event.target.value))}
+              onChange={(event) => setEntryRating(event.target.value)}
               className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
             <Button onClick={logFargo}>Log Rating</Button>

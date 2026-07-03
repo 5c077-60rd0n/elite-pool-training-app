@@ -172,7 +172,11 @@ export default function Settings() {
           min={400}
           max={900}
           value={profile.currentFargoRating}
-          onChange={(event) => setProfile({ currentFargoRating: Number(event.target.value) })}
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            if (!raw) return;
+            setProfile({ currentFargoRating: Number(raw) });
+          }}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
 
@@ -215,8 +219,11 @@ export default function Settings() {
           type="number"
           min={0}
           max={40}
-          value={profile.yearsAwayFromCompetition ?? 0}
-          onChange={(event) => setProfile({ yearsAwayFromCompetition: Number(event.target.value) })}
+          value={profile.yearsAwayFromCompetition ?? ''}
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            setProfile({ yearsAwayFromCompetition: raw ? Number(raw) : undefined });
+          }}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
       </Card>
