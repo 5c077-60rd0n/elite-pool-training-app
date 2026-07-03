@@ -5,7 +5,7 @@ export const kpis: KPI[] = [
     id: 'stroke-accuracy',
     name: 'Stroke Accuracy',
     category: 'stroke-mechanics',
-    description: 'Straight-line drill success rate.',
+    description: 'Straight-line drill rack completion rate without disturbing the lineup.',
     measurementUnit: '%',
     benchmarks: { fargo550: 60, fargo600: 72, fargo650: 82, fargo700: 90, fargo750: 95, fargo800: 98 },
     relatedDrillIds: ['straight-line-drill'],
