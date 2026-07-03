@@ -201,6 +201,14 @@ interface ShotGeometry {
   cuePostPath: Vec2[];
   cueOutUnit: Vec2;
   cutAngleDeg: number;
+  spin: SpinProfile;
+}
+
+interface SpinProfile {
+  side: number;
+  vertical: number;
+  speed: number;
+  label: string;
 }
 
 interface ProgressionPhaseSpec {
@@ -244,6 +252,49 @@ const phaseColors: Record<1 | 2 | 3 | 4, { cb: string; ob: string; pos: string; 
   2: { cb: '#8dc7ff', ob: '#6aa8ff', pos: '#a8d4ff', text: '#8dc7ff' },
   3: { cb: '#c5adff', ob: '#b78bff', pos: '#d9c7ff', text: '#c5adff' },
   4: { cb: '#ff9eb5', ob: '#ff7fa2', pos: '#ffc4d3', text: '#ff9eb5' },
+};
+
+const spinByDrill: Record<string, SpinProfile> = {
+  'straight-line-drill': { side: 0, vertical: 0, speed: 0.45, label: 'center-stun' },
+  'pause-at-back-verification': { side: 0, vertical: 0, speed: 0.4, label: 'center-stun' },
+  'feathering-technique-drill': { side: 0, vertical: 0, speed: 0.45, label: 'center-stun' },
+  'slow-motion-stroke-drill': { side: 0.15, vertical: 0, speed: 0.3, label: 'small outside-stun' },
+  'cut-shot-matrix': { side: 0, vertical: 0, speed: 0.5, label: 'center-ball' },
+  'ghost-ball-visualization-drill': { side: 0, vertical: 0, speed: 0.45, label: 'center-ball' },
+  'fractional-ball-drill': { side: 0, vertical: 0, speed: 0.45, label: 'center-ball' },
+  'thin-cut-practice': { side: 0.45, vertical: 0.12, speed: 0.55, label: 'outside-follow' },
+  'l-drill': { side: 0.05, vertical: 0.35, speed: 0.48, label: 'variant follow/stun/draw reference' },
+  'five-position-drill': { side: 0.15, vertical: 0.25, speed: 0.5, label: 'light running follow' },
+  'rail-control-drill': { side: 0.55, vertical: 0.2, speed: 0.62, label: 'running english' },
+  'stop-shot-matrix': { side: 0, vertical: 0, speed: 0.45, label: 'pure stun' },
+  '9-ball-shape-drill': { side: 0.3, vertical: 0.28, speed: 0.56, label: 'natural running follow' },
+  'clock-system-drill': { side: 0.8, vertical: 0.3, speed: 0.5, label: 'clock-position sample' },
+  'speed-control-5-zone-drill': { side: 0, vertical: 0.15, speed: 0.5, label: 'speed ladder baseline' },
+  '9-ball-roadmap-drill': { side: 0.2, vertical: 0.26, speed: 0.56, label: 'pattern running english' },
+  'key-ball-identification-drill': { side: 0.18, vertical: 0.24, speed: 0.53, label: 'position-play english' },
+  '3-ball-pattern-sequence': { side: 0.2, vertical: 0.24, speed: 0.53, label: 'position-play english' },
+  'problem-ball-first-drill': { side: 0.28, vertical: 0.2, speed: 0.56, label: 'controlled breakout entry' },
+  '8-ball-strategic-assessment-drill': { side: 0.2, vertical: 0.22, speed: 0.52, label: 'pattern-map cueing' },
+  'thin-cut-safe-drill': { side: 0.5, vertical: -0.2, speed: 0.43, label: 'outside-draw safety' },
+  'cluster-safe-drill': { side: -0.1, vertical: -0.12, speed: 0.38, label: 'kill-ball stun-draw' },
+  'two-way-shot-drill': { side: 0.35, vertical: 0, speed: 0.5, label: 'two-way outside' },
+  'roll-up-safety-drill': { side: 0, vertical: -0.35, speed: 0.25, label: 'dead-stun/draw kill' },
+  'kick-safe-drill': { side: 0.45, vertical: 0, speed: 0.58, label: 'running english kick' },
+  '9-ball-break-zone-chart': { side: 0, vertical: 0.6, speed: 1, label: 'power break follow' },
+  '8-ball-break-control': { side: 0, vertical: 0.55, speed: 0.95, label: 'power break follow' },
+  'half-power-mechanics-break': { side: 0, vertical: 0.35, speed: 0.72, label: 'half-power follow' },
+  'rack-reading-drill': { side: 0, vertical: 0, speed: 0.35, label: 'neutral reference' },
+  'cross-side-bank-matrix': { side: 0.4, vertical: 0, speed: 0.55, label: 'bank running english' },
+  'one-rail-kick-drill': { side: 0.32, vertical: 0, speed: 0.56, label: 'one-rail running english' },
+  'two-rail-kick-system': { side: 0.48, vertical: 0, speed: 0.62, label: 'two-rail running english' },
+  'rail-first-shot-drill': { side: 0.3, vertical: 0.06, speed: 0.56, label: 'rail-first running english' },
+  'break-ball-drill': { side: 0.25, vertical: 0.35, speed: 0.56, label: 'break-ball follow' },
+  'high-run-builder': { side: 0.22, vertical: 0.26, speed: 0.52, label: '14.1 position english' },
+  'safety-cluster-drill': { side: 0, vertical: -0.25, speed: 0.36, label: 'lock-up kill cue ball' },
+  'deliberate-mistake-drill': { side: 0, vertical: 0, speed: 0.45, label: 'neutral reference' },
+  'pre-shot-commitment-drill': { side: 0.05, vertical: 0.05, speed: 0.47, label: 'commitment baseline' },
+  'pressure-ghost-match': { side: 0.2, vertical: 0.25, speed: 0.56, label: 'match-speed position english' },
+  'quiet-eye-practice': { side: 0, vertical: 0, speed: 0.45, label: 'quiet-eye center-ball' },
 };
 
 function clamp(value: number, min: number, max: number): number {
@@ -419,7 +470,46 @@ function reflectFromRails(origin: Vec2, direction: Vec2, steps: number): Vec2[] 
   return points;
 }
 
-function buildShotGeometryFromLayout(layout: DrillLayoutPreset): ShotGeometry {
+function reflectFromRailsWithSpin(origin: Vec2, direction: Vec2, steps: number, sideSpin: number, speed: number): Vec2[] {
+  const points: Vec2[] = [origin];
+  let current = origin;
+  let dir = normalize(direction);
+
+  for (let i = 0; i < steps; i += 1) {
+    const tx = dir.x > 0 ? (TABLE_LENGTH_IN - current.x) / dir.x : dir.x < 0 ? (0 - current.x) / dir.x : Number.POSITIVE_INFINITY;
+    const ty = dir.y > 0 ? (TABLE_WIDTH_IN - current.y) / dir.y : dir.y < 0 ? (0 - current.y) / dir.y : Number.POSITIVE_INFINITY;
+    const t = Math.min(tx, ty);
+    if (!Number.isFinite(t) || t <= 0) {
+      break;
+    }
+
+    const impact = add(current, scale(dir, t));
+    points.push({ x: clamp(impact.x, 0, TABLE_LENGTH_IN), y: clamp(impact.y, 0, TABLE_WIDTH_IN) });
+
+    const hitVerticalRail = tx < ty;
+    const reflected = hitVerticalRail ? { x: -dir.x, y: dir.y } : { x: dir.x, y: -dir.y };
+    const railTangent = hitVerticalRail ? { x: 0, y: 1 } : { x: 1, y: 0 };
+    const travelSign = hitVerticalRail ? Math.sign(reflected.y) || 1 : Math.sign(reflected.x) || 1;
+    const spinKick = sideSpin * travelSign * (0.08 + speed * 0.06);
+    dir = normalize(add(reflected, scale(railTangent, spinKick)));
+    current = impact;
+  }
+
+  return points;
+}
+
+function fallbackSpinProfile(drill: Drill): SpinProfile {
+  if (drill.category === 'break-optimization') return { side: 0, vertical: 0.55, speed: 0.9, label: 'power follow' };
+  if (drill.category === 'banking-kicking') return { side: 0.35, vertical: 0, speed: 0.58, label: 'running english' };
+  if (drill.category === 'safety') return { side: 0, vertical: -0.2, speed: 0.35, label: 'kill cue ball' };
+  return { side: 0, vertical: 0, speed: 0.5, label: 'center-ball reference' };
+}
+
+function spinProfileForDrill(drill: Drill): SpinProfile {
+  return spinByDrill[drill.id] ?? fallbackSpinProfile(drill);
+}
+
+function buildShotGeometryFromLayout(layout: DrillLayoutPreset, spin: SpinProfile): ShotGeometry {
   const pocket = pocketPosById(layout.pocketId);
   const objectBall = diamondToTable(layout.objectBallDiamond);
 
@@ -445,7 +535,13 @@ function buildShotGeometryFromLayout(layout: DrillLayoutPreset): ShotGeometry {
   };
 
   const incomingUnit = normalize(sub(ghostBall, cueStart));
-  const cueOut = sub(incomingUnit, scale(n, dot(incomingUnit, n)));
+  const tangentBase = sub(incomingUnit, scale(n, dot(incomingUnit, n)));
+  const tangentUnit = normalize(tangentBase);
+  const sideUnit = normalize({ x: -n.y, y: n.x });
+  const tangentWeight = Math.max(0.12, 1 - Math.abs(spin.vertical) * 0.5);
+  const verticalWeight = spin.vertical * 0.62;
+  const sideWeight = spin.side * Math.max(0.06, Math.sin(cutRad)) * 0.28;
+  const cueOut = add(add(scale(tangentUnit, tangentWeight), scale(n, verticalWeight)), scale(sideUnit, sideWeight));
   const cueOutUnit = normalize(cueOut);
 
   const tangentDir = { x: -n.y, y: n.x };
@@ -455,7 +551,7 @@ function buildShotGeometryFromLayout(layout: DrillLayoutPreset): ShotGeometry {
   const cuePostPath =
     length(cueOut) < 1e-6
       ? [ghostBall, add(ghostBall, scale(tangentDir, 0.01))]
-      : reflectFromRails(ghostBall, cueOutUnit, layout.postCollisionRails);
+      : reflectFromRailsWithSpin(ghostBall, cueOutUnit, layout.postCollisionRails, spin.side, spin.speed);
 
   const cutAngleDeg = (Math.acos(clamp(dot(incomingUnit, n), -1, 1)) * 180) / Math.PI;
 
@@ -469,12 +565,13 @@ function buildShotGeometryFromLayout(layout: DrillLayoutPreset): ShotGeometry {
     cuePostPath,
     cueOutUnit,
     cutAngleDeg,
+    spin,
   };
 }
 
 function buildShotGeometry(drill: Drill): ShotGeometry {
   const layout = clampLayout(getLayoutForDrill(drill));
-  return buildShotGeometryFromLayout(layout);
+  return buildShotGeometryFromLayout(layout, spinProfileForDrill(drill));
 }
 
 function buildProgressionShots(drill: Drill): ProgressionShot[] {
@@ -495,7 +592,7 @@ function buildProgressionShots(drill: Drill): ProgressionShot[] {
     });
     return {
       phase: spec.phase,
-      shot: buildShotGeometryFromLayout(phasedLayout),
+      shot: buildShotGeometryFromLayout(phasedLayout, spinProfileForDrill(drill)),
     };
   });
 }
@@ -855,6 +952,14 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         <circle cx={svgGhost.x} cy={svgGhost.y} r={svgR} fill="none" stroke="#ffe7ba" strokeDasharray="0.7 0.8" strokeWidth="0.55" />
         <circle cx={svgCueStart.x} cy={svgCueStart.y} r={svgR} fill="#fafafa" stroke="#d9d9d9" strokeWidth="0.55" />
         <circle cx={svgObject.x} cy={svgObject.y} r={svgR} fill="#ffcc43" stroke="#9e7b20" strokeWidth="0.55" />
+        <circle
+          cx={svgCueStart.x + shot.spin.side * svgR * 0.48}
+          cy={svgCueStart.y - shot.spin.vertical * svgR * 0.48}
+          r={0.28}
+          fill="#ff5d5d"
+          stroke="#761111"
+          strokeWidth="0.12"
+        />
 
         <circle cx={svgPocket.x} cy={svgPocket.y} r={0.75} fill="#f7b267" />
 
@@ -870,6 +975,9 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         </text>
         <text x={MARGIN + 1.5} y={MARGIN + TABLE_WIDTH_IN + 7.6} fontSize="2.15" fill="#b9d4c7">
           OB D({obDiamond.long.toFixed(2)}, {obDiamond.short.toFixed(2)}) snap ({snapDiamond(obDiamond.long).toFixed(1)}, {snapDiamond(obDiamond.short).toFixed(1)})
+        </text>
+        <text x={MARGIN + 47.5} y={MARGIN + TABLE_WIDTH_IN + 5.35} fontSize="2.15" fill="#b9d4c7" textAnchor="start">
+          Tip: {shot.spin.label} | side {shot.spin.side.toFixed(2)} | v {shot.spin.vertical.toFixed(2)}
         </text>
 
         {supportsProgression && showProgression ? (
