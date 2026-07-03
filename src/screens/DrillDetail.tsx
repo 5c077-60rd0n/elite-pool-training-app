@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import { PoolPhysicsDiagram } from '../components/diagrams/PoolPhysicsDiagram';
 import { drills } from '../data/drills';
 import { useProgressStore } from '../store/useProgressStore';
 import { Button } from '../components/ui/Button';
@@ -75,7 +74,6 @@ export default function DrillDetail() {
         <p className="text-ivory-100">{drill.setup}</p>
       </Card>
       <Card title="Table Layout" className="mb-4">
-        <PoolPhysicsDiagram drill={drill} />
         <pre className="whitespace-pre-wrap rounded-lg bg-felt-800 p-3 text-sm text-ivory-200">{drill.tableLayoutDescription}</pre>
       </Card>
       <Card title="Instructions">
