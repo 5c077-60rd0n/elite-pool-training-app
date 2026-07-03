@@ -32,23 +32,6 @@ interface DrillLayoutPreset {
   postCollisionRails: 1 | 2 | 3;
 }
 
-interface TargetZoneShape {
-  id: string;
-  label: string;
-  kind: 'rect' | 'circle';
-  long: number;
-  short: number;
-  widthLong?: number;
-  heightShort?: number;
-  radiusIn?: number;
-}
-
-interface TargetZoneOverlay {
-  stroke: string;
-  fill: string;
-  zones: TargetZoneShape[];
-}
-
 const LONG_DIAMOND_IN = TABLE_LENGTH_IN / 8;
 const SHORT_DIAMOND_IN = TABLE_WIDTH_IN / 4;
 
@@ -119,76 +102,6 @@ const drillLayouts: Record<string, DrillLayoutPreset> = {
   'pre-shot-commitment-drill': { objectBallDiamond: d(5, 2.1), pocketId: 'TR', cutAngleDeg: 18, side: 1, cueDistanceDiamonds: 2.6, postCollisionRails: 1 },
   'pressure-ghost-match': { objectBallDiamond: d(4, 2), pocketId: 'TR', cutAngleDeg: 25, side: -1, cueDistanceDiamonds: 2.7, postCollisionRails: 2 },
   'quiet-eye-practice': { objectBallDiamond: d(5.3, 1.9), pocketId: 'BR', cutAngleDeg: 14, side: 1, cueDistanceDiamonds: 2.55, postCollisionRails: 1 },
-};
-
-const targetZonesByDrill: Record<string, TargetZoneOverlay> = {
-  'slow-motion-stroke-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'z1', label: 'CB zone', kind: 'rect', long: 5.5, short: 2.35, widthLong: 0.7, heightShort: 0.45 }],
-  },
-  'l-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [
-      { id: 'left', label: 'L', kind: 'rect', long: 2.5, short: 0.65, widthLong: 0.7, heightShort: 0.45 },
-      { id: 'center', label: 'C', kind: 'rect', long: 3.8, short: 0.65, widthLong: 0.7, heightShort: 0.45 },
-      { id: 'right', label: 'R', kind: 'rect', long: 5.1, short: 0.65, widthLong: 0.7, heightShort: 0.45 },
-    ],
-  },
-  'five-position-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'finish', label: 'Finish', kind: 'rect', long: 4.15, short: 1.0, widthLong: 0.8, heightShort: 0.55 }],
-  },
-  'rail-control-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'rail', label: 'Rail zone', kind: 'rect', long: 6.4, short: 1.7, widthLong: 0.65, heightShort: 0.5 }],
-  },
-  'speed-control-5-zone-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [
-      { id: 'dead', label: 'D', kind: 'rect', long: 4.1, short: 2.7, widthLong: 0.45, heightShort: 0.34 },
-      { id: 'soft', label: 'S', kind: 'rect', long: 4.65, short: 2.55, widthLong: 0.45, heightShort: 0.34 },
-      { id: 'med', label: 'M', kind: 'rect', long: 5.2, short: 2.4, widthLong: 0.45, heightShort: 0.34 },
-      { id: 'firm', label: 'F', kind: 'rect', long: 5.75, short: 2.25, widthLong: 0.45, heightShort: 0.34 },
-      { id: 'pow', label: 'P', kind: 'rect', long: 6.3, short: 2.1, widthLong: 0.45, heightShort: 0.34 },
-    ],
-  },
-  'roll-up-safety-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'die', label: '6in', kind: 'circle', long: 5.3, short: 2.2, radiusIn: 6 }],
-  },
-  'kick-safe-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'safe', label: 'Safe', kind: 'rect', long: 1.1, short: 2.45, widthLong: 0.7, heightShort: 0.45 }],
-  },
-  'one-rail-kick-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'contact', label: 'Contact', kind: 'rect', long: 6.95, short: 1.6, widthLong: 0.35, heightShort: 0.55 }],
-  },
-  'break-ball-drill': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [{ id: 'acceptable', label: 'Accept', kind: 'rect', long: 4.4, short: 1.9, widthLong: 1, heightShort: 0.7 }],
-  },
-  '9-ball-break-zone-chart': {
-    stroke: '#8de4af',
-    fill: '#8de4af22',
-    zones: [
-      { id: 'A', label: 'A', kind: 'rect', long: 1.28, short: 0.96, widthLong: 1.6, heightShort: 0.48 },
-      { id: 'B', label: 'B', kind: 'rect', long: 3.36, short: 0.96, widthLong: 1.6, heightShort: 0.48 },
-      { id: 'C', label: 'C', kind: 'rect', long: 5.44, short: 0.96, widthLong: 1.6, heightShort: 0.48 },
-      { id: 'D', label: 'D', kind: 'rect', long: 1.28, short: 2.48, widthLong: 1.6, heightShort: 0.48 },
-      { id: 'E', label: 'E', kind: 'rect', long: 3.36, short: 2.48, widthLong: 1.6, heightShort: 0.48 },
-      { id: 'F', label: 'F', kind: 'rect', long: 5.44, short: 2.48, widthLong: 1.6, heightShort: 0.48 },
-    ],
-  },
 };
 
 interface ShotGeometry {
@@ -453,9 +366,7 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
   const [showThrowBands, setShowThrowBands] = useState(true);
   const [showSpeedTiers, setShowSpeedTiers] = useState(true);
   const [showDiamondGrid, setShowDiamondGrid] = useState(false);
-  const [showTargetZones, setShowTargetZones] = useState(true);
   const shot = useMemo(() => buildShotGeometry(drill), [drill]);
-  const targetOverlay = targetZonesByDrill[drill.id];
 
   const svgCueStart = tableToSvg(shot.cueStart);
   const svgObject = tableToSvg(shot.objectBall);
@@ -529,13 +440,6 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         >
           Diamond Grid
         </button>
-        <button
-          type="button"
-          onClick={() => setShowTargetZones((value) => !value)}
-          className={`rounded-md border px-2 py-1 ${showTargetZones ? 'border-cue-400 bg-cue-900/40 text-cue-200' : 'border-felt-600 text-chalk-300'}`}
-        >
-          Target Zones
-        </button>
       </div>
 
       <svg
@@ -593,56 +497,6 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
           const pocketSvg = tableToSvg(pocket.pos);
           return <circle key={pocket.id} cx={pocketSvg.x} cy={pocketSvg.y} r={POCKET_MOUTH_IN / 2} fill="#0a0a0a" />;
         })}
-
-        {showTargetZones && targetOverlay
-          ? targetOverlay.zones.map((zone) => {
-              if (zone.kind === 'rect') {
-                const x = MARGIN + zone.long * LONG_DIAMOND_IN;
-                const y = MARGIN + zone.short * SHORT_DIAMOND_IN;
-                const width = Math.max(4.6, (zone.widthLong ?? 0.5) * LONG_DIAMOND_IN);
-                const height = Math.max(3.8, (zone.heightShort ?? 0.4) * SHORT_DIAMOND_IN);
-                return (
-                  <g key={`zone-${zone.id}`}>
-                    <rect x={x} y={y} width={width} height={height} rx="0.7" fill={targetOverlay.fill} stroke={targetOverlay.stroke} strokeWidth="0.45" />
-                    <text
-                      x={x + width / 2}
-                      y={y + height / 2 + 0.92}
-                      fontSize="2.45"
-                      fontWeight="700"
-                      textAnchor="middle"
-                      fill="#e6fff4"
-                      stroke="#0b2e23"
-                      strokeWidth="0.18"
-                      paintOrder="stroke"
-                    >
-                      {zone.label}
-                    </text>
-                  </g>
-                );
-              }
-
-              const center = tableToSvg(diamondToTable({ long: zone.long, short: zone.short }));
-              const radius = Math.max(4.5, zone.radiusIn ?? 6);
-              return (
-                <g key={`zone-${zone.id}`}>
-                  <circle cx={center.x} cy={center.y} r={radius} fill={targetOverlay.fill} stroke={targetOverlay.stroke} strokeWidth="0.45" />
-                  <text
-                    x={center.x}
-                    y={center.y + 0.9}
-                    fontSize="2.45"
-                    fontWeight="700"
-                    textAnchor="middle"
-                    fill="#e6fff4"
-                    stroke="#0b2e23"
-                    strokeWidth="0.18"
-                    paintOrder="stroke"
-                  >
-                    {zone.label}
-                  </text>
-                </g>
-              );
-            })
-          : null}
 
         <line
           x1={tableToSvg(shot.tangentA).x}
@@ -767,9 +621,6 @@ export function PoolPhysicsDiagram({ drill }: PoolPhysicsDiagramProps) {
         </p>
         <p>
           <span className="font-semibold text-chalk-300">Diamond grid:</span> full cross-grid at 1-diamond spacing
-        </p>
-        <p>
-          <span className="font-semibold text-chalk-300">Target zones:</span> drill-specific landing or contact zones
         </p>
       </div>
     </div>
