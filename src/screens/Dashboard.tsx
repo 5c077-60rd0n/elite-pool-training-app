@@ -16,6 +16,7 @@ import { Button } from '../components/ui/Button';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
 export default function Dashboard() {
@@ -70,6 +71,16 @@ export default function Dashboard() {
     [weeklySummaries],
   );
 
+  const gamification = useMemo(() => getTrackerGamificationSnapshot(logs), [logs]);
+  const levelProgressPct =
+    gamification.nextLevelXp > gamification.levelFloorXp
+      ? Math.round(
+          ((gamification.totalXp - gamification.levelFloorXp) /
+            (gamification.nextLevelXp - gamification.levelFloorXp)) *
+            100,
+        )
+      : 0;
+
   return (
     <PageWrapper title="Dashboard">
       <Card className="mb-4" title="Rating Progress">
@@ -103,6 +114,33 @@ export default function Dashboard() {
           <p className="text-right text-ivory-100">{weeksLogged}</p>
           <p className="text-chalk-300">Milestones Met</p>
           <p className="text-right text-ivory-100">{milestonesMet}</p>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Gamification">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">Player Title</p>
+          <p className="text-right text-ivory-100">{gamification.title}</p>
+          <p className="text-chalk-300">Current Level</p>
+          <p className="text-right text-ivory-100">{gamification.level}</p>
+          <p className="text-chalk-300">Total XP</p>
+          <p className="text-right text-ivory-100">{gamification.totalXp}</p>
+          <p className="text-chalk-300">Training Streak</p>
+          <p className="text-right text-ivory-100">{gamification.streakDays} days</p>
+        </div>
+
+        <p className="mt-3 text-xs text-chalk-300">XP to next level: {Math.max(0, gamification.nextLevelXp - gamification.totalXp)}</p>
+        <div className="mt-1 h-3 rounded-full bg-felt-800">
+          <div className="h-3 rounded-full bg-cue-500" style={{ width: `${Math.max(0, Math.min(100, levelProgressPct))}%` }} />
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {gamification.weeklyQuests.map((quest) => (
+            <div key={quest.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-ivory-100">
+              <p>{quest.name}</p>
+              <p className="text-chalk-300">{quest.progress}/{quest.target} {quest.completed ? '· Complete' : ''}</p>
+            </div>
+          ))}
         </div>
       </Card>
 
