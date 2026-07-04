@@ -9,6 +9,7 @@ import {
 } from '../data/trackerPlan';
 import type {
   AdaptiveDailyPlan,
+  RecoveryRecommendationPlan,
   CompetitionLogEntry,
   DailySessionLog,
   FargoRatingLogEntry,
@@ -21,6 +22,7 @@ import type {
   BullseyeCategoryTrackerEntry,
 } from '../types/tracker';
 import { generateAdaptiveDailyPlan } from '../utils/adaptivePlan';
+import { generateRecoveryRecommendation } from '../utils/recoveryPlan';
 import {
   calculateWeeklySummary,
   estimateFargo,
@@ -39,6 +41,7 @@ interface TrackerState {
   mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
   competitionLog: CompetitionLogEntry[];
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
+  recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
   addDailySessionLog: (entry: DailySessionLog, currentFargo: number) => void;
   addFargoRating: (entry: FargoRatingLogEntry) => void;
@@ -46,6 +49,7 @@ interface TrackerState {
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
+  refreshRecoveryRecommendationPlan: () => void;
   flushSyncQueue: () => void;
 }
 
@@ -62,6 +66,7 @@ export const useTrackerStore = create<TrackerState>()(
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
       adaptiveDailyPlan: null,
+      recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
       addDailySessionLog: (entry, currentFargo) =>
         set((state) => {
@@ -93,6 +98,11 @@ export const useTrackerStore = create<TrackerState>()(
               : state.bullseyeCategoryTracker;
 
           const adaptiveDailyPlan = generateAdaptiveDailyPlan(nextLogs, currentFargo, entry.weekNumber);
+          const recoveryRecommendationPlan = generateRecoveryRecommendation(
+            nextLogs,
+            state.competitionLog,
+            adaptiveDailyPlan,
+          );
 
           return {
             dailySessionLogs: nextLogs,
@@ -101,6 +111,7 @@ export const useTrackerStore = create<TrackerState>()(
             milestonePhaseStatuses: updatedStatuses,
             bullseyeCategoryTracker: nextBullseye,
             adaptiveDailyPlan,
+            recoveryRecommendationPlan,
             syncState: {
               ...state.syncState,
               pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
@@ -119,11 +130,17 @@ export const useTrackerStore = create<TrackerState>()(
             entry.newFargoRating,
             currentWeek,
           );
+          const recoveryRecommendationPlan = generateRecoveryRecommendation(
+            state.dailySessionLogs,
+            state.competitionLog,
+            adaptiveDailyPlan,
+          );
           return {
             fargoRatingLog: nextFargo,
             milestoneTrackerRows: updatedRows,
             milestonePhaseStatuses: updatedStatuses,
             adaptiveDailyPlan,
+            recoveryRecommendationPlan,
           };
         }),
       addMechanicsWeeklyAudit: (entry) =>
@@ -141,16 +158,34 @@ export const useTrackerStore = create<TrackerState>()(
           ],
         })),
       addCompetitionLog: (entry) =>
-        set((state) => ({
-          competitionLog: [entry, ...state.competitionLog.filter((item) => item.id !== entry.id)],
-          syncState: {
-            ...state.syncState,
-            pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
-          },
-        })),
+        set((state) => {
+          const nextCompetition = [entry, ...state.competitionLog.filter((item) => item.id !== entry.id)];
+          const recoveryRecommendationPlan = generateRecoveryRecommendation(
+            state.dailySessionLogs,
+            nextCompetition,
+            state.adaptiveDailyPlan,
+          );
+
+          return {
+            competitionLog: nextCompetition,
+            recoveryRecommendationPlan,
+            syncState: {
+              ...state.syncState,
+              pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+            },
+          };
+        }),
       refreshAdaptiveDailyPlan: (currentFargo, currentWeek) =>
         set((state) => ({
           adaptiveDailyPlan: generateAdaptiveDailyPlan(state.dailySessionLogs, currentFargo, currentWeek),
+        })),
+      refreshRecoveryRecommendationPlan: () =>
+        set((state) => ({
+          recoveryRecommendationPlan: generateRecoveryRecommendation(
+            state.dailySessionLogs,
+            state.competitionLog,
+            state.adaptiveDailyPlan,
+          ),
         })),
       flushSyncQueue: () => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;

@@ -195,3 +195,25 @@ export interface AdaptiveDailyPlan {
   targetMetrics: AdaptiveTargetMetrics;
   actionChecklist: string[];
 }
+
+export interface RecoveryCheckpointMetrics {
+  drillRoomShotmakingPct: number;
+  ghostDrillWinRatePct: number;
+  safetyExchangeSuccessPct: number;
+  lineUpShotCount: number;
+}
+
+export interface RecoveryRecommendationPlan {
+  id: string;
+  generatedAt: string;
+  forDate: string;
+  horizonDays: number;
+  trigger: 'weak-session' | 'competition-loss' | 'mixed';
+  severity: 'medium' | 'high';
+  focusKpiId: string;
+  focusKpiName: string;
+  recommendedFocusArea: string;
+  rationale: string;
+  actions: string[];
+  checkpointMetrics: RecoveryCheckpointMetrics;
+}

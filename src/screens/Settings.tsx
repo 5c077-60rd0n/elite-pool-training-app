@@ -29,6 +29,7 @@ type BackupPayload = {
     mechanicsWeeklyAuditLog?: ReturnType<typeof useTrackerStore.getState>['mechanicsWeeklyAuditLog'];
     competitionLog?: ReturnType<typeof useTrackerStore.getState>['competitionLog'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
+    recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
   };
   trackerData?: BackupPayload['tracker'];
@@ -116,6 +117,7 @@ export default function Settings() {
         mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
         competitionLog: tracker.competitionLog,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
+        recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
       },
       legacyCompatibility: {
@@ -197,6 +199,7 @@ export default function Settings() {
           mechanicsWeeklyAuditLog: trackerData.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
           competitionLog: trackerData.competitionLog ?? state.competitionLog,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
+          recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
         }));
       }
@@ -251,6 +254,7 @@ export default function Settings() {
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
       adaptiveDailyPlan: null,
+      recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
     }));
     useSessionStore.setState((state) => ({

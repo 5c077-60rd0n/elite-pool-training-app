@@ -25,6 +25,7 @@ export default function Dashboard() {
   const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
+  const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
   const syncState = useTrackerStore((s) => s.syncState);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
@@ -126,6 +127,20 @@ export default function Dashboard() {
           <p className="mt-1 text-xs text-ivory-200">
             Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Ghost {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
           </p>
+        </Card>
+      ) : null}
+
+      {recoveryRecommendationPlan ? (
+        <Card className="mb-4" title="Recovery Protocol (3-Day)">
+          <p className="text-sm text-ivory-100">Focus: {recoveryRecommendationPlan.focusKpiName}</p>
+          <p className="mt-1 text-xs text-chalk-300">{recoveryRecommendationPlan.rationale}</p>
+          <p className="mt-1 text-xs text-ivory-200">Severity: {recoveryRecommendationPlan.severity.toUpperCase()} · Trigger: {recoveryRecommendationPlan.trigger}</p>
+          <p className="mt-1 text-xs text-ivory-200">Recommended area: {recoveryRecommendationPlan.recommendedFocusArea}</p>
+          <div className="mt-2 space-y-1 text-xs text-chalk-300">
+            {recoveryRecommendationPlan.actions.slice(0, 2).map((action) => (
+              <p key={action}>- {action}</p>
+            ))}
+          </div>
         </Card>
       ) : null}
 

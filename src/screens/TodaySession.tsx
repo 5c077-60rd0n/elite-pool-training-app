@@ -49,6 +49,8 @@ export default function TodaySession() {
   const addDailySessionLog = useTrackerStore((s) => s.addDailySessionLog);
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
+  const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
+  const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
@@ -101,7 +103,14 @@ export default function TodaySession() {
 
   useEffect(() => {
     refreshAdaptiveDailyPlan(profile.currentFargoRating, currentWeek);
-  }, [currentWeek, profile.currentFargoRating, refreshAdaptiveDailyPlan, logs.length]);
+    refreshRecoveryRecommendationPlan();
+  }, [
+    currentWeek,
+    profile.currentFargoRating,
+    refreshAdaptiveDailyPlan,
+    refreshRecoveryRecommendationPlan,
+    logs.length,
+  ]);
 
   function saveSessionLog(): void {
     const now = new Date().toISOString();
@@ -213,6 +222,21 @@ export default function TodaySession() {
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
             {adaptiveDailyPlan.actionChecklist.map((item) => (
+              <p key={item}>- {item}</p>
+            ))}
+          </div>
+        </Card>
+      ) : null}
+
+      {recoveryRecommendationPlan ? (
+        <Card className="mb-4" title="3-Day Recovery Recommendation">
+          <p className="text-sm text-ivory-100">Focus: {recoveryRecommendationPlan.focusKpiName}</p>
+          <p className="mt-1 text-xs text-chalk-300">{recoveryRecommendationPlan.rationale}</p>
+          <p className="mt-2 text-xs text-ivory-200">Intensity: {recoveryRecommendationPlan.severity.toUpperCase()} · Horizon: {recoveryRecommendationPlan.horizonDays} days</p>
+          <p className="mt-1 text-xs text-ivory-200">Recommended Focus Area: {recoveryRecommendationPlan.recommendedFocusArea}</p>
+
+          <div className="mt-2 space-y-1 text-xs text-chalk-300">
+            {recoveryRecommendationPlan.actions.map((item) => (
               <p key={item}>- {item}</p>
             ))}
           </div>
