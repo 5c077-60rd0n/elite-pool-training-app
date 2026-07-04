@@ -8,6 +8,7 @@ import {
   phaseStatuses,
 } from '../data/trackerPlan';
 import type {
+  AdaptiveDailyPlan,
   CompetitionLogEntry,
   DailySessionLog,
   FargoRatingLogEntry,
@@ -19,6 +20,7 @@ import type {
   WeeklySummary,
   BullseyeCategoryTrackerEntry,
 } from '../types/tracker';
+import { generateAdaptiveDailyPlan } from '../utils/adaptivePlan';
 import {
   calculateWeeklySummary,
   estimateFargo,
@@ -36,12 +38,14 @@ interface TrackerState {
   mechanicsChecklist: MechanicsChecklistItem[];
   mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
   competitionLog: CompetitionLogEntry[];
+  adaptiveDailyPlan: AdaptiveDailyPlan | null;
   syncState: TrackerSyncState;
   addDailySessionLog: (entry: DailySessionLog, currentFargo: number) => void;
   addFargoRating: (entry: FargoRatingLogEntry) => void;
   addMechanicsWeeklyAudit: (entry: MechanicsWeeklyAuditLog) => void;
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
+  refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   flushSyncQueue: () => void;
 }
 
@@ -57,6 +61,7 @@ export const useTrackerStore = create<TrackerState>()(
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
+      adaptiveDailyPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
       addDailySessionLog: (entry, currentFargo) =>
         set((state) => {
@@ -87,12 +92,15 @@ export const useTrackerStore = create<TrackerState>()(
                 )
               : state.bullseyeCategoryTracker;
 
+          const adaptiveDailyPlan = generateAdaptiveDailyPlan(nextLogs, currentFargo, entry.weekNumber);
+
           return {
             dailySessionLogs: nextLogs,
             weeklySummaries,
             milestoneTrackerRows: updatedRows,
             milestonePhaseStatuses: updatedStatuses,
             bullseyeCategoryTracker: nextBullseye,
+            adaptiveDailyPlan,
             syncState: {
               ...state.syncState,
               pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
@@ -105,10 +113,17 @@ export const useTrackerStore = create<TrackerState>()(
           const estFargo = estimateFargo(550, state.dailySessionLogs, nextFargo);
           const updatedRows = milestoneStatusRows(state.milestoneTrackerRows, estFargo);
           const updatedStatuses = milestonePhaseStatus(state.milestonePhaseStatuses, updatedRows);
+          const currentWeek = Math.max(1, ...state.dailySessionLogs.map((item) => item.weekNumber));
+          const adaptiveDailyPlan = generateAdaptiveDailyPlan(
+            state.dailySessionLogs,
+            entry.newFargoRating,
+            currentWeek,
+          );
           return {
             fargoRatingLog: nextFargo,
             milestoneTrackerRows: updatedRows,
             milestonePhaseStatuses: updatedStatuses,
+            adaptiveDailyPlan,
           };
         }),
       addMechanicsWeeklyAudit: (entry) =>
@@ -132,6 +147,10 @@ export const useTrackerStore = create<TrackerState>()(
             ...state.syncState,
             pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
           },
+        })),
+      refreshAdaptiveDailyPlan: (currentFargo, currentWeek) =>
+        set((state) => ({
+          adaptiveDailyPlan: generateAdaptiveDailyPlan(state.dailySessionLogs, currentFargo, currentWeek),
         })),
       flushSyncQueue: () => {
         if (typeof navigator !== 'undefined' && !navigator.onLine) return;

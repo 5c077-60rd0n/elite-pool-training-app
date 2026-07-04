@@ -28,6 +28,7 @@ type BackupPayload = {
     mechanicsChecklist?: ReturnType<typeof useTrackerStore.getState>['mechanicsChecklist'];
     mechanicsWeeklyAuditLog?: ReturnType<typeof useTrackerStore.getState>['mechanicsWeeklyAuditLog'];
     competitionLog?: ReturnType<typeof useTrackerStore.getState>['competitionLog'];
+    adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
   };
   trackerData?: BackupPayload['tracker'];
@@ -114,6 +115,7 @@ export default function Settings() {
         mechanicsChecklist: tracker.mechanicsChecklist,
         mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
         competitionLog: tracker.competitionLog,
+        adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         syncState: tracker.syncState,
       },
       legacyCompatibility: {
@@ -194,6 +196,7 @@ export default function Settings() {
           mechanicsChecklist: trackerData.mechanicsChecklist ?? state.mechanicsChecklist,
           mechanicsWeeklyAuditLog: trackerData.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
           competitionLog: trackerData.competitionLog ?? state.competitionLog,
+          adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           syncState: trackerData.syncState ?? state.syncState,
         }));
       }
@@ -247,6 +250,7 @@ export default function Settings() {
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
+      adaptiveDailyPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
     }));
     useSessionStore.setState((state) => ({

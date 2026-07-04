@@ -173,3 +173,25 @@ export interface TrackerSyncState {
   pendingLogIds: string[];
   lastSyncAt?: string;
 }
+
+export interface AdaptiveTargetMetrics {
+  drillRoomShotmakingPct: number;
+  ghostDrillWinRatePct: number;
+  safetyExchangeSuccessPct: number;
+  lineUpShotCount: number;
+  bullseyeProximity: number;
+  wpbLessonsThisWeek: number;
+}
+
+export interface AdaptiveDailyPlan {
+  id: string;
+  generatedAt: string;
+  forDate: string;
+  weekNumber: number;
+  focusKpiId: string;
+  focusKpiName: string;
+  rationale: string;
+  recommendedMinutes: number;
+  targetMetrics: AdaptiveTargetMetrics;
+  actionChecklist: string[];
+}

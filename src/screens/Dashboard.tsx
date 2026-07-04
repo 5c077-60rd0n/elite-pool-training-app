@@ -24,6 +24,7 @@ export default function Dashboard() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
+  const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
   const syncState = useTrackerStore((s) => s.syncState);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
@@ -116,6 +117,17 @@ export default function Dashboard() {
           <p className="text-right text-ivory-100">{milestonesMet}</p>
         </div>
       </Card>
+
+      {adaptiveDailyPlan ? (
+        <Card className="mb-4" title="Adaptive Next Session Plan">
+          <p className="text-sm text-ivory-100">Focus: {adaptiveDailyPlan.focusKpiName}</p>
+          <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
+          <p className="mt-2 text-xs text-ivory-200">Target time: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
+          <p className="mt-1 text-xs text-ivory-200">
+            Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Ghost {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
+          </p>
+        </Card>
+      ) : null}
 
       <Card className="mb-4" title="Gamification">
         <div className="grid grid-cols-2 gap-2 text-sm">

@@ -47,6 +47,8 @@ export default function TodaySession() {
   const profile = useSettingsStore((s) => s.profile);
   const markComplete = useSessionStore((s) => s.markComplete);
   const addDailySessionLog = useTrackerStore((s) => s.addDailySessionLog);
+  const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
+  const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
@@ -96,6 +98,10 @@ export default function TodaySession() {
     const timer = window.setTimeout(() => setCelebration(null), 2200);
     return () => window.clearTimeout(timer);
   }, [celebration]);
+
+  useEffect(() => {
+    refreshAdaptiveDailyPlan(profile.currentFargoRating, currentWeek);
+  }, [currentWeek, profile.currentFargoRating, refreshAdaptiveDailyPlan, logs.length]);
 
   function saveSessionLog(): void {
     const now = new Date().toISOString();
@@ -189,6 +195,29 @@ export default function TodaySession() {
         <p className="text-sm text-ivory-200">Primary App: {template.primaryApp} · {template.sessionLengthLabel}</p>
         <p className="mt-2 text-xs text-chalk-300">Key Drills: {template.keyDrills.join(' · ')}</p>
       </Card>
+
+      {adaptiveDailyPlan ? (
+        <Card className="mb-4" title="Adaptive Daily Plan">
+          <p className="text-sm text-ivory-100">Focus KPI: {adaptiveDailyPlan.focusKpiName}</p>
+          <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
+          <p className="mt-2 text-sm text-chalk-300">Recommended Session Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
+
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-ivory-200">
+            <p>DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
+            <p>Ghost Target: {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}%</p>
+            <p>Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
+            <p>Line-Up Target: {'<= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
+            <p>Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
+            <p>WPB Lessons: {adaptiveDailyPlan.targetMetrics.wpbLessonsThisWeek}/week</p>
+          </div>
+
+          <div className="mt-2 space-y-1 text-xs text-chalk-300">
+            {adaptiveDailyPlan.actionChecklist.map((item) => (
+              <p key={item}>- {item}</p>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       <Card className="mb-4" title="Daily Session Log (Workbook Fields)">
         <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
