@@ -15,6 +15,7 @@ import type {
   FargoRatingLogEntry,
   MechanicsChecklistItem,
   MechanicsWeeklyAuditLog,
+  MilestoneVerificationAttempt,
   MilestonePhaseStatus,
   MilestoneTrackerRow,
   TrackerSyncState,
@@ -36,6 +37,7 @@ interface TrackerState {
   fargoRatingLog: FargoRatingLogEntry[];
   bullseyeCategoryTracker: BullseyeCategoryTrackerEntry[];
   milestoneTrackerRows: MilestoneTrackerRow[];
+  milestoneVerificationAttempts: MilestoneVerificationAttempt[];
   milestonePhaseStatuses: MilestonePhaseStatus[];
   mechanicsChecklist: MechanicsChecklistItem[];
   mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
@@ -48,6 +50,7 @@ interface TrackerState {
   addMechanicsWeeklyAudit: (entry: MechanicsWeeklyAuditLog) => void;
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
+  addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
   flushSyncQueue: () => void;
@@ -61,6 +64,7 @@ export const useTrackerStore = create<TrackerState>()(
       fargoRatingLog: [],
       bullseyeCategoryTracker: bullseyeCategorySeed,
       milestoneTrackerRows: milestoneRows,
+      milestoneVerificationAttempts: [],
       milestonePhaseStatuses: phaseStatuses,
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],
@@ -173,6 +177,32 @@ export const useTrackerStore = create<TrackerState>()(
               ...state.syncState,
               pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
             },
+          };
+        }),
+      addMilestoneVerificationAttempt: (entry) =>
+        set((state) => {
+          const nextAttempts = [
+            entry,
+            ...state.milestoneVerificationAttempts.filter((item) => item.id !== entry.id),
+          ];
+
+          const nextRows = state.milestoneTrackerRows.map((row) => {
+            if (row.id !== entry.milestoneId) return row;
+            const nextStatus: 'Met' | 'Not Met' =
+              row.status === 'Met' || entry.outcome === 'Pass' ? 'Met' : 'Not Met';
+            return {
+              ...row,
+              currentBest: entry.measuredValue || row.currentBest,
+              status: nextStatus,
+            };
+          });
+
+          const nextPhaseStatuses = milestonePhaseStatus(state.milestonePhaseStatuses, nextRows);
+
+          return {
+            milestoneVerificationAttempts: nextAttempts,
+            milestoneTrackerRows: nextRows,
+            milestonePhaseStatuses: nextPhaseStatuses,
           };
         }),
       refreshAdaptiveDailyPlan: (currentFargo, currentWeek) =>

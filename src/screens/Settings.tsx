@@ -24,6 +24,7 @@ type BackupPayload = {
     fargoRatingLog?: ReturnType<typeof useTrackerStore.getState>['fargoRatingLog'];
     bullseyeCategoryTracker?: ReturnType<typeof useTrackerStore.getState>['bullseyeCategoryTracker'];
     milestoneTrackerRows?: ReturnType<typeof useTrackerStore.getState>['milestoneTrackerRows'];
+    milestoneVerificationAttempts?: ReturnType<typeof useTrackerStore.getState>['milestoneVerificationAttempts'];
     milestonePhaseStatuses?: ReturnType<typeof useTrackerStore.getState>['milestonePhaseStatuses'];
     mechanicsChecklist?: ReturnType<typeof useTrackerStore.getState>['mechanicsChecklist'];
     mechanicsWeeklyAuditLog?: ReturnType<typeof useTrackerStore.getState>['mechanicsWeeklyAuditLog'];
@@ -112,6 +113,7 @@ export default function Settings() {
         fargoRatingLog: tracker.fargoRatingLog,
         bullseyeCategoryTracker: tracker.bullseyeCategoryTracker,
         milestoneTrackerRows: tracker.milestoneTrackerRows,
+        milestoneVerificationAttempts: tracker.milestoneVerificationAttempts,
         milestonePhaseStatuses: tracker.milestonePhaseStatuses,
         mechanicsChecklist: tracker.mechanicsChecklist,
         mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
@@ -194,6 +196,8 @@ export default function Settings() {
           fargoRatingLog: trackerData.fargoRatingLog ?? state.fargoRatingLog,
           bullseyeCategoryTracker: trackerData.bullseyeCategoryTracker ?? state.bullseyeCategoryTracker,
           milestoneTrackerRows: trackerData.milestoneTrackerRows ?? state.milestoneTrackerRows,
+          milestoneVerificationAttempts:
+            trackerData.milestoneVerificationAttempts ?? state.milestoneVerificationAttempts,
           milestonePhaseStatuses: trackerData.milestonePhaseStatuses ?? state.milestonePhaseStatuses,
           mechanicsChecklist: trackerData.mechanicsChecklist ?? state.mechanicsChecklist,
           mechanicsWeeklyAuditLog: trackerData.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
@@ -249,6 +253,7 @@ export default function Settings() {
       fargoRatingLog: [],
       bullseyeCategoryTracker: bullseyeCategorySeed,
       milestoneTrackerRows: milestoneRows,
+      milestoneVerificationAttempts: [],
       milestonePhaseStatuses: phaseStatuses,
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],

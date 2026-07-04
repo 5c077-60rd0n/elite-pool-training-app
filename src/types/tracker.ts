@@ -102,6 +102,17 @@ export interface MilestonePhaseStatus {
   phaseStatus: 'Not Started' | 'In Progress' | 'Met';
 }
 
+export interface MilestoneVerificationAttempt {
+  id: string;
+  milestoneId: string;
+  date: string;
+  measuredValue: string;
+  outcome: 'Pass' | 'Fail';
+  evidenceNotes: string;
+  evaluator: string;
+  createdAt: string;
+}
+
 export interface MechanicsChecklistItem {
   id: string;
   checkpointItem: string;
