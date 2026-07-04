@@ -7,6 +7,7 @@ import {
   milestoneRows,
   phaseStatuses,
 } from '../data/trackerPlan';
+import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import type {
   AdaptiveDailyPlan,
   RecoveryRecommendationPlan,
@@ -19,6 +20,7 @@ import type {
   MilestoneVerificationAttempt,
   MilestonePhaseStatus,
   MilestoneTrackerRow,
+  OpponentPrepCard,
   TrackerSyncState,
   WeeklySummary,
   BullseyeCategoryTrackerEntry,
@@ -44,6 +46,7 @@ interface TrackerState {
   mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
   competitionLog: CompetitionLogEntry[];
   matchSimSessions: MatchSimulatorSession[];
+  opponentPrepCards: OpponentPrepCard[];
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -53,6 +56,7 @@ interface TrackerState {
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
   addMatchSimSession: (entry: MatchSimulatorSession) => void;
+  upsertOpponentPrepCard: (entry: OpponentPrepCard) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
@@ -73,6 +77,7 @@ export const useTrackerStore = create<TrackerState>()(
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
       matchSimSessions: [],
+      opponentPrepCards: opponentPrepCardSeed,
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
@@ -190,6 +195,13 @@ export const useTrackerStore = create<TrackerState>()(
             ...state.syncState,
             pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
           },
+        })),
+      upsertOpponentPrepCard: (entry) =>
+        set((state) => ({
+          opponentPrepCards: [
+            entry,
+            ...state.opponentPrepCards.filter((item) => item.id !== entry.id),
+          ],
         })),
       addMilestoneVerificationAttempt: (entry) =>
         set((state) => {

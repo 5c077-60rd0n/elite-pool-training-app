@@ -166,6 +166,17 @@ export interface MatchSimulatorSession {
   createdAt: string;
 }
 
+export interface OpponentPrepCard {
+  id: string;
+  name: string;
+  archetype: string;
+  openingPatterns: string[];
+  safetyPlans: string[];
+  bailoutChoices: string[];
+  notes: string;
+  updatedAt: string;
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;

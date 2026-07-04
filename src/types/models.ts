@@ -219,6 +219,7 @@ export interface TournamentPrep {
   date: string;
   format: string;
   location: string;
+  opponentPrepCardId?: string;
   prepStartDate: string;
   currentStep: number;
   checklistItems: PrepChecklist[];

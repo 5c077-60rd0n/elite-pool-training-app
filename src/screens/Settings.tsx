@@ -10,6 +10,7 @@ import { useSessionStore } from '../store/useSessionStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { bullseyeCategorySeed, mechanicsChecklistSeed, milestoneRows, phaseStatuses } from '../data/trackerPlan';
+import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 
 type BackupPayload = {
   version?: string;
@@ -34,6 +35,7 @@ type BackupPayload = {
     mechanicsWeeklyAuditLog?: ReturnType<typeof useTrackerStore.getState>['mechanicsWeeklyAuditLog'];
     competitionLog?: ReturnType<typeof useTrackerStore.getState>['competitionLog'];
     matchSimSessions?: ReturnType<typeof useTrackerStore.getState>['matchSimSessions'];
+    opponentPrepCards?: ReturnType<typeof useTrackerStore.getState>['opponentPrepCards'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
@@ -86,6 +88,7 @@ export default function Settings() {
       mechanicsAudits: tracker.mechanicsWeeklyAuditLog.length,
       competitionEntries: tracker.competitionLog.length,
       matchSimSessions: tracker.matchSimSessions.length,
+      opponentPrepCards: tracker.opponentPrepCards.length,
       pendingSync: tracker.syncState.pendingLogIds.length,
       lastSyncAt: tracker.syncState.lastSyncAt,
     }),
@@ -126,6 +129,7 @@ export default function Settings() {
         mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
         competitionLog: tracker.competitionLog,
         matchSimSessions: tracker.matchSimSessions,
+        opponentPrepCards: tracker.opponentPrepCards,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
@@ -212,6 +216,7 @@ export default function Settings() {
           mechanicsWeeklyAuditLog: trackerData.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
           competitionLog: trackerData.competitionLog ?? state.competitionLog,
           matchSimSessions: trackerData.matchSimSessions ?? state.matchSimSessions,
+          opponentPrepCards: trackerData.opponentPrepCards ?? state.opponentPrepCards,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
@@ -269,6 +274,7 @@ export default function Settings() {
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
       matchSimSessions: [],
+      opponentPrepCards: opponentPrepCardSeed,
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },

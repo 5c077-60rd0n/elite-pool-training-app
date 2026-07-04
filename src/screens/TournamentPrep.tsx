@@ -7,6 +7,7 @@ import { useProgressStore } from '../store/useProgressStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { trackerKpis } from '../data/trackerKpis';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
+import type { OpponentPrepCard } from '../types/tracker';
 import type { PrepChecklist, TournamentPrep } from '../types/models';
 
 function prepStartDate(date: string): string {
@@ -41,6 +42,8 @@ export default function TournamentPrep() {
   const addCompetitionLog = useTrackerStore((s) => s.addCompetitionLog);
   const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const opponentPrepCards = useTrackerStore((s) => s.opponentPrepCards);
+  const upsertOpponentPrepCard = useTrackerStore((s) => s.upsertOpponentPrepCard);
 
   const [activePrepId, setActivePrepId] = useState('');
   const [tournamentName, setTournamentName] = useState('');
@@ -53,6 +56,13 @@ export default function TournamentPrep() {
   const [primarySkillGap, setPrimarySkillGap] = useState('');
   const [focusAreaId, setFocusAreaId] = useState('');
   const [notes, setNotes] = useState('');
+  const [selectedCardId, setSelectedCardId] = useState('');
+  const [cardName, setCardName] = useState('');
+  const [cardArchetype, setCardArchetype] = useState('');
+  const [openingPatternsText, setOpeningPatternsText] = useState('');
+  const [safetyPlansText, setSafetyPlansText] = useState('');
+  const [bailoutChoicesText, setBailoutChoicesText] = useState('');
+  const [cardNotes, setCardNotes] = useState('');
 
   const sortedPreps = useMemo(
     () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
@@ -96,7 +106,46 @@ export default function TournamentPrep() {
     () => [...matchSimSessions].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))[0],
     [matchSimSessions],
   );
+  const selectedCard = useMemo(
+    () => opponentPrepCards.find((item) => item.id === selectedCardId) ?? opponentPrepCards[0],
+    [opponentPrepCards, selectedCardId],
+  );
+  const opponentCardMap = useMemo(
+    () => Object.fromEntries(opponentPrepCards.map((item) => [item.id, item])),
+    [opponentPrepCards],
+  );
   const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
+
+  useEffect(() => {
+    if (!selectedCard && opponentPrepCards.length) {
+      setSelectedCardId(opponentPrepCards[0].id);
+      return;
+    }
+    if (!selectedCard) {
+      setCardName('');
+      setCardArchetype('');
+      setOpeningPatternsText('');
+      setSafetyPlansText('');
+      setBailoutChoicesText('');
+      setCardNotes('');
+      return;
+    }
+
+    setCardName(selectedCard.name);
+    setCardArchetype(selectedCard.archetype);
+    setOpeningPatternsText(selectedCard.openingPatterns.join('\n'));
+    setSafetyPlansText(selectedCard.safetyPlans.join('\n'));
+    setBailoutChoicesText(selectedCard.bailoutChoices.join('\n'));
+    setCardNotes(selectedCard.notes);
+  }, [opponentPrepCards, selectedCard]);
+
+  function splitLines(value: string): string[] {
+    return value
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 5);
+  }
 
   function createPrep(): void {
     const entry: TournamentPrep = {
@@ -105,6 +154,7 @@ export default function TournamentPrep() {
       date,
       format,
       location,
+      opponentPrepCardId: selectedCard?.id,
       prepStartDate: prepStartDate(date),
       currentStep: 1,
       checklistItems: buildChecklist(),
@@ -143,6 +193,9 @@ export default function TournamentPrep() {
       .filter(Boolean)
       .slice(0, 3);
     const focusLabel = trackerKpis.find((kpi) => kpi.id === focusAreaId)?.name;
+    const prepCard = activePrep.opponentPrepCardId
+      ? opponentCardMap[activePrep.opponentPrepCardId]
+      : undefined;
 
     upsertTournamentPrep({
       ...activePrep,
@@ -165,11 +218,48 @@ export default function TournamentPrep() {
       result,
       notes: [
         notes.trim(),
+        prepCard ? `Opponent card: ${prepCard.name}` : '',
         primarySkillGap ? `Primary skill gap: ${primarySkillGap}` : '',
         focusLabel ? `Recovery focus: ${focusLabel}` : '',
       ]
         .filter(Boolean)
         .join(' | '),
+    });
+  }
+
+  function saveOpponentPrepCard(): void {
+    if (!cardName.trim()) return;
+
+    const entry: OpponentPrepCard = {
+      id: selectedCard?.id ?? `opp-${Date.now()}`,
+      name: cardName.trim(),
+      archetype: cardArchetype.trim() || 'Custom',
+      openingPatterns: splitLines(openingPatternsText),
+      safetyPlans: splitLines(safetyPlansText),
+      bailoutChoices: splitLines(bailoutChoicesText),
+      notes: cardNotes.trim(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    upsertOpponentPrepCard(entry);
+    setSelectedCardId(entry.id);
+  }
+
+  function createNewOpponentCard(): void {
+    setSelectedCardId('');
+    setCardName('Custom Opponent Plan');
+    setCardArchetype(latestMatchSimulation?.opponentArchetype ?? 'Custom');
+    setOpeningPatternsText('');
+    setSafetyPlansText('');
+    setBailoutChoicesText('');
+    setCardNotes('');
+  }
+
+  function attachCardToActivePrep(): void {
+    if (!activePrep || !selectedCard) return;
+    upsertTournamentPrep({
+      ...activePrep,
+      opponentPrepCardId: selectedCard.id,
     });
   }
 
@@ -222,6 +312,67 @@ export default function TournamentPrep() {
         </Link>
       </Card>
 
+      <Card className="mb-4" title="Opponent Prep Cards">
+        <select
+          value={selectedCardId}
+          onChange={(event) => setSelectedCardId(event.target.value)}
+          className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        >
+          {opponentPrepCards.map((card) => (
+            <option key={card.id} value={card.id}>{card.name} · {card.archetype}</option>
+          ))}
+        </select>
+
+        <input
+          value={cardName}
+          onChange={(event) => setCardName(event.target.value)}
+          placeholder="Card name"
+          className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+        <input
+          value={cardArchetype}
+          onChange={(event) => setCardArchetype(event.target.value)}
+          placeholder="Opponent archetype"
+          className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+        <textarea
+          value={openingPatternsText}
+          onChange={(event) => setOpeningPatternsText(event.target.value)}
+          placeholder="Opening patterns (one per line)"
+          className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+        />
+        <textarea
+          value={safetyPlansText}
+          onChange={(event) => setSafetyPlansText(event.target.value)}
+          placeholder="Safety plans (one per line)"
+          className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+        />
+        <textarea
+          value={bailoutChoicesText}
+          onChange={(event) => setBailoutChoicesText(event.target.value)}
+          placeholder="Bailout choices (one per line)"
+          className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+        />
+        <textarea
+          value={cardNotes}
+          onChange={(event) => setCardNotes(event.target.value)}
+          placeholder="Card notes"
+          className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+        />
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Button onClick={saveOpponentPrepCard} disabled={!cardName.trim()}>
+            Save Card Template
+          </Button>
+          <Button variant="secondary" onClick={createNewOpponentCard}>
+            New Card
+          </Button>
+          <Button variant="secondary" onClick={attachCardToActivePrep} disabled={!activePrep || !selectedCard}>
+            Attach To Active Plan
+          </Button>
+        </div>
+      </Card>
+
       {sortedPreps.length ? (
         <Card className="mb-4" title="Tournament Plans">
           <div className="space-y-2">
@@ -243,6 +394,9 @@ export default function TournamentPrep() {
                   <p className="text-ivory-100">{entry.tournamentName}</p>
                   <p className="text-chalk-300">{entry.date} · {entry.location} · {entry.format}</p>
                   <p className="text-chalk-300">Progress: {pct}%</p>
+                  {entry.opponentPrepCardId && opponentCardMap[entry.opponentPrepCardId] ? (
+                    <p className="text-chalk-300">Opponent card: {opponentCardMap[entry.opponentPrepCardId].name}</p>
+                  ) : null}
                   <Button className="mt-2" variant="secondary" onClick={() => setActivePrepId(entry.id)}>
                     Open Plan
                   </Button>
@@ -257,6 +411,14 @@ export default function TournamentPrep() {
         <Card className="mb-4" title="Active Prep Timeline">
           <p className="text-sm text-chalk-300">{activePrep.tournamentName} · {activePrep.date} · {activePrep.location}</p>
           <p className="mb-2 text-sm text-ivory-200">Prep starts: {activePrep.prepStartDate} · Current step: {activePrep.currentStep}/{activePrep.checklistItems.length}</p>
+          {activePrep.opponentPrepCardId && opponentCardMap[activePrep.opponentPrepCardId] ? (
+            <div className="mb-3 rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-chalk-300">
+              <p className="text-ivory-100">Opponent Card: {opponentCardMap[activePrep.opponentPrepCardId].name}</p>
+              <p>Archetype: {opponentCardMap[activePrep.opponentPrepCardId].archetype}</p>
+              <p>Opening cue: {opponentCardMap[activePrep.opponentPrepCardId].openingPatterns[0] ?? 'Not set'}</p>
+              <p>Safety cue: {opponentCardMap[activePrep.opponentPrepCardId].safetyPlans[0] ?? 'Not set'}</p>
+            </div>
+          ) : null}
           <div className="mb-3 h-3 rounded-full bg-felt-800">
             <div className="h-3 rounded-full bg-cue-500" style={{ width: `${completionPercent}%` }} />
           </div>
