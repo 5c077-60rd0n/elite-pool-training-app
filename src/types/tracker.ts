@@ -109,6 +109,9 @@ export interface MilestoneVerificationAttempt {
   measuredValue: string;
   outcome: 'Pass' | 'Fail';
   evidenceNotes: string;
+  clipReferenceUrl?: string;
+  beforeSnapshotNotes?: string;
+  afterSnapshotNotes?: string;
   evaluator: string;
   createdAt: string;
 }
@@ -122,6 +125,9 @@ export interface MechanicsChecklistItem {
   lastCheckedDate?: string;
   status: 'Not Checked' | 'Pass' | 'Needs Work';
   notes: string;
+  clipReferenceUrl?: string;
+  beforeSnapshotNotes?: string;
+  afterSnapshotNotes?: string;
 }
 
 export interface MechanicsWeeklyAuditLog {

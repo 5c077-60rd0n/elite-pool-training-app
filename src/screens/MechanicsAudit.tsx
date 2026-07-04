@@ -96,6 +96,51 @@ export default function MechanicsAudit() {
                   className="min-h-11 rounded-xl border border-felt-600 bg-felt-900 px-3 text-ivory-100"
                 />
               </div>
+
+              <input
+                value={item.clipReferenceUrl ?? ''}
+                placeholder="Clip reference URL"
+                onChange={(event) =>
+                  updateChecklist({
+                    ...item,
+                    clipReferenceUrl: event.target.value,
+                  })
+                }
+                className="mt-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-900 px-3 text-ivory-100"
+              />
+
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <textarea
+                  value={item.beforeSnapshotNotes ?? ''}
+                  placeholder="Before snapshot notes"
+                  onChange={(event) =>
+                    updateChecklist({
+                      ...item,
+                      beforeSnapshotNotes: event.target.value,
+                    })
+                  }
+                  className="min-h-20 rounded-xl border border-felt-600 bg-felt-900 p-3 text-ivory-100"
+                />
+                <textarea
+                  value={item.afterSnapshotNotes ?? ''}
+                  placeholder="After snapshot notes"
+                  onChange={(event) =>
+                    updateChecklist({
+                      ...item,
+                      afterSnapshotNotes: event.target.value,
+                    })
+                  }
+                  className="min-h-20 rounded-xl border border-felt-600 bg-felt-900 p-3 text-ivory-100"
+                />
+              </div>
+
+              {(item.beforeSnapshotNotes || item.afterSnapshotNotes) && (
+                <div className="mt-2 rounded-lg border border-felt-600 bg-felt-900/60 p-2 text-xs text-chalk-300">
+                  <p className="text-ivory-100">Checkpoint Snapshot Compare</p>
+                  <p>Before: {item.beforeSnapshotNotes || 'Not set'}</p>
+                  <p>After: {item.afterSnapshotNotes || 'Not set'}</p>
+                </div>
+              )}
             </div>
           ))}
         </div>

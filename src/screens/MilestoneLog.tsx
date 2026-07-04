@@ -13,6 +13,9 @@ export default function MilestoneLog() {
   const [evidenceNotes, setEvidenceNotes] = useState<Record<string, string>>({});
   const [outcome, setOutcome] = useState<Record<string, 'Pass' | 'Fail'>>({});
   const [evaluator, setEvaluator] = useState<Record<string, string>>({});
+  const [clipReferenceUrl, setClipReferenceUrl] = useState<Record<string, string>>({});
+  const [beforeSnapshotNotes, setBeforeSnapshotNotes] = useState<Record<string, string>>({});
+  const [afterSnapshotNotes, setAfterSnapshotNotes] = useState<Record<string, string>>({});
 
   const attemptsByMilestone = useMemo(() => {
     const grouped = new Map<string, typeof attempts>();
@@ -35,12 +38,18 @@ export default function MilestoneLog() {
       measuredValue: value,
       outcome: outcome[milestoneId] ?? 'Fail',
       evidenceNotes: evidenceNotes[milestoneId] ?? '',
+      clipReferenceUrl: clipReferenceUrl[milestoneId] ?? '',
+      beforeSnapshotNotes: beforeSnapshotNotes[milestoneId] ?? '',
+      afterSnapshotNotes: afterSnapshotNotes[milestoneId] ?? '',
       evaluator: evaluator[milestoneId] ?? 'Self',
       createdAt: new Date().toISOString(),
     });
 
     setMeasuredValue((state) => ({ ...state, [milestoneId]: '' }));
     setEvidenceNotes((state) => ({ ...state, [milestoneId]: '' }));
+    setClipReferenceUrl((state) => ({ ...state, [milestoneId]: '' }));
+    setBeforeSnapshotNotes((state) => ({ ...state, [milestoneId]: '' }));
+    setAfterSnapshotNotes((state) => ({ ...state, [milestoneId]: '' }));
   }
 
   return (
@@ -91,16 +100,51 @@ export default function MilestoneLog() {
               placeholder="Evidence notes (conditions, pressure set details, observations)"
               className="mt-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
             />
+            <input
+              value={clipReferenceUrl[milestone.id] ?? ''}
+              onChange={(event) =>
+                setClipReferenceUrl((state) => ({ ...state, [milestone.id]: event.target.value }))
+              }
+              placeholder="Clip reference URL"
+              className="mt-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <textarea
+                value={beforeSnapshotNotes[milestone.id] ?? ''}
+                onChange={(event) =>
+                  setBeforeSnapshotNotes((state) => ({ ...state, [milestone.id]: event.target.value }))
+                }
+                placeholder="Before snapshot notes"
+                className="min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+              />
+              <textarea
+                value={afterSnapshotNotes[milestone.id] ?? ''}
+                onChange={(event) =>
+                  setAfterSnapshotNotes((state) => ({ ...state, [milestone.id]: event.target.value }))
+                }
+                placeholder="After snapshot notes"
+                className="min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+              />
+            </div>
             <Button className="mt-2" onClick={() => saveAttempt(milestone.id)} disabled={!(measuredValue[milestone.id] ?? '').trim()}>
               Save Verification Attempt
             </Button>
 
             <div className="mt-3 space-y-1 text-xs text-chalk-300">
               {(attemptsByMilestone.get(milestone.id) ?? []).slice(0, 3).map((attempt) => (
-                <p key={attempt.id}>
-                  {attempt.date} · {attempt.outcome} · {attempt.measuredValue}
-                  {attempt.evaluator ? ` · ${attempt.evaluator}` : ''}
-                </p>
+                <div key={attempt.id} className="rounded-lg border border-felt-600 bg-felt-800/50 p-2">
+                  <p>
+                    {attempt.date} · {attempt.outcome} · {attempt.measuredValue}
+                    {attempt.evaluator ? ` · ${attempt.evaluator}` : ''}
+                  </p>
+                  {attempt.clipReferenceUrl ? <p>Clip: {attempt.clipReferenceUrl}</p> : null}
+                  {(attempt.beforeSnapshotNotes || attempt.afterSnapshotNotes) ? (
+                    <>
+                      <p>Before: {attempt.beforeSnapshotNotes || 'Not set'}</p>
+                      <p>After: {attempt.afterSnapshotNotes || 'Not set'}</p>
+                    </>
+                  ) : null}
+                </div>
               ))}
             </div>
           </Card>
