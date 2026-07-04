@@ -43,6 +43,12 @@ import {
   milestoneStatusRows,
 } from '../utils/trackerCalculations';
 
+const ELITE_OVERRIDE_SUFFIX = " Elite override active for today's session.";
+
+function withEliteOverrideRationale(rationale: string): string {
+  return `${rationale.replace(ELITE_OVERRIDE_SUFFIX, '')}${ELITE_OVERRIDE_SUFFIX}`;
+}
+
 interface TrackerState {
   dailySessionLogs: DailySessionLog[];
   weeklySummaries: WeeklySummary[];
@@ -366,7 +372,7 @@ export const useTrackerStore = create<TrackerState>()(
               generatedAt: isoNow,
               focusKpiName: nextFocusKpiName,
               recommendedMinutes: nextRecommendedMinutes,
-              rationale: `${basePlan.rationale} Elite override active for today's session.`,
+              rationale: withEliteOverrideRationale(basePlan.rationale),
               actionChecklist,
               eliteOverride: {
                 lockedForDate: today,
@@ -407,7 +413,7 @@ export const useTrackerStore = create<TrackerState>()(
               ...regenerated,
               focusKpiName: override.promotedFocusKpiName ?? regenerated.focusKpiName,
               recommendedMinutes: override.promotedRecommendedMinutes ?? regenerated.recommendedMinutes,
-              rationale: `${regenerated.rationale} Elite override active for today's session.`,
+              rationale: withEliteOverrideRationale(regenerated.rationale),
               actionChecklist,
               eliteOverride: override,
             },

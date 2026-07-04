@@ -384,8 +384,8 @@ export default function Dashboard() {
           <Link to="/competition">
             <Button className="w-full">Open Competition Log</Button>
           </Link>
-          <Link to="/match-simulator">
-            <Button className="w-full">Run Match Simulator</Button>
+          <Link to="/elite-lab">
+            <Button className="w-full">Open Elite Performance Lab</Button>
           </Link>
         </div>
       </Card>
