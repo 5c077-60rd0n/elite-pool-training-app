@@ -150,7 +150,7 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      <Card className="mb-4" title="Training Stats (Current Week)">
+      <Card className="mb-4" title="Current Week KPIs">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">DrillRoom Shotmaking % (Avg)</p>
           <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
@@ -181,10 +181,10 @@ export default function Dashboard() {
       ) : null}
 
       {adaptiveDailyPlan ? (
-        <Card className="mb-4" title="Adaptive Next Session Plan">
+        <Card className="mb-4" title="Adaptive Plan">
           <p className="text-sm text-ivory-100">Focus: {adaptiveDailyPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
-          <p className="mt-2 text-xs text-ivory-200">Target time: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
+          <p className="mt-2 text-xs text-ivory-200">Session length: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
           <p className="mt-1 text-xs text-ivory-200">
             Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Ghost {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
           </p>
@@ -192,7 +192,7 @@ export default function Dashboard() {
       ) : null}
 
       {recoveryRecommendationPlan ? (
-        <Card className="mb-4" title="Recovery Protocol (3-Day)">
+        <Card className="mb-4" title="3-Day Recovery Plan">
           <p className="text-sm text-ivory-100">Focus: {recoveryRecommendationPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{recoveryRecommendationPlan.rationale}</p>
           <p className="mt-1 text-xs text-ivory-200">Severity: {recoveryRecommendationPlan.severity.toUpperCase()} · Trigger: {recoveryRecommendationPlan.trigger}</p>
@@ -370,13 +370,13 @@ export default function Dashboard() {
         </div>
       </Card>
 
-      <Card className="mb-4" title="Offline Sync">
+      <Card className="mb-4" title="Sync Queue">
         <p className="text-sm text-ivory-200">Pending logs: {syncState.pendingLogIds.length}</p>
         <p className="text-sm text-ivory-200">Last sync: {syncState.lastSyncAt ? new Date(syncState.lastSyncAt).toLocaleString() : 'Not synced yet'}</p>
         <Button className="mt-3" onClick={flushSyncQueue}>Sync Now</Button>
       </Card>
 
-      <Card className="mb-4" title="Quick Actions">
+      <Card className="mb-4" title="Launchpad">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link to="/mechanics">
             <Button className="w-full">Open Mechanics Audit</Button>
@@ -391,7 +391,7 @@ export default function Dashboard() {
       </Card>
 
       <Link to="/session/today">
-        <Button className="w-full">Start Session</Button>
+        <Button className="w-full">Open Today's Session</Button>
       </Link>
     </PageWrapper>
   );

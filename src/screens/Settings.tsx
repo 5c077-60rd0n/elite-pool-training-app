@@ -358,7 +358,7 @@ export default function Settings() {
 
   return (
     <PageWrapper title="Settings">
-      <Card className="mb-4" title="Profile & Ratings">
+      <Card className="mb-4" title="Player Profile">
         <label className="mb-2 block text-sm text-chalk-300">Name</label>
         <input
           value={profile.name}
@@ -500,8 +500,8 @@ export default function Settings() {
         </select>
       </Card>
 
-      <Card title="Notifications">
-        <p className="mb-3 text-ivory-200">Permission: {permission}</p>
+      <Card title="Notifications & Reminders">
+        <p className="mb-3 text-ivory-200">Permission status: {permission}</p>
         <div className="mb-3 flex items-center gap-2 text-sm text-ivory-200">
           <input
             type="checkbox"
@@ -523,7 +523,7 @@ export default function Settings() {
           }}
           className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
-        <Button onClick={() => void scheduleReminder()}>Request Notification Permission</Button>
+        <Button onClick={() => void scheduleReminder()}>Enable Notifications</Button>
       </Card>
 
       <Card className="mt-4" title="Gamification Effects">
@@ -548,7 +548,7 @@ export default function Settings() {
         </label>
       </Card>
 
-      <Card className="mt-4" title="Tracker Data Management">
+      <Card className="mt-4" title="Data & Backup">
         <div className="mb-3 grid grid-cols-2 gap-2 text-sm text-ivory-200 sm:grid-cols-3">
           <p>Session Logs: {trackerSummary.sessionLogs}</p>
           <p>Weekly Summaries: {trackerSummary.weeklySummaries}</p>
@@ -563,10 +563,10 @@ export default function Settings() {
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button onClick={exportData}>Export Backup</Button>
-          <Button onClick={exportCoachReview}>Generate Coach Review Export</Button>
+          <Button onClick={exportCoachReview}>Export Coach Review</Button>
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Import Backup</Button>
-          <Button variant="secondary" onClick={syncNow}>Sync Pending Logs</Button>
-          <Button variant="secondary" onClick={resetAllData}>Reset Tracker Data</Button>
+          <Button variant="secondary" onClick={syncNow}>Sync Queue Now</Button>
+          <Button variant="secondary" onClick={resetAllData}>Reset All Local Data</Button>
         </div>
         {tracker.coachExportHistory.length ? (
           <div className="mt-3 space-y-1 rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-chalk-300">

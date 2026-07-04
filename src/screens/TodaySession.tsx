@@ -205,7 +205,7 @@ export default function TodaySession() {
   }
 
   return (
-    <PageWrapper title="Daily Session Flow">
+    <PageWrapper title="Today's Session">
       {celebration ? (
         <div className="celebration-overlay" role="status" aria-live="polite">
           <div className="celebration-card">
@@ -222,7 +222,7 @@ export default function TodaySession() {
         </div>
       ) : null}
 
-      <Card className="mb-4">
+      <Card className="mb-4" title="Today's Template">
         <p className="text-sm text-chalk-300">{today} · Week {currentWeek} · {day}</p>
         <p className="text-lg text-ivory-100">{template.focusArea}</p>
         <p className="text-sm text-ivory-200">Primary App: {template.primaryApp} · {template.sessionLengthLabel}</p>
@@ -236,7 +236,7 @@ export default function TodaySession() {
           ) : null}
           <p className="text-sm text-ivory-100">Focus KPI: {adaptiveDailyPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
-          <p className="mt-2 text-sm text-chalk-300">Recommended Session Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
+          <p className="mt-2 text-sm text-chalk-300">Recommended Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
 
           <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-ivory-200">
             <p>DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
@@ -256,7 +256,7 @@ export default function TodaySession() {
       ) : null}
 
       {recoveryRecommendationPlan ? (
-        <Card className="mb-4" title="3-Day Recovery Recommendation">
+        <Card className="mb-4" title="Recovery Plan (3-Day)">
           <p className="text-sm text-ivory-100">Focus: {recoveryRecommendationPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{recoveryRecommendationPlan.rationale}</p>
           <p className="mt-2 text-xs text-ivory-200">Intensity: {recoveryRecommendationPlan.severity.toUpperCase()} · Horizon: {recoveryRecommendationPlan.horizonDays} days</p>
@@ -270,7 +270,7 @@ export default function TodaySession() {
         </Card>
       ) : null}
 
-      <Card className="mb-4" title="Daily Session Log (Workbook Fields)">
+      <Card className="mb-4" title="Session Log">
         <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
         <input
           value={focusArea}
@@ -351,7 +351,7 @@ export default function TodaySession() {
         </div>
       </Card>
 
-      <Card className="mb-4" title="Ghost Drill Race-to-10 Simulator">
+      <Card className="mb-4" title="Ghost Drill (Race to 10)">
         <div className="grid grid-cols-2 gap-2">
           <label className="text-sm text-chalk-300">
             Games Won
@@ -377,7 +377,7 @@ export default function TodaySession() {
         <p className="mt-2 text-sm text-ivory-100">Ghost Drill Win Rate %: {ghostDrillWinRatePct}</p>
       </Card>
 
-      <Card className="mb-4" title="Line-Up + Safety Exchange">
+      <Card className="mb-4" title="Line-Up & Safety">
         <div className="grid grid-cols-2 gap-2">
           <label className="text-sm text-chalk-300">
             Line-Up Shot Count
@@ -413,15 +413,15 @@ export default function TodaySession() {
         <p className="mt-2 text-sm text-ivory-100">Safety Exchange Success %: {safetyExchangeSuccessPct}</p>
       </Card>
 
-      <Card title="Notes + Required Save">
+      <Card title="Session Notes & Save">
         <label className="mb-2 block text-sm text-chalk-300">Notes</label>
         <textarea
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
         />
-        <Button className="w-full" onClick={saveSessionLog}>Save Session Log</Button>
-        {alreadyLogged ? <p className="mt-2 text-sm text-cue-300">A log entry already exists for today.</p> : null}
+        <Button className="w-full" onClick={saveSessionLog}>Save Today's Log</Button>
+        {alreadyLogged ? <p className="mt-2 text-sm text-cue-300">Today's session is already logged.</p> : null}
         {saveMessage ? <p className="mt-2 text-sm text-cue-300">{saveMessage}</p> : null}
       </Card>
     </PageWrapper>
