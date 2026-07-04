@@ -247,6 +247,41 @@ export interface CoachExportHistoryEntry {
   payload: CoachReviewExportPayload;
 }
 
+export interface SeasonMeta {
+  id: string;
+  name: string;
+  theme: string;
+  startDate: string;
+  endDate: string;
+  ladderTier: string;
+  ladderRank: number;
+}
+
+export interface SeasonQuestChainStep {
+  id: string;
+  title: string;
+  description: string;
+  progress: number;
+  target: number;
+  completed: boolean;
+}
+
+export interface SeasonBossChallenge {
+  id: string;
+  title: string;
+  description: string;
+  attempts: number;
+  completed: boolean;
+  lastScore?: number;
+}
+
+export interface SeasonChallengeProgress {
+  updatedAt: string;
+  qualityScore7DayAvg: number;
+  themedQuestChain: SeasonQuestChainStep[];
+  bossChallenges: SeasonBossChallenge[];
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;

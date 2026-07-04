@@ -24,6 +24,8 @@ import type {
   MilestonePhaseStatus,
   MilestoneTrackerRow,
   OpponentPrepCard,
+  SeasonChallengeProgress,
+  SeasonMeta,
   TrackerSyncState,
   WeeklySummary,
   BullseyeCategoryTrackerEntry,
@@ -31,6 +33,7 @@ import type {
 import { generateAdaptiveDailyPlan } from '../utils/adaptivePlan';
 import { buildPerformanceInsights } from '../utils/performanceInsights';
 import { generateRecoveryRecommendation } from '../utils/recoveryPlan';
+import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import {
   calculateWeeklySummary,
   estimateFargo,
@@ -54,6 +57,8 @@ interface TrackerState {
   personalRecords: PersonalRecord[];
   confidenceIndexHistory: ConfidenceIndexEntry[];
   coachExportHistory: CoachExportHistoryEntry[];
+  seasonMeta: SeasonMeta;
+  seasonChallengeProgress: SeasonChallengeProgress;
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -66,6 +71,7 @@ interface TrackerState {
   upsertOpponentPrepCard: (entry: OpponentPrepCard) => void;
   addCoachExportHistoryEntry: (entry: CoachExportHistoryEntry) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
+  refreshSeasonProgress: () => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
   flushSyncQueue: () => void;
@@ -74,6 +80,8 @@ interface TrackerState {
 export const useTrackerStore = create<TrackerState>()(
   persist(
     (set, get) => ({
+      seasonMeta: getTrackerGamificationSnapshot([]).seasonMeta,
+      seasonChallengeProgress: getTrackerGamificationSnapshot([]).seasonChallenges,
       dailySessionLogs: [],
       weeklySummaries: [],
       fargoRatingLog: [],
@@ -136,6 +144,7 @@ export const useTrackerStore = create<TrackerState>()(
             performance.confidenceIndex,
             ...state.confidenceIndexHistory,
           ].slice(0, 60);
+          const seasonSnapshot = getTrackerGamificationSnapshot(nextLogs);
 
           return {
             dailySessionLogs: nextLogs,
@@ -145,6 +154,8 @@ export const useTrackerStore = create<TrackerState>()(
             bullseyeCategoryTracker: nextBullseye,
             personalRecords: performance.personalRecords,
             confidenceIndexHistory,
+            seasonMeta: seasonSnapshot.seasonMeta,
+            seasonChallengeProgress: seasonSnapshot.seasonChallenges,
             adaptiveDailyPlan,
             recoveryRecommendationPlan,
             syncState: {
@@ -292,6 +303,14 @@ export const useTrackerStore = create<TrackerState>()(
             milestoneVerificationAttempts: nextAttempts,
             milestoneTrackerRows: nextRows,
             milestonePhaseStatuses: nextPhaseStatuses,
+          };
+        }),
+      refreshSeasonProgress: () =>
+        set((state) => {
+          const seasonSnapshot = getTrackerGamificationSnapshot(state.dailySessionLogs);
+          return {
+            seasonMeta: seasonSnapshot.seasonMeta,
+            seasonChallengeProgress: seasonSnapshot.seasonChallenges,
           };
         }),
       refreshAdaptiveDailyPlan: (currentFargo, currentWeek) =>

@@ -293,6 +293,41 @@ export default function Dashboard() {
         </div>
       </Card>
 
+      <Card className="mb-4" title="Season Ladder">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">Season</p>
+          <p className="text-right text-ivory-100">{gamification.seasonMeta.name}</p>
+          <p className="text-chalk-300">Theme</p>
+          <p className="text-right text-ivory-100">{gamification.seasonMeta.theme}</p>
+          <p className="text-chalk-300">Ladder Tier</p>
+          <p className="text-right text-ivory-100">{gamification.seasonMeta.ladderTier}</p>
+          <p className="text-chalk-300">Ladder Rank</p>
+          <p className="text-right text-ivory-100">#{gamification.seasonMeta.ladderRank}</p>
+          <p className="text-chalk-300">7-Day Quality Avg</p>
+          <p className="text-right text-ivory-100">{gamification.seasonChallenges.qualityScore7DayAvg}</p>
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {gamification.seasonChallenges.themedQuestChain.map((step) => (
+            <div key={step.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-ivory-100">
+              <p>{step.title}</p>
+              <p className="text-chalk-300">{step.description}</p>
+              <p className="text-chalk-300">{step.progress}/{step.target} {step.completed ? '· Complete' : ''}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-3 space-y-2">
+          {gamification.seasonChallenges.bossChallenges.map((boss) => (
+            <div key={boss.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-ivory-100">
+              <p>{boss.title}</p>
+              <p className="text-chalk-300">{boss.description}</p>
+              <p className="text-chalk-300">Attempts: {boss.attempts} {boss.completed ? '· Defeated' : '· In Progress'}</p>
+            </div>
+          ))}
+        </div>
+      </Card>
+
       <Card className="mb-4" title="Fargo Rating Over Time">
         <div className="h-60">
           <ResponsiveContainer width="100%" height="100%">

@@ -145,6 +145,14 @@ export default function TodaySession() {
       const previous = before.weeklyQuests.find((item) => item.id === quest.id);
       return quest.completed && !previous?.completed;
     });
+    const seasonBossCompleted = after.seasonChallenges.bossChallenges.some((boss) => {
+      const previous = before.seasonChallenges.bossChallenges.find((item) => item.id === boss.id);
+      return boss.completed && !previous?.completed;
+    });
+    const seasonChainStepCompleted = after.seasonChallenges.themedQuestChain.some((step) => {
+      const previous = before.seasonChallenges.themedQuestChain.find((item) => item.id === step.id);
+      return step.completed && !previous?.completed;
+    });
 
     if (after.latestSession) {
       triggerRewardCue({
@@ -168,6 +176,22 @@ export default function TodaySession() {
       setCelebration({
         title: `Level ${after.level} Reached`,
         subtitle: `+${latestXp} XP · Keep pressing this pace`,
+      });
+      return;
+    }
+
+    if (seasonBossCompleted) {
+      setCelebration({
+        title: 'Season Boss Defeated',
+        subtitle: `Tier ${after.seasonMeta.ladderTier} · Rank #${after.seasonMeta.ladderRank}`,
+      });
+      return;
+    }
+
+    if (seasonChainStepCompleted) {
+      setCelebration({
+        title: 'Season Quest Chain Progress',
+        subtitle: `7-day quality avg ${after.seasonChallenges.qualityScore7DayAvg}`,
       });
       return;
     }
