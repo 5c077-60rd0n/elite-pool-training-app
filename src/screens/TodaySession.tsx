@@ -7,8 +7,13 @@ import { useProgramStore } from '../store/useProgramStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { useGamificationStore } from '../store/useGamificationStore';
 import { calculateRate } from '../utils/trackerCalculations';
+import { triggerRewardCue } from '../utils/rewardEffects';
+import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import type { BullseyeCategory, DailySessionLog, YesNo } from '../types/tracker';
+
+const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
 
 function isoDate(value = new Date()): string {
   return value.toISOString().slice(0, 10);
@@ -43,6 +48,8 @@ export default function TodaySession() {
   const markComplete = useSessionStore((s) => s.markComplete);
   const addDailySessionLog = useTrackerStore((s) => s.addDailySessionLog);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const soundEnabled = useGamificationStore((s) => s.soundEnabled);
+  const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
 
   const today = isoDate();
   const day = dayName();
@@ -68,6 +75,7 @@ export default function TodaySession() {
   const [safetyAttempts, setSafetyAttempts] = useState(10);
   const [notes, setNotes] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
+  const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
 
   const ghostDrillWinRatePct = Math.round(calculateRate(ghostGamesWon, ghostGamesPlayed));
   const safetyExchangeSuccessPct = Math.round(calculateRate(safetySuccesses, safetyAttempts));
@@ -83,8 +91,15 @@ export default function TodaySession() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [alreadyLogged]);
 
+  useEffect(() => {
+    if (!celebration) return;
+    const timer = window.setTimeout(() => setCelebration(null), 2200);
+    return () => window.clearTimeout(timer);
+  }, [celebration]);
+
   function saveSessionLog(): void {
     const now = new Date().toISOString();
+    const before = getTrackerGamificationSnapshot(logs);
 
     const log: DailySessionLog = {
       id: `session-${Date.now()}`,
@@ -108,11 +123,66 @@ export default function TodaySession() {
 
     addDailySessionLog(log, profile.currentFargoRating);
     markComplete();
-    setSaveMessage('Session logged successfully.');
+
+    const after = getTrackerGamificationSnapshot([log, ...logs]);
+    const leveledUp = after.level > before.level;
+    const questCompleted = after.weeklyQuests.some((quest) => {
+      const previous = before.weeklyQuests.find((item) => item.id === quest.id);
+      return quest.completed && !previous?.completed;
+    });
+
+    if (after.latestSession) {
+      triggerRewardCue({
+        xpEarned: after.latestSession.xpEarned,
+        leveledUp,
+        questCompleted,
+        soundEnabled,
+        hapticsEnabled,
+      });
+    }
+
+    const latestXp = after.latestSession?.xpEarned ?? 0;
+    const latestQuality = after.latestSession?.qualityScore ?? 0;
+    setSaveMessage(
+      `Session logged. +${latestXp} XP · Quality ${latestQuality} · Level ${after.level}${
+        leveledUp ? ' (Level Up!)' : ''
+      }`,
+    );
+
+    if (leveledUp) {
+      setCelebration({
+        title: `Level ${after.level} Reached`,
+        subtitle: `+${latestXp} XP · Keep pressing this pace`,
+      });
+      return;
+    }
+
+    if (questCompleted) {
+      setCelebration({
+        title: 'Weekly Quest Complete',
+        subtitle: `+${latestXp} XP · Great consistency`,
+      });
+    }
   }
 
   return (
     <PageWrapper title="Daily Session Flow">
+      {celebration ? (
+        <div className="celebration-overlay" role="status" aria-live="polite">
+          <div className="celebration-card">
+            <p className="celebration-title">{celebration.title}</p>
+            <p className="celebration-subtitle">{celebration.subtitle}</p>
+          </div>
+          {celebrationBursts.map((seed) => (
+            <span
+              key={seed}
+              className="celebration-burst"
+              style={{ left: `${seed}%`, animationDelay: `${(seed % 7) * 80}ms` }}
+            />
+          ))}
+        </div>
+      ) : null}
+
       <Card className="mb-4">
         <p className="text-sm text-chalk-300">{today} · Week {currentWeek} · {day}</p>
         <p className="text-lg text-ivory-100">{template.focusArea}</p>

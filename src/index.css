@@ -54,3 +54,74 @@ a {
   opacity: 0.15;
   z-index: 0;
 }
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 60;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 16vh;
+}
+
+.celebration-card {
+  border: 1px solid rgba(201, 168, 76, 0.55);
+  background: radial-gradient(circle at 30% 0%, rgba(201, 168, 76, 0.28), rgba(8, 15, 24, 0.95) 62%);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.42);
+  border-radius: 14px;
+  padding: 14px 18px;
+  min-width: min(90vw, 320px);
+  animation: celebration-pop 260ms ease-out;
+}
+
+.celebration-title {
+  margin: 0;
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.04em;
+  font-size: 1.5rem;
+  color: #f3f5f8;
+}
+
+.celebration-subtitle {
+  margin: 4px 0 0;
+  font-size: 0.9rem;
+  color: #d0eaf5;
+}
+
+.celebration-burst {
+  position: absolute;
+  top: 17vh;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #c9a84c;
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.8);
+  animation: celebration-burst 900ms ease-out forwards;
+}
+
+@keyframes celebration-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes celebration-burst {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(110px) scale(0.2);
+  }
+}
