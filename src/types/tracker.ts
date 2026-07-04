@@ -282,6 +282,115 @@ export interface SeasonChallengeProgress {
   bossChallenges: SeasonBossChallenge[];
 }
 
+export interface ShotDecisionEntry {
+  id: string;
+  date: string;
+  scenario: string;
+  optionsConsidered: string[];
+  selectedOption: string;
+  result: 'success' | 'partial' | 'fail';
+  decisionQualityScore: number;
+  notes: string;
+}
+
+export interface PressureScenarioResult {
+  id: string;
+  date: string;
+  scenarioType: 'hill-hill' | 'shot-clock' | 'bad-leave' | 'crowd-noise';
+  attempts: number;
+  conversions: number;
+  clutchRatePct: number;
+  notes: string;
+}
+
+export interface OpponentPatternIntel {
+  id: string;
+  opponentName: string;
+  archetype: string;
+  breakTendency: string;
+  safetyTendency: string;
+  kickWeakness: string;
+  pressureLeak: string;
+  planNotes: string;
+  updatedAt: string;
+}
+
+export interface BreakOptimizationEntry {
+  id: string;
+  date: string;
+  gameType: '9-ball' | '10-ball' | '8-ball';
+  breakPosition: string;
+  breakSpeed: string;
+  cueBallLandingZone: string;
+  ballsMade: number;
+  shotOnNext: boolean;
+  successRating: number;
+  notes: string;
+}
+
+export interface SafetyKickPatternDrill {
+  id: string;
+  name: string;
+  family: 'safety' | 'kick';
+  intervalDays: number;
+  dueDate: string;
+  proficiency: 1 | 2 | 3 | 4 | 5;
+  notes: string;
+}
+
+export interface RackPatternReview {
+  id: string;
+  date: string;
+  layoutLabel: string;
+  plannedRoute: string;
+  cleanerAlternative: string;
+  routeEfficiencyScore: number;
+  notes: string;
+}
+
+export interface PreShotRoutineLog {
+  id: string;
+  date: string;
+  scenario: string;
+  routineUsed: boolean;
+  shotDifficulty: 1 | 2 | 3 | 4 | 5;
+  outcome: 'made' | 'missed' | 'safe';
+  notes: string;
+}
+
+export interface TournamentAutopsy {
+  id: string;
+  date: string;
+  eventName: string;
+  decisionErrors: string;
+  executionErrors: string;
+  emotionalErrors: string;
+  preparationErrors: string;
+  nextWeekPriority: string;
+}
+
+export interface ReadinessEntry {
+  id: string;
+  date: string;
+  sleepHours: number;
+  stressLevel: 1 | 2 | 3 | 4 | 5;
+  sorenessLevel: 1 | 2 | 3 | 4 | 5;
+  focusLevel: 1 | 2 | 3 | 4 | 5;
+  notes: string;
+}
+
+export interface ElitePerformanceLabData {
+  shotDecisionEntries: ShotDecisionEntry[];
+  pressureScenarioResults: PressureScenarioResult[];
+  opponentIntel: OpponentPatternIntel[];
+  breakOptimizationLog: BreakOptimizationEntry[];
+  safetyKickDrills: SafetyKickPatternDrill[];
+  rackPatternReviews: RackPatternReview[];
+  preShotRoutineLogs: PreShotRoutineLog[];
+  tournamentAutopsies: TournamentAutopsy[];
+  readinessLog: ReadinessEntry[];
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;

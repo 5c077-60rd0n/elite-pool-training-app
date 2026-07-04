@@ -9,6 +9,7 @@ const links = [
   { to: '/mechanics', label: 'Mechanics Audit' },
   { to: '/competition', label: 'Competition Log' },
   { to: '/match-simulator', label: 'Match Simulator' },
+  { to: '/elite-lab', label: 'Elite Performance Lab' },
   { to: '/mental', label: 'Mental Game' },
   { to: '/tournament', label: 'Tournament Prep' },
   { to: '/settings', label: 'Settings' },

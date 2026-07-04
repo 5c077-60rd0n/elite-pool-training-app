@@ -8,6 +8,7 @@ import {
   phaseStatuses,
 } from '../data/trackerPlan';
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
+import { eliteLabSeed } from '../data/eliteLab';
 import type {
   AdaptiveDailyPlan,
   CoachExportHistoryEntry,
@@ -16,6 +17,7 @@ import type {
   RecoveryRecommendationPlan,
   CompetitionLogEntry,
   DailySessionLog,
+  ElitePerformanceLabData,
   FargoRatingLogEntry,
   MatchSimulatorSession,
   MechanicsChecklistItem,
@@ -59,6 +61,7 @@ interface TrackerState {
   coachExportHistory: CoachExportHistoryEntry[];
   seasonMeta: SeasonMeta;
   seasonChallengeProgress: SeasonChallengeProgress;
+  eliteLab: ElitePerformanceLabData;
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -71,6 +74,7 @@ interface TrackerState {
   upsertOpponentPrepCard: (entry: OpponentPrepCard) => void;
   addCoachExportHistoryEntry: (entry: CoachExportHistoryEntry) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
+  setEliteLab: (updater: (state: ElitePerformanceLabData) => ElitePerformanceLabData) => void;
   refreshSeasonProgress: () => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
@@ -82,6 +86,7 @@ export const useTrackerStore = create<TrackerState>()(
     (set, get) => ({
       seasonMeta: getTrackerGamificationSnapshot([]).seasonMeta,
       seasonChallengeProgress: getTrackerGamificationSnapshot([]).seasonChallenges,
+      eliteLab: eliteLabSeed,
       dailySessionLogs: [],
       weeklySummaries: [],
       fargoRatingLog: [],
@@ -305,6 +310,10 @@ export const useTrackerStore = create<TrackerState>()(
             milestonePhaseStatuses: nextPhaseStatuses,
           };
         }),
+      setEliteLab: (updater) =>
+        set((state) => ({
+          eliteLab: updater(state.eliteLab),
+        })),
       refreshSeasonProgress: () =>
         set((state) => {
           const seasonSnapshot = getTrackerGamificationSnapshot(state.dailySessionLogs);

@@ -10,6 +10,7 @@ import { useSessionStore } from '../store/useSessionStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { bullseyeCategorySeed, mechanicsChecklistSeed, milestoneRows, phaseStatuses } from '../data/trackerPlan';
+import { eliteLabSeed } from '../data/eliteLab';
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import { buildCoachReviewExport } from '../utils/coachExport';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
@@ -43,6 +44,7 @@ type BackupPayload = {
     coachExportHistory?: ReturnType<typeof useTrackerStore.getState>['coachExportHistory'];
     seasonMeta?: ReturnType<typeof useTrackerStore.getState>['seasonMeta'];
     seasonChallengeProgress?: ReturnType<typeof useTrackerStore.getState>['seasonChallengeProgress'];
+    eliteLab?: ReturnType<typeof useTrackerStore.getState>['eliteLab'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
@@ -146,6 +148,7 @@ export default function Settings() {
         coachExportHistory: tracker.coachExportHistory,
         seasonMeta: tracker.seasonMeta,
         seasonChallengeProgress: tracker.seasonChallengeProgress,
+        eliteLab: tracker.eliteLab,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
@@ -238,6 +241,7 @@ export default function Settings() {
           coachExportHistory: trackerData.coachExportHistory ?? state.coachExportHistory,
           seasonMeta: trackerData.seasonMeta ?? state.seasonMeta,
           seasonChallengeProgress: trackerData.seasonChallengeProgress ?? state.seasonChallengeProgress,
+          eliteLab: trackerData.eliteLab ?? state.eliteLab,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
@@ -336,6 +340,7 @@ export default function Settings() {
       coachExportHistory: [],
       seasonMeta: emptySeason.seasonMeta,
       seasonChallengeProgress: emptySeason.seasonChallenges,
+      eliteLab: eliteLabSeed,
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
