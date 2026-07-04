@@ -44,6 +44,8 @@ export default function TournamentPrep() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const opponentPrepCards = useTrackerStore((s) => s.opponentPrepCards);
   const upsertOpponentPrepCard = useTrackerStore((s) => s.upsertOpponentPrepCard);
+  const personalRecords = useTrackerStore((s) => s.personalRecords);
+  const confidenceIndexHistory = useTrackerStore((s) => s.confidenceIndexHistory);
 
   const [activePrepId, setActivePrepId] = useState('');
   const [tournamentName, setTournamentName] = useState('');
@@ -310,6 +312,26 @@ export default function TournamentPrep() {
         <Link to="/match-simulator">
           <Button className="mt-3" variant="secondary">Run Simulation</Button>
         </Link>
+      </Card>
+
+      <Card className="mb-4" title="Confidence + Records">
+        {confidenceIndexHistory.length ? (
+          <>
+            <p className="text-sm text-ivory-100">Current Confidence Index: {confidenceIndexHistory[0].score}</p>
+            <p className="text-xs text-chalk-300">{confidenceIndexHistory[0].rationale}</p>
+            <p className="mt-2 text-xs text-chalk-300">Training {confidenceIndexHistory[0].components.trainingConsistency} · Match {confidenceIndexHistory[0].components.matchReadiness} · Results {confidenceIndexHistory[0].components.recentResults} · Pressure {confidenceIndexHistory[0].components.pressureExecution}</p>
+          </>
+        ) : (
+          <p className="text-sm text-chalk-300">Confidence index appears after training, match simulations, and competition entries are logged.</p>
+        )}
+
+        {personalRecords.length ? (
+          <div className="mt-3 space-y-1 text-xs text-chalk-300">
+            {personalRecords.slice(0, 4).map((record) => (
+              <p key={record.id}>{record.label}: {record.value} {record.unit} ({record.achievedAt})</p>
+            ))}
+          </div>
+        ) : null}
       </Card>
 
       <Card className="mb-4" title="Opponent Prep Cards">

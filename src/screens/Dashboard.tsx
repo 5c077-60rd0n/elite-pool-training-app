@@ -30,6 +30,8 @@ export default function Dashboard() {
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
+  const personalRecords = useTrackerStore((s) => s.personalRecords);
+  const confidenceIndexHistory = useTrackerStore((s) => s.confidenceIndexHistory);
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
   const syncState = useTrackerStore((s) => s.syncState);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
@@ -78,6 +80,16 @@ export default function Dashboard() {
           ghost: item.ghostDrillBestWinRatePct,
         })),
     [weeklySummaries],
+  );
+  const confidenceLineData = useMemo(
+    () =>
+      [...confidenceIndexHistory]
+        .sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
+        .map((item) => ({
+          date: item.date,
+          confidence: item.score,
+        })),
+    [confidenceIndexHistory],
   );
 
   const gamification = useMemo(() => getTrackerGamificationSnapshot(logs), [logs]);
@@ -219,6 +231,41 @@ export default function Dashboard() {
         </Link>
       </Card>
 
+      <Card className="mb-4" title="Confidence Index">
+        {confidenceIndexHistory.length ? (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Current Confidence</p>
+              <p className="text-right text-ivory-100">{confidenceIndexHistory[0].score}</p>
+              <p className="text-chalk-300">Training Consistency</p>
+              <p className="text-right text-ivory-100">{confidenceIndexHistory[0].components.trainingConsistency}</p>
+              <p className="text-chalk-300">Match Readiness Signal</p>
+              <p className="text-right text-ivory-100">{confidenceIndexHistory[0].components.matchReadiness}</p>
+              <p className="text-chalk-300">Recent Results Signal</p>
+              <p className="text-right text-ivory-100">{confidenceIndexHistory[0].components.recentResults}</p>
+            </div>
+            <p className="mt-2 text-xs text-chalk-300">{confidenceIndexHistory[0].rationale}</p>
+          </>
+        ) : (
+          <p className="text-sm text-chalk-300">Confidence index will populate after recent training and match logs are available.</p>
+        )}
+      </Card>
+
+      <Card className="mb-4" title="Personal Records">
+        {personalRecords.length ? (
+          <div className="space-y-2">
+            {personalRecords.slice(0, 6).map((record) => (
+              <div key={record.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-sm">
+                <p className="text-ivory-100">{record.label}</p>
+                <p className="text-chalk-300">{record.value} {record.unit} · {record.achievedAt}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-chalk-300">No records yet. Log sessions and simulations to establish baselines.</p>
+        )}
+      </Card>
+
       <Card className="mb-4" title="Gamification">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">Player Title</p>
@@ -270,6 +317,20 @@ export default function Dashboard() {
               <Tooltip />
               <Bar dataKey="ghost" fill="#C9A84C" />
             </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Confidence Trend">
+        <div className="h-52">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={confidenceLineData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#274033" />
+              <XAxis dataKey="date" stroke="#d0eaf5" />
+              <YAxis stroke="#d0eaf5" domain={[0, 100]} />
+              <Tooltip />
+              <Line type="monotone" dataKey="confidence" stroke="#F7C96B" strokeWidth={2} dot={false} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </Card>

@@ -177,6 +177,30 @@ export interface OpponentPrepCard {
   updatedAt: string;
 }
 
+export interface PersonalRecord {
+  id: string;
+  label: string;
+  value: number;
+  unit: string;
+  achievedAt: string;
+  source: 'training' | 'simulation' | 'competition';
+}
+
+export interface ConfidenceIndexComponents {
+  trainingConsistency: number;
+  matchReadiness: number;
+  recentResults: number;
+  pressureExecution: number;
+}
+
+export interface ConfidenceIndexEntry {
+  id: string;
+  date: string;
+  score: number;
+  components: ConfidenceIndexComponents;
+  rationale: string;
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;

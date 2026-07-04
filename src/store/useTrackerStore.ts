@@ -10,6 +10,8 @@ import {
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import type {
   AdaptiveDailyPlan,
+  ConfidenceIndexEntry,
+  PersonalRecord,
   RecoveryRecommendationPlan,
   CompetitionLogEntry,
   DailySessionLog,
@@ -26,6 +28,7 @@ import type {
   BullseyeCategoryTrackerEntry,
 } from '../types/tracker';
 import { generateAdaptiveDailyPlan } from '../utils/adaptivePlan';
+import { buildPerformanceInsights } from '../utils/performanceInsights';
 import { generateRecoveryRecommendation } from '../utils/recoveryPlan';
 import {
   calculateWeeklySummary,
@@ -47,6 +50,8 @@ interface TrackerState {
   competitionLog: CompetitionLogEntry[];
   matchSimSessions: MatchSimulatorSession[];
   opponentPrepCards: OpponentPrepCard[];
+  personalRecords: PersonalRecord[];
+  confidenceIndexHistory: ConfidenceIndexEntry[];
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -78,6 +83,8 @@ export const useTrackerStore = create<TrackerState>()(
       competitionLog: [],
       matchSimSessions: [],
       opponentPrepCards: opponentPrepCardSeed,
+      personalRecords: [],
+      confidenceIndexHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
@@ -116,6 +123,15 @@ export const useTrackerStore = create<TrackerState>()(
             state.competitionLog,
             adaptiveDailyPlan,
           );
+          const performance = buildPerformanceInsights({
+            logs: nextLogs,
+            competitionLog: state.competitionLog,
+            matchSimSessions: state.matchSimSessions,
+          });
+          const confidenceIndexHistory = [
+            performance.confidenceIndex,
+            ...state.confidenceIndexHistory,
+          ].slice(0, 60);
 
           return {
             dailySessionLogs: nextLogs,
@@ -123,6 +139,8 @@ export const useTrackerStore = create<TrackerState>()(
             milestoneTrackerRows: updatedRows,
             milestonePhaseStatuses: updatedStatuses,
             bullseyeCategoryTracker: nextBullseye,
+            personalRecords: performance.personalRecords,
+            confidenceIndexHistory,
             adaptiveDailyPlan,
             recoveryRecommendationPlan,
             syncState: {
@@ -148,10 +166,21 @@ export const useTrackerStore = create<TrackerState>()(
             state.competitionLog,
             adaptiveDailyPlan,
           );
+          const performance = buildPerformanceInsights({
+            logs: state.dailySessionLogs,
+            competitionLog: state.competitionLog,
+            matchSimSessions: state.matchSimSessions,
+          });
+          const confidenceIndexHistory = [
+            performance.confidenceIndex,
+            ...state.confidenceIndexHistory,
+          ].slice(0, 60);
           return {
             fargoRatingLog: nextFargo,
             milestoneTrackerRows: updatedRows,
             milestonePhaseStatuses: updatedStatuses,
+            personalRecords: performance.personalRecords,
+            confidenceIndexHistory,
             adaptiveDailyPlan,
             recoveryRecommendationPlan,
           };
@@ -178,9 +207,20 @@ export const useTrackerStore = create<TrackerState>()(
             nextCompetition,
             state.adaptiveDailyPlan,
           );
+          const performance = buildPerformanceInsights({
+            logs: state.dailySessionLogs,
+            competitionLog: nextCompetition,
+            matchSimSessions: state.matchSimSessions,
+          });
+          const confidenceIndexHistory = [
+            performance.confidenceIndex,
+            ...state.confidenceIndexHistory,
+          ].slice(0, 60);
 
           return {
             competitionLog: nextCompetition,
+            personalRecords: performance.personalRecords,
+            confidenceIndexHistory,
             recoveryRecommendationPlan,
             syncState: {
               ...state.syncState,
@@ -189,13 +229,27 @@ export const useTrackerStore = create<TrackerState>()(
           };
         }),
       addMatchSimSession: (entry) =>
-        set((state) => ({
-          matchSimSessions: [entry, ...state.matchSimSessions.filter((item) => item.id !== entry.id)],
-          syncState: {
-            ...state.syncState,
-            pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
-          },
-        })),
+        set((state) => {
+          const nextSims = [entry, ...state.matchSimSessions.filter((item) => item.id !== entry.id)];
+          const performance = buildPerformanceInsights({
+            logs: state.dailySessionLogs,
+            competitionLog: state.competitionLog,
+            matchSimSessions: nextSims,
+          });
+          const confidenceIndexHistory = [
+            performance.confidenceIndex,
+            ...state.confidenceIndexHistory,
+          ].slice(0, 60);
+          return {
+            matchSimSessions: nextSims,
+            personalRecords: performance.personalRecords,
+            confidenceIndexHistory,
+            syncState: {
+              ...state.syncState,
+              pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+            },
+          };
+        }),
       upsertOpponentPrepCard: (entry) =>
         set((state) => ({
           opponentPrepCards: [

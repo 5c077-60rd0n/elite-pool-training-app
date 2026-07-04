@@ -36,6 +36,8 @@ type BackupPayload = {
     competitionLog?: ReturnType<typeof useTrackerStore.getState>['competitionLog'];
     matchSimSessions?: ReturnType<typeof useTrackerStore.getState>['matchSimSessions'];
     opponentPrepCards?: ReturnType<typeof useTrackerStore.getState>['opponentPrepCards'];
+    personalRecords?: ReturnType<typeof useTrackerStore.getState>['personalRecords'];
+    confidenceIndexHistory?: ReturnType<typeof useTrackerStore.getState>['confidenceIndexHistory'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
@@ -89,6 +91,8 @@ export default function Settings() {
       competitionEntries: tracker.competitionLog.length,
       matchSimSessions: tracker.matchSimSessions.length,
       opponentPrepCards: tracker.opponentPrepCards.length,
+      personalRecords: tracker.personalRecords.length,
+      confidenceEntries: tracker.confidenceIndexHistory.length,
       pendingSync: tracker.syncState.pendingLogIds.length,
       lastSyncAt: tracker.syncState.lastSyncAt,
     }),
@@ -130,6 +134,8 @@ export default function Settings() {
         competitionLog: tracker.competitionLog,
         matchSimSessions: tracker.matchSimSessions,
         opponentPrepCards: tracker.opponentPrepCards,
+        personalRecords: tracker.personalRecords,
+        confidenceIndexHistory: tracker.confidenceIndexHistory,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
@@ -217,6 +223,8 @@ export default function Settings() {
           competitionLog: trackerData.competitionLog ?? state.competitionLog,
           matchSimSessions: trackerData.matchSimSessions ?? state.matchSimSessions,
           opponentPrepCards: trackerData.opponentPrepCards ?? state.opponentPrepCards,
+          personalRecords: trackerData.personalRecords ?? state.personalRecords,
+          confidenceIndexHistory: trackerData.confidenceIndexHistory ?? state.confidenceIndexHistory,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
@@ -275,6 +283,8 @@ export default function Settings() {
       competitionLog: [],
       matchSimSessions: [],
       opponentPrepCards: opponentPrepCardSeed,
+      personalRecords: [],
+      confidenceIndexHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
