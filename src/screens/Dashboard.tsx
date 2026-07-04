@@ -17,6 +17,7 @@ import { PageWrapper } from '../components/layout/PageWrapper';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { getNotificationInsights } from '../utils/notificationIntelligence';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
+  const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
   const syncState = useTrackerStore((s) => s.syncState);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
@@ -79,6 +81,11 @@ export default function Dashboard() {
   );
 
   const gamification = useMemo(() => getTrackerGamificationSnapshot(logs), [logs]);
+  const latestMatchSimulation = useMemo(
+    () => [...matchSimSessions].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))[0],
+    [matchSimSessions],
+  );
+  const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
   const notificationInsights = useMemo(
     () => getNotificationInsights(logs, gamification, adaptiveDailyPlan, recoveryRecommendationPlan),
     [adaptiveDailyPlan, gamification, logs, recoveryRecommendationPlan],
@@ -186,6 +193,32 @@ export default function Dashboard() {
         </Card>
       ) : null}
 
+      <Card className="mb-4" title="Match Readiness">
+        {latestMatchSimulation ? (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Last Simulation Date</p>
+              <p className="text-right text-ivory-100">{latestMatchSimulation.date}</p>
+              <p className="text-chalk-300">Match Readiness Score</p>
+              <p className="text-right text-ivory-100">{latestMatchSimulation.matchReadinessScore}</p>
+              <p className="text-chalk-300">Drill Readiness Score</p>
+              <p className="text-right text-ivory-100">{drillReadinessScore}</p>
+              <p className="text-chalk-300">Opponent Archetype</p>
+              <p className="text-right text-ivory-100">{latestMatchSimulation.opponentArchetype}</p>
+            </div>
+            <p className="mt-2 text-xs text-chalk-300">
+              Gap: {latestMatchSimulation.matchReadinessScore - drillReadinessScore >= 0 ? '+' : ''}
+              {latestMatchSimulation.matchReadinessScore - drillReadinessScore} points
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-chalk-300">No simulation yet. Run your first race-format simulation to baseline match readiness.</p>
+        )}
+        <Link to="/match-simulator">
+          <Button className="mt-3">Open Match Simulator</Button>
+        </Link>
+      </Card>
+
       <Card className="mb-4" title="Gamification">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">Player Title</p>
@@ -254,6 +287,9 @@ export default function Dashboard() {
           </Link>
           <Link to="/competition">
             <Button className="w-full">Open Competition Log</Button>
+          </Link>
+          <Link to="/match-simulator">
+            <Button className="w-full">Run Match Simulator</Button>
           </Link>
         </div>
       </Card>

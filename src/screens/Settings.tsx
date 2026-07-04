@@ -33,6 +33,7 @@ type BackupPayload = {
     mechanicsChecklist?: ReturnType<typeof useTrackerStore.getState>['mechanicsChecklist'];
     mechanicsWeeklyAuditLog?: ReturnType<typeof useTrackerStore.getState>['mechanicsWeeklyAuditLog'];
     competitionLog?: ReturnType<typeof useTrackerStore.getState>['competitionLog'];
+    matchSimSessions?: ReturnType<typeof useTrackerStore.getState>['matchSimSessions'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
@@ -84,6 +85,7 @@ export default function Settings() {
       fargoEntries: tracker.fargoRatingLog.length,
       mechanicsAudits: tracker.mechanicsWeeklyAuditLog.length,
       competitionEntries: tracker.competitionLog.length,
+      matchSimSessions: tracker.matchSimSessions.length,
       pendingSync: tracker.syncState.pendingLogIds.length,
       lastSyncAt: tracker.syncState.lastSyncAt,
     }),
@@ -123,6 +125,7 @@ export default function Settings() {
         mechanicsChecklist: tracker.mechanicsChecklist,
         mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
         competitionLog: tracker.competitionLog,
+        matchSimSessions: tracker.matchSimSessions,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
@@ -208,6 +211,7 @@ export default function Settings() {
           mechanicsChecklist: trackerData.mechanicsChecklist ?? state.mechanicsChecklist,
           mechanicsWeeklyAuditLog: trackerData.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
           competitionLog: trackerData.competitionLog ?? state.competitionLog,
+          matchSimSessions: trackerData.matchSimSessions ?? state.matchSimSessions,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
@@ -264,6 +268,7 @@ export default function Settings() {
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
+      matchSimSessions: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },

@@ -13,6 +13,7 @@ import type {
   CompetitionLogEntry,
   DailySessionLog,
   FargoRatingLogEntry,
+  MatchSimulatorSession,
   MechanicsChecklistItem,
   MechanicsWeeklyAuditLog,
   MilestoneVerificationAttempt,
@@ -42,6 +43,7 @@ interface TrackerState {
   mechanicsChecklist: MechanicsChecklistItem[];
   mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
   competitionLog: CompetitionLogEntry[];
+  matchSimSessions: MatchSimulatorSession[];
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -50,6 +52,7 @@ interface TrackerState {
   addMechanicsWeeklyAudit: (entry: MechanicsWeeklyAuditLog) => void;
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
+  addMatchSimSession: (entry: MatchSimulatorSession) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
@@ -69,6 +72,7 @@ export const useTrackerStore = create<TrackerState>()(
       mechanicsChecklist: mechanicsChecklistSeed,
       mechanicsWeeklyAuditLog: [],
       competitionLog: [],
+      matchSimSessions: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
@@ -179,6 +183,14 @@ export const useTrackerStore = create<TrackerState>()(
             },
           };
         }),
+      addMatchSimSession: (entry) =>
+        set((state) => ({
+          matchSimSessions: [entry, ...state.matchSimSessions.filter((item) => item.id !== entry.id)],
+          syncState: {
+            ...state.syncState,
+            pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+          },
+        })),
       addMilestoneVerificationAttempt: (entry) =>
         set((state) => {
           const nextAttempts = [

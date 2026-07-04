@@ -144,6 +144,28 @@ export interface CompetitionLogEntry {
   notes: string;
 }
 
+export type MatchSimulatorPressureLevel = 'low' | 'medium' | 'high';
+
+export interface MatchSimulatorSession {
+  id: string;
+  date: string;
+  opponentArchetype: string;
+  raceTo: number;
+  inningsPlayed: number;
+  breaksMade: number;
+  breakAndRuns: number;
+  safetyWins: number;
+  pressureLevel: MatchSimulatorPressureLevel;
+  pressureShotsMade: number;
+  pressureShotsAttempted: number;
+  hillHillResult: 'Win' | 'Loss' | 'N/A';
+  result: MatchResult;
+  matchReadinessScore: number;
+  drillReadinessScore: number;
+  notes: string;
+  createdAt: string;
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;

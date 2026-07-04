@@ -11,6 +11,7 @@ const PhaseOverview = lazy(() => import('../screens/PhaseOverview'));
 const MilestoneLog = lazy(() => import('../screens/MilestoneLog'));
 const MentalGame = lazy(() => import('../screens/MentalGame'));
 const TournamentPrep = lazy(() => import('../screens/TournamentPrep'));
+const MatchSimulator = lazy(() => import('../screens/MatchSimulator'));
 const MechanicsAudit = lazy(() => import('../screens/MechanicsAudit'));
 const CompetitionLog = lazy(() => import('../screens/CompetitionLog'));
 const Settings = lazy(() => import('../screens/Settings'));
@@ -51,6 +52,7 @@ function GuardedRoutes() {
         <Route path="/milestones" element={<MilestoneLog />} />
         <Route path="/mental" element={<MentalGame />} />
         <Route path="/tournament" element={<TournamentPrep />} />
+        <Route path="/match-simulator" element={<MatchSimulator />} />
         <Route path="/mechanics" element={<MechanicsAudit />} />
         <Route path="/competition" element={<CompetitionLog />} />
         <Route path="/settings" element={<Settings />} />

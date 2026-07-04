@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button } from '../components/ui/Button';
 import { useProgressStore } from '../store/useProgressStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { trackerKpis } from '../data/trackerKpis';
+import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import type { PrepChecklist, TournamentPrep } from '../types/models';
 
 function prepStartDate(date: string): string {
@@ -37,6 +39,8 @@ export default function TournamentPrep() {
   const tournamentPreps = useProgressStore((s) => s.tournamentPreps);
   const upsertTournamentPrep = useProgressStore((s) => s.upsertTournamentPrep);
   const addCompetitionLog = useTrackerStore((s) => s.addCompetitionLog);
+  const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
+  const logs = useTrackerStore((s) => s.dailySessionLogs);
 
   const [activePrepId, setActivePrepId] = useState('');
   const [tournamentName, setTournamentName] = useState('');
@@ -87,6 +91,12 @@ export default function TournamentPrep() {
     const done = activePrep.checklistItems.filter((item) => item.completed).length;
     return Math.round((done / activePrep.checklistItems.length) * 100);
   }, [activePrep]);
+
+  const latestMatchSimulation = useMemo(
+    () => [...matchSimSessions].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))[0],
+    [matchSimSessions],
+  );
+  const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
 
   function createPrep(): void {
     const entry: TournamentPrep = {
@@ -195,6 +205,21 @@ export default function TournamentPrep() {
         <Button className="mt-3 w-full" onClick={createPrep} disabled={!tournamentName || !location}>
           Create 14-Day Prep Plan
         </Button>
+      </Card>
+
+      <Card className="mb-4" title="Match Simulator Signal">
+        {latestMatchSimulation ? (
+          <>
+            <p className="text-sm text-ivory-100">Last simulation: {latestMatchSimulation.date} · {latestMatchSimulation.opponentArchetype}</p>
+            <p className="text-xs text-chalk-300">Match readiness {latestMatchSimulation.matchReadinessScore} vs drill readiness {drillReadinessScore}</p>
+            <p className="text-xs text-chalk-300">Pressure execution {latestMatchSimulation.pressureShotsMade}/{latestMatchSimulation.pressureShotsAttempted} · Safety wins {latestMatchSimulation.safetyWins}</p>
+          </>
+        ) : (
+          <p className="text-sm text-chalk-300">No simulation data yet. Run a race-format simulation before your next event prep cycle.</p>
+        )}
+        <Link to="/match-simulator">
+          <Button className="mt-3" variant="secondary">Run Simulation</Button>
+        </Link>
       </Card>
 
       {sortedPreps.length ? (
