@@ -4,8 +4,6 @@ import { useSettingsStore } from '../store/useSettingsStore';
 
 const Dashboard = lazy(() => import('../screens/Dashboard'));
 const TodaySession = lazy(() => import('../screens/TodaySession'));
-const DrillLibrary = lazy(() => import('../screens/DrillLibrary'));
-const DrillDetail = lazy(() => import('../screens/DrillDetail'));
 const WeeklySchedule = lazy(() => import('../screens/WeeklySchedule'));
 const Progress = lazy(() => import('../screens/Progress'));
 const KPITracker = lazy(() => import('../screens/KPITracker'));
@@ -46,8 +44,6 @@ function GuardedRoutes() {
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/session/today" element={<TodaySession />} />
-        <Route path="/drills" element={<DrillLibrary />} />
-        <Route path="/drills/:drillId" element={<DrillDetail />} />
         <Route path="/schedule" element={<WeeklySchedule />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/kpi" element={<KPITracker />} />
