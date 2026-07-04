@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button } from '../components/ui/Button';
 import { useProgressStore } from '../store/useProgressStore';
+import { useTrackerStore } from '../store/useTrackerStore';
+import { trackerKpis } from '../data/trackerKpis';
 import type { PrepChecklist, TournamentPrep } from '../types/models';
-import { drills } from '../data/drills';
 
 function prepStartDate(date: string): string {
   const target = new Date(`${date}T00:00:00`);
@@ -14,12 +15,13 @@ function prepStartDate(date: string): string {
 
 function buildChecklist(): PrepChecklist[] {
   const steps: Array<{ label: string; daysOut: number }> = [
-    { label: 'Finalize break and opening pattern plan', daysOut: 14 },
-    { label: 'Review safety response trees', daysOut: 7 },
-    { label: 'Play race simulation set', daysOut: 4 },
-    { label: 'Light technical tune-up only', daysOut: 3 },
-    { label: 'Equipment and travel checklist', daysOut: 2 },
-    { label: 'Mental routine walkthrough', daysOut: 1 },
+    { label: 'Lock event goals and match format strategy', daysOut: 14 },
+    { label: 'Set break plan and first-inning options', daysOut: 10 },
+    { label: 'Pressure-set simulation (race format)', daysOut: 7 },
+    { label: 'Safety and kick response rehearsal', daysOut: 5 },
+    { label: 'Refine weakest KPI block under timer', daysOut: 3 },
+    { label: 'Equipment, logistics, and nutrition prep', daysOut: 2 },
+    { label: 'Mental reset routine and visualization', daysOut: 1 },
     { label: 'Event-day warm-up protocol', daysOut: 0 },
   ];
 
@@ -34,26 +36,57 @@ function buildChecklist(): PrepChecklist[] {
 export default function TournamentPrep() {
   const tournamentPreps = useProgressStore((s) => s.tournamentPreps);
   const upsertTournamentPrep = useProgressStore((s) => s.upsertTournamentPrep);
+  const addCompetitionLog = useTrackerStore((s) => s.addCompetitionLog);
 
+  const [activePrepId, setActivePrepId] = useState('');
   const [tournamentName, setTournamentName] = useState('');
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [format, setFormat] = useState('Race to 7');
   const [location, setLocation] = useState('');
+  const [result, setResult] = useState('Win');
   const [bestDecisions, setBestDecisions] = useState('');
   const [weakestDecisions, setWeakestDecisions] = useState('');
   const [primarySkillGap, setPrimarySkillGap] = useState('');
-  const [linkedDrillId, setLinkedDrillId] = useState('');
-  const [result, setResult] = useState('');
+  const [focusAreaId, setFocusAreaId] = useState('');
   const [notes, setNotes] = useState('');
 
-  const latest = tournamentPreps[0];
-  const eventReached = latest ? new Date(`${latest.date}T23:59:59`).getTime() <= Date.now() : false;
+  const sortedPreps = useMemo(
+    () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
+    [tournamentPreps],
+  );
+
+  const activePrep = useMemo(
+    () => sortedPreps.find((entry) => entry.id === activePrepId) ?? sortedPreps[0],
+    [activePrepId, sortedPreps],
+  );
+
+  const eventReached = activePrep ? new Date(`${activePrep.date}T23:59:59`).getTime() <= Date.now() : false;
+
+  useEffect(() => {
+    if (!activePrep) {
+      setResult('Win');
+      setBestDecisions('');
+      setWeakestDecisions('');
+      setPrimarySkillGap('');
+      setFocusAreaId('');
+      setNotes('');
+      return;
+    }
+
+    const analysis = activePrep.postEventAnalysis;
+    setResult(analysis?.result ?? 'Win');
+    setBestDecisions((analysis?.bestDecisions ?? []).join('\n'));
+    setWeakestDecisions((analysis?.weakestDecisions ?? []).join('\n'));
+    setPrimarySkillGap(analysis?.primarySkillGap ?? '');
+    setFocusAreaId(analysis?.linkedFocusAreaId ?? analysis?.linkedDrillId ?? '');
+    setNotes(analysis?.notes ?? '');
+  }, [activePrep]);
 
   const completionPercent = useMemo(() => {
-    if (!latest || latest.checklistItems.length === 0) return 0;
-    const done = latest.checklistItems.filter((item) => item.completed).length;
-    return Math.round((done / latest.checklistItems.length) * 100);
-  }, [latest]);
+    if (!activePrep || activePrep.checklistItems.length === 0) return 0;
+    const done = activePrep.checklistItems.filter((item) => item.completed).length;
+    return Math.round((done / activePrep.checklistItems.length) * 100);
+  }, [activePrep]);
 
   function createPrep(): void {
     const entry: TournamentPrep = {
@@ -66,34 +99,67 @@ export default function TournamentPrep() {
       currentStep: 1,
       checklistItems: buildChecklist(),
     };
+
     upsertTournamentPrep(entry);
+    setActivePrepId(entry.id);
+    setTournamentName('');
+    setLocation('');
   }
 
   function toggleChecklist(itemId: string): void {
-    if (!latest) return;
-    const checklistItems = latest.checklistItems.map((item) =>
+    if (!activePrep) return;
+    const checklistItems = activePrep.checklistItems.map((item) =>
       item.id === itemId ? { ...item, completed: !item.completed } : item,
     );
     const completed = checklistItems.filter((item) => item.completed).length;
     upsertTournamentPrep({
-      ...latest,
+      ...activePrep,
       checklistItems,
       currentStep: Math.min(checklistItems.length, completed + 1),
     });
   }
 
   function savePostEventAnalysis(): void {
-    if (!latest) return;
+    if (!activePrep) return;
+
+    const best = bestDecisions
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    const weakest = weakestDecisions
+      .split('\n')
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 3);
+    const focusLabel = trackerKpis.find((kpi) => kpi.id === focusAreaId)?.name;
+
     upsertTournamentPrep({
-      ...latest,
+      ...activePrep,
       postEventAnalysis: {
         result,
-        bestDecisions: bestDecisions.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 3),
-        weakestDecisions: weakestDecisions.split('\n').map((item) => item.trim()).filter(Boolean).slice(0, 3),
+        bestDecisions: best,
+        weakestDecisions: weakest,
         primarySkillGap,
-        linkedDrillId: linkedDrillId || undefined,
+        linkedFocusAreaId: focusAreaId || undefined,
+        linkedDrillId: focusAreaId || undefined,
         notes,
       },
+    });
+
+    addCompetitionLog({
+      id: `competition-${activePrep.id}`,
+      date: activePrep.date,
+      eventName: activePrep.tournamentName,
+      format: activePrep.format,
+      result,
+      notes: [
+        notes.trim(),
+        primarySkillGap ? `Primary skill gap: ${primarySkillGap}` : '',
+        focusLabel ? `Recovery focus: ${focusLabel}` : '',
+      ]
+        .filter(Boolean)
+        .join(' | '),
     });
   }
 
@@ -131,16 +197,47 @@ export default function TournamentPrep() {
         </Button>
       </Card>
 
-      {latest ? (
+      {sortedPreps.length ? (
+        <Card className="mb-4" title="Tournament Plans">
+          <div className="space-y-2">
+            {sortedPreps.map((entry) => {
+              const done = entry.checklistItems.filter((item) => item.completed).length;
+              const pct = entry.checklistItems.length
+                ? Math.round((done / entry.checklistItems.length) * 100)
+                : 0;
+
+              return (
+                <div
+                  key={entry.id}
+                  className={`rounded-lg border p-3 text-sm ${
+                    activePrep?.id === entry.id
+                      ? 'border-cue-500 bg-felt-700/70'
+                      : 'border-felt-600 bg-felt-800/60'
+                  }`}
+                >
+                  <p className="text-ivory-100">{entry.tournamentName}</p>
+                  <p className="text-chalk-300">{entry.date} · {entry.location} · {entry.format}</p>
+                  <p className="text-chalk-300">Progress: {pct}%</p>
+                  <Button className="mt-2" variant="secondary" onClick={() => setActivePrepId(entry.id)}>
+                    Open Plan
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      ) : null}
+
+      {activePrep ? (
         <Card className="mb-4" title="Active Prep Timeline">
-          <p className="text-sm text-chalk-300">{latest.tournamentName} · {latest.date} · {latest.location}</p>
-          <p className="mb-2 text-sm text-ivory-200">Prep starts: {latest.prepStartDate} · Current step: {latest.currentStep}/{latest.checklistItems.length}</p>
+          <p className="text-sm text-chalk-300">{activePrep.tournamentName} · {activePrep.date} · {activePrep.location}</p>
+          <p className="mb-2 text-sm text-ivory-200">Prep starts: {activePrep.prepStartDate} · Current step: {activePrep.currentStep}/{activePrep.checklistItems.length}</p>
           <div className="mb-3 h-3 rounded-full bg-felt-800">
             <div className="h-3 rounded-full bg-cue-500" style={{ width: `${completionPercent}%` }} />
           </div>
 
           <div className="space-y-2">
-            {latest.checklistItems.map((item) => (
+            {activePrep.checklistItems.map((item) => (
               <label key={item.id} className="flex min-h-11 items-center justify-between rounded-lg bg-felt-800 p-2 text-sm text-ivory-100">
                 <span>D-{item.daysOut}: {item.label}</span>
                 <input
@@ -155,14 +252,17 @@ export default function TournamentPrep() {
         </Card>
       ) : null}
 
-      {latest && eventReached ? (
+      {activePrep && eventReached ? (
         <Card title="Post-Event Analysis">
-          <input
+          <select
             value={result}
             onChange={(event) => setResult(event.target.value)}
-            placeholder="Result summary"
             className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-          />
+          >
+            <option value="Win">Win</option>
+            <option value="Loss">Loss</option>
+            <option value="Mixed">Mixed</option>
+          </select>
           <textarea
             value={bestDecisions}
             onChange={(event) => setBestDecisions(event.target.value)}
@@ -182,22 +282,22 @@ export default function TournamentPrep() {
             className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
           />
           <select
-            value={linkedDrillId}
-            onChange={(event) => setLinkedDrillId(event.target.value)}
+            value={focusAreaId}
+            onChange={(event) => setFocusAreaId(event.target.value)}
             className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
           >
-            <option value="">Link recovery drill</option>
-            {drills.map((drill) => (
-              <option key={drill.id} value={drill.id}>{drill.name}</option>
+            <option value="">Select recovery KPI focus</option>
+            {trackerKpis.map((kpi) => (
+              <option key={kpi.id} value={kpi.id}>{kpi.name}</option>
             ))}
           </select>
           <textarea
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
-            placeholder="Notes"
+            placeholder="Notes (saved to tournament prep and competition log)"
             className="mb-3 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
           />
-          <Button className="w-full" onClick={savePostEventAnalysis}>Save Analysis</Button>
+          <Button className="w-full" onClick={savePostEventAnalysis}>Save Analysis + Update Competition Log</Button>
         </Card>
       ) : null}
     </PageWrapper>

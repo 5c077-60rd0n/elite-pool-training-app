@@ -208,6 +208,7 @@ export interface PostEventAnalysis {
   bestDecisions: string[];
   weakestDecisions: string[];
   primarySkillGap: string;
+  linkedFocusAreaId?: string;
   linkedDrillId?: string;
   notes: string;
 }
