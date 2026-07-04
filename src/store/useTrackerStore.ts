@@ -319,6 +319,7 @@ export const useTrackerStore = create<TrackerState>()(
         set((state) => {
           const now = new Date();
           const isoNow = now.toISOString();
+          const today = isoNow.slice(0, 10);
           const weekNumber = Math.max(1, ...state.dailySessionLogs.map((item) => item.weekNumber));
           const eliteAction = `Elite priority: ${actionItem.trim()}`;
 
@@ -343,21 +344,37 @@ export const useTrackerStore = create<TrackerState>()(
               actionChecklist: [],
             };
 
-          const actionChecklist = [
+          const promotedActions = [
             eliteAction,
-            ...basePlan.actionChecklist.filter((item) => item !== eliteAction),
+            ...(basePlan.eliteOverride?.promotedActions ?? []).filter((item) => item !== eliteAction),
+          ].slice(0, 5);
+
+          const actionChecklist = [
+            ...promotedActions,
+            ...basePlan.actionChecklist.filter((item) => !promotedActions.includes(item)),
           ].slice(0, 10);
+
+          const nextRecommendedMinutes = typeof recommendedMinutes === 'number'
+            ? Math.max(20, Math.min(180, recommendedMinutes))
+            : basePlan.recommendedMinutes;
+
+          const nextFocusKpiName = focusKpiName?.trim() || basePlan.focusKpiName;
 
           return {
             adaptiveDailyPlan: {
               ...basePlan,
               generatedAt: isoNow,
-              focusKpiName: focusKpiName?.trim() || basePlan.focusKpiName,
-              recommendedMinutes: typeof recommendedMinutes === 'number'
-                ? Math.max(20, Math.min(180, recommendedMinutes))
-                : basePlan.recommendedMinutes,
+              focusKpiName: nextFocusKpiName,
+              recommendedMinutes: nextRecommendedMinutes,
               rationale: `${basePlan.rationale} Elite override active for today's session.`,
               actionChecklist,
+              eliteOverride: {
+                lockedForDate: today,
+                source: 'elite-lab',
+                promotedActions,
+                promotedFocusKpiName: nextFocusKpiName,
+                promotedRecommendedMinutes: nextRecommendedMinutes,
+              },
             },
           };
         }),
@@ -370,9 +387,32 @@ export const useTrackerStore = create<TrackerState>()(
           };
         }),
       refreshAdaptiveDailyPlan: (currentFargo, currentWeek) =>
-        set((state) => ({
-          adaptiveDailyPlan: generateAdaptiveDailyPlan(state.dailySessionLogs, currentFargo, currentWeek),
-        })),
+        set((state) => {
+          const regenerated = generateAdaptiveDailyPlan(state.dailySessionLogs, currentFargo, currentWeek);
+          const override = state.adaptiveDailyPlan?.eliteOverride;
+          const today = new Date().toISOString().slice(0, 10);
+          const hasTodayLog = state.dailySessionLogs.some((item) => item.date === today);
+
+          if (!override || override.lockedForDate !== today || hasTodayLog) {
+            return { adaptiveDailyPlan: regenerated };
+          }
+
+          const actionChecklist = [
+            ...override.promotedActions,
+            ...regenerated.actionChecklist.filter((item) => !override.promotedActions.includes(item)),
+          ].slice(0, 10);
+
+          return {
+            adaptiveDailyPlan: {
+              ...regenerated,
+              focusKpiName: override.promotedFocusKpiName ?? regenerated.focusKpiName,
+              recommendedMinutes: override.promotedRecommendedMinutes ?? regenerated.recommendedMinutes,
+              rationale: `${regenerated.rationale} Elite override active for today's session.`,
+              actionChecklist,
+              eliteOverride: override,
+            },
+          };
+        }),
       refreshRecoveryRecommendationPlan: () =>
         set((state) => ({
           recoveryRecommendationPlan: generateRecoveryRecommendation(

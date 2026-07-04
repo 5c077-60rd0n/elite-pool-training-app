@@ -452,6 +452,13 @@ export interface AdaptiveDailyPlan {
   recommendedMinutes: number;
   targetMetrics: AdaptiveTargetMetrics;
   actionChecklist: string[];
+  eliteOverride?: {
+    lockedForDate: string;
+    source: string;
+    promotedActions: string[];
+    promotedFocusKpiName?: string;
+    promotedRecommendedMinutes?: number;
+  };
 }
 
 export interface RecoveryCheckpointMetrics {

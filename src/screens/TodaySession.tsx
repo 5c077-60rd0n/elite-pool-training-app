@@ -231,6 +231,9 @@ export default function TodaySession() {
 
       {adaptiveDailyPlan ? (
         <Card className="mb-4" title="Adaptive Daily Plan">
+          {adaptiveDailyPlan.eliteOverride?.lockedForDate === today && !alreadyLogged ? (
+            <p className="mb-2 text-xs text-cue-300">Elite override active for today. Promoted priorities are locked until you save today's session.</p>
+          ) : null}
           <p className="text-sm text-ivory-100">Focus KPI: {adaptiveDailyPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
           <p className="mt-2 text-sm text-chalk-300">Recommended Session Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
