@@ -6,6 +6,8 @@ const links = [
   { to: '/schedule', label: 'Schedule' },
   { to: '/phases', label: 'Phases' },
   { to: '/milestones', label: 'Milestones' },
+  { to: '/mechanics', label: 'Mechanics Audit' },
+  { to: '/competition', label: 'Competition Log' },
   { to: '/mental', label: 'Mental Game' },
   { to: '/tournament', label: 'Tournament Prep' },
   { to: '/settings', label: 'Settings' },

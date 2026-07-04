@@ -1,139 +1,159 @@
+import { useEffect, useMemo } from 'react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import { getTipOfDay } from '../data/mentalGame';
-import { useProgramStore, getProgramWeek } from '../store/useProgramStore';
-import { useProgressStore } from '../store/useProgressStore';
-import { getGamificationSnapshot } from '../utils/gamification';
-import { useMemo } from 'react';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { useTrackerStore } from '../store/useTrackerStore';
+import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
 export default function Dashboard() {
-  const currentWeek = useProgramStore((s) => s.currentWeek);
-  const logs = useProgressStore((s) => s.logs);
-  const week = getProgramWeek(currentWeek);
-  const tip = getTipOfDay();
-  const game = useMemo(() => getGamificationSnapshot(logs), [logs]);
-  const levelProgress =
-    game.nextLevelXp > game.levelFloorXp
-      ? ((game.totalXp - game.levelFloorXp) / (game.nextLevelXp - game.levelFloorXp)) * 100
-      : 0;
+  const profile = useSettingsStore((s) => s.profile);
+  const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
+  const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
+  const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
+  const syncState = useTrackerStore((s) => s.syncState);
+  const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const onOnline = () => flushSyncQueue();
+    window.addEventListener('online', onOnline);
+    if (navigator.onLine) flushSyncQueue();
+    return () => window.removeEventListener('online', onOnline);
+  }, [flushSyncQueue]);
+
+  const estimatedFargo = useMemo(
+    () => estimateFargo(profile.currentFargoRating, logs, fargoLog),
+    [fargoLog, logs, profile.currentFargoRating],
+  );
+  const currentPhase = phaseFromFargo(estimatedFargo);
+  const pointsToGoal = Math.max(0, 800 - profile.currentFargoRating);
+  const progressToGoal = Math.round(((profile.currentFargoRating - 550) / (800 - 550)) * 100);
+  const milestonesMet = milestoneRows.filter((item) => item.status === 'Met').length;
+  const weeksLogged = new Set(logs.map((item) => item.weekNumber)).size;
+
+  const currentWeekStats = weeklySummaries.at(-1);
+
+  const fargoLineData = useMemo(
+    () =>
+      [...fargoLog]
+        .sort((a, b) => Date.parse(a.date) - Date.parse(b.date))
+        .map((item) => ({
+          event: item.eventTournamentName,
+          rating: item.newFargoRating,
+          date: item.date,
+        })),
+    [fargoLog],
+  );
+
+  const ghostBarData = useMemo(
+    () =>
+      [...weeklySummaries]
+        .sort((a, b) => a.weekNumber - b.weekNumber)
+        .map((item) => ({
+          week: item.weekNumber,
+          ghost: item.ghostDrillBestWinRatePct,
+        })),
+    [weeklySummaries],
+  );
 
   return (
     <PageWrapper title="Dashboard">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
-        <Card className="mb-4 bg-gradient-to-br from-felt-700 to-felt-800">
-          <p className="text-sm text-chalk-300">Week {week.week} of 52</p>
-          <p className="text-xl font-semibold text-ivory-100">Phase {week.phase} · {week.theme}</p>
-        </Card>
-      </motion.div>
+      <Card className="mb-4" title="Rating Progress">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">Current Fargo Rating</p>
+          <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
+          <p className="text-chalk-300">Target Fargo Rating</p>
+          <p className="text-right text-ivory-100">800</p>
+          <p className="text-chalk-300">Points to Goal</p>
+          <p className="text-right text-ivory-100">{pointsToGoal}</p>
+          <p className="text-chalk-300">Progress to Goal</p>
+          <p className="text-right text-ivory-100">{Math.max(0, Math.min(100, progressToGoal))}%</p>
+          <p className="text-chalk-300">Current Phase</p>
+          <p className="text-right text-ivory-100">Phase {currentPhase}</p>
+          <p className="text-chalk-300">Estimated Fargo (Model)</p>
+          <p className="text-right text-cue-300">{estimatedFargo}</p>
+        </div>
+      </Card>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.05 }}>
-        <Card title="Today's Session" className="mb-4">
-          <p className="mb-3 text-ivory-100">{week.dailySessions.monday.focusArea} · 60 minutes</p>
-          <Link to="/session/today">
-            <Button>Start Session</Button>
+      <Card className="mb-4" title="Training Stats (Current Week)">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">DrillRoom Shotmaking % (Avg)</p>
+          <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
+          <p className="text-chalk-300">Bullseye Proximity Score (Avg)</p>
+          <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
+          <p className="text-chalk-300">Ghost Drill Win Rate % (Best)</p>
+          <p className="text-right text-ivory-100">{currentWeekStats?.ghostDrillBestWinRatePct ?? 0}</p>
+          <p className="text-chalk-300">WPB Lessons This Week</p>
+          <p className="text-right text-ivory-100">{currentWeekStats?.wpbLessonsCompleted ?? 0}</p>
+          <p className="text-chalk-300">Weeks Logged</p>
+          <p className="text-right text-ivory-100">{weeksLogged}</p>
+          <p className="text-chalk-300">Milestones Met</p>
+          <p className="text-right text-ivory-100">{milestonesMet}</p>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Fargo Rating Over Time">
+        <div className="h-60">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={fargoLineData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#274033" />
+              <XAxis dataKey="date" stroke="#d0eaf5" />
+              <YAxis stroke="#d0eaf5" domain={[500, 850]} />
+              <Tooltip />
+              <Line type="monotone" dataKey="rating" stroke="#4CAF82" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Weekly Ghost Drill Win Rate Trend">
+        <div className="h-60">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={ghostBarData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#274033" />
+              <XAxis dataKey="week" stroke="#d0eaf5" />
+              <YAxis stroke="#d0eaf5" domain={[0, 100]} />
+              <Tooltip />
+              <Bar dataKey="ghost" fill="#C9A84C" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Offline Sync">
+        <p className="text-sm text-ivory-200">Pending logs: {syncState.pendingLogIds.length}</p>
+        <p className="text-sm text-ivory-200">Last sync: {syncState.lastSyncAt ? new Date(syncState.lastSyncAt).toLocaleString() : 'Not synced yet'}</p>
+        <Button className="mt-3" onClick={flushSyncQueue}>Sync Now</Button>
+      </Card>
+
+      <Card className="mb-4" title="Quick Actions">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Link to="/mechanics">
+            <Button className="w-full">Open Mechanics Audit</Button>
           </Link>
-        </Card>
-      </motion.div>
+          <Link to="/competition">
+            <Button className="w-full">Open Competition Log</Button>
+          </Link>
+        </div>
+      </Card>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.1 }}>
-        <Card title="Training XP" className="mb-4">
-          <div className="mb-2 flex items-end justify-between">
-            <p className="text-3xl font-semibold text-ivory-100">Level {game.level}</p>
-            <p className="text-sm text-chalk-300">{game.totalXp} XP</p>
-          </div>
-          <div className="h-2 overflow-hidden rounded-full bg-felt-600">
-            <motion.div
-              className="h-full bg-cue-400"
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.max(0, Math.min(100, levelProgress))}%` }}
-              transition={{ duration: 0.45, ease: 'easeOut' }}
-            />
-          </div>
-          <p className="mt-2 text-sm text-chalk-300">
-            {Math.max(0, game.nextLevelXp - game.totalXp)} XP to level {game.level + 1}
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-            <div className="rounded-xl border border-felt-600 bg-felt-800/60 p-2">
-              <p className="text-chalk-300">Season Tier</p>
-              <p className="text-lg text-ivory-100">{game.seasonTier}</p>
-            </div>
-            <div className="rounded-xl border border-felt-600 bg-felt-800/60 p-2">
-              <p className="text-chalk-300">North Star</p>
-              <p className="text-lg text-ivory-100">{game.northStarQualitySessions} quality sessions</p>
-            </div>
-          </div>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.15 }}>
-        <Card title="Weekly Quests" className="mb-4">
-          <div className="space-y-3">
-            {game.weeklyQuests.map((quest, index) => {
-              const progressPct = Math.min(100, (quest.progress / Math.max(1, quest.target)) * 100);
-              return (
-                <motion.div
-                  key={quest.id}
-                  className="rounded-xl border border-felt-600 bg-felt-800/60 p-3"
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2, delay: 0.13 + index * 0.05 }}
-                >
-                  <div className="mb-1 flex items-center justify-between">
-                    <p className="text-sm text-ivory-100">{quest.name}</p>
-                    <p className="text-xs text-chalk-300">
-                      {quest.progress}/{quest.target}
-                    </p>
-                  </div>
-                  <p className="mb-2 text-xs text-chalk-300">{quest.description}</p>
-                  <div className="h-2 overflow-hidden rounded-full bg-felt-600">
-                    <motion.div
-                      className="h-full bg-flash-400"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progressPct}%` }}
-                      transition={{ duration: 0.35, delay: 0.16 + index * 0.05 }}
-                    />
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.2 }}>
-        <Card title="Player Identity" className="mb-4">
-          <p className="text-sm text-chalk-300">Current title</p>
-          <p className="text-xl text-ivory-100">{game.title}</p>
-          <p className="mt-2 text-sm text-chalk-300">Streak: {game.streakDays} days</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {game.badges.length ? (
-              game.badges.map((badge, index) => (
-                <motion.span
-                  key={badge}
-                  className="rounded-full border border-cue-600/60 bg-felt-800 px-3 py-1 text-xs text-cue-300"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.18, delay: 0.2 + index * 0.05 }}
-                >
-                  {badge}
-                </motion.span>
-              ))
-            ) : (
-              <span className="text-sm text-chalk-300">Complete quality sessions to earn badges.</span>
-            )}
-          </div>
-        </Card>
-      </motion.div>
-
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.24, delay: 0.24 }}>
-        <Card title="Mental Game Tip">
-          <p className="text-sm text-chalk-300">{tip.title}</p>
-          <p className="text-ivory-100">{tip.content}</p>
-        </Card>
-      </motion.div>
+      <Link to="/session/today">
+        <Button className="w-full">Start Session</Button>
+      </Link>
     </PageWrapper>
   );
 }

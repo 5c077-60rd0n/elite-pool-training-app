@@ -1,216 +1,173 @@
 import { useMemo, useState } from 'react';
-import {
-  Line,
-  LineChart,
-  PolarAngleAxis,
-  PolarGrid,
-  Radar,
-  RadarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
 import { Card } from '../components/ui/Card';
-import { PageWrapper } from '../components/layout/PageWrapper';
-import { useProgressStore } from '../store/useProgressStore';
 import { Button } from '../components/ui/Button';
-import { useKPICalc } from '../hooks/useKPICalc';
-import { drills } from '../data/drills';
-import { isoDate } from '../utils/date';
-import { usePlateauDetector } from '../hooks/usePlateauDetector';
-import { useSettingsStore } from '../store/useSettingsStore';
-import { useFargoEstimate } from '../hooks/useFargoEstimate';
+import { PageWrapper } from '../components/layout/PageWrapper';
+import { useTrackerStore } from '../store/useTrackerStore';
+import type { MatchResult } from '../types/tracker';
 
-type Tab = 'fargo' | 'kpi' | 'scorecard';
+type Tab = 'weekly' | 'fargo' | 'bullseye';
 
 export default function Progress() {
-  const [tab, setTab] = useState<Tab>('fargo');
-  const [entryDate, setEntryDate] = useState(isoDate());
-  const [entryRating, setEntryRating] = useState<string>('550');
-  const history = useProgressStore((s) => s.fargoHistory);
-  const logs = useProgressStore((s) => s.logs);
-  const addFargoPoint = useProgressStore((s) => s.addFargoPoint);
-  const weeklyKpis = useProgressStore((s) => s.weeklyKpis);
-  const { radarData, trends, kpiScores, weeklyHistory } = useKPICalc();
-  const plateau = usePlateauDetector();
-  const profile = useSettingsStore((s) => s.profile);
+  const [tab, setTab] = useState<Tab>('weekly');
+  const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
+  const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
+  const bullseye = useTrackerStore((s) => s.bullseyeCategoryTracker);
+  const addFargoRating = useTrackerStore((s) => s.addFargoRating);
 
-  const { estimatedCurrent, projectedIn4Weeks, confidence, confidenceRange, confidenceLabel, diagnostics } = useFargoEstimate({
-    currentFargoRating: profile.currentFargoRating,
-    lastOfficialFargoRating: profile.lastOfficialFargoRating,
-    lastOfficialFargoDate: profile.lastOfficialFargoDate,
-    historicalPeakFargoRating: profile.historicalPeakFargoRating,
-    yearsAwayFromCompetition: profile.yearsAwayFromCompetition,
-    fargoHistory: history,
-    logs,
-    weeklyHistory,
-    kpiScores,
-    trends,
-  });
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [eventName, setEventName] = useState('');
+  const [opponent, setOpponent] = useState('');
+  const [matchResult, setMatchResult] = useState<MatchResult>('Win');
+  const [gamesWon, setGamesWon] = useState(7);
+  const [gamesLost, setGamesLost] = useState(4);
+  const [newRating, setNewRating] = useState(550);
+  const [notes, setNotes] = useState('');
 
-  const sortedHistory = useMemo(
-    () => [...history].sort((a, b) => Date.parse(a.date || '') - Date.parse(b.date || '')),
-    [history],
+  const sortedWeekly = useMemo(
+    () => [...weeklySummaries].sort((a, b) => a.weekNumber - b.weekNumber),
+    [weeklySummaries],
   );
 
-  const chartData = useMemo(() => {
-    const base = sortedHistory.length
-      ? sortedHistory.map((point) => ({ date: point.date, rating: point.rating, estimatedRating: null as number | null }))
-      : [{ date: 'Baseline', rating: profile.currentFargoRating, estimatedRating: null as number | null }];
-
-    return [
-      ...base,
-      { date: 'Now (Est.)', rating: null, estimatedRating: estimatedCurrent },
-      { date: '+4 Weeks', rating: null, estimatedRating: projectedIn4Weeks },
-    ];
-  }, [sortedHistory, profile.currentFargoRating, estimatedCurrent, projectedIn4Weeks]);
-
-  const trendByKpi = useMemo(() => {
-    return new Map(trends.map((entry) => [entry.kpiId, entry.trend]));
-  }, [trends]);
-
-  const scorecardRows = useMemo(() => {
-    return drills.slice(0, 12).map((drill) => {
-      const scores = [1, 2, 3, 4].map((weekOffset) => {
-        const week = weekOffset;
-        const entry = weeklyKpis.find((item) => item.week === week);
-        return entry?.value ?? 0;
-      });
-      return {
-        drillName: drill.name,
-        target: drill.targetScore.phase1,
-        scores,
-      };
+  function saveFargoLog(): void {
+    const previous = [...fargoLog].sort((a, b) => Date.parse(a.date) - Date.parse(b.date)).at(-1);
+    addFargoRating({
+      id: `fargo-${Date.now()}`,
+      date,
+      eventTournamentName: eventName,
+      opponentFargoRating: opponent ? Number(opponent) : undefined,
+      matchResult,
+      gamesWon,
+      gamesLost,
+      newFargoRating: newRating,
+      ratingChange: previous ? newRating - previous.newFargoRating : undefined,
+      notes,
     });
-  }, [weeklyKpis]);
 
-  function logFargo(): void {
-    const parsedRating = Number(entryRating);
-    if (!Number.isFinite(parsedRating)) return;
-    addFargoPoint({ date: entryDate, rating: parsedRating });
+    setEventName('');
+    setOpponent('');
+    setNotes('');
   }
 
   return (
-    <PageWrapper title="Progress">
+    <PageWrapper title="Tracking">
       <div className="mb-4 flex flex-wrap gap-2">
-        <Button variant={tab === 'fargo' ? 'primary' : 'secondary'} onClick={() => setTab('fargo')}>Fargo Journey</Button>
-        <Button variant={tab === 'kpi' ? 'primary' : 'secondary'} onClick={() => setTab('kpi')}>KPI Dashboard</Button>
-        <Button variant={tab === 'scorecard' ? 'primary' : 'secondary'} onClick={() => setTab('scorecard')}>Weekly Scorecard</Button>
+        <Button variant={tab === 'weekly' ? 'primary' : 'secondary'} onClick={() => setTab('weekly')}>Weekly Summary</Button>
+        <Button variant={tab === 'fargo' ? 'primary' : 'secondary'} onClick={() => setTab('fargo')}>Fargo Rating Log</Button>
+        <Button variant={tab === 'bullseye' ? 'primary' : 'secondary'} onClick={() => setTab('bullseye')}>Bullseye Tracker</Button>
       </div>
 
-      {tab === 'fargo' ? (
-        <Card title="Fargo Journey">
-          <div className="mb-3 rounded-xl border border-felt-600 bg-felt-800/70 p-3">
-            <p className="text-xs uppercase tracking-wide text-chalk-300">Estimated Fargo (Practice Model)</p>
-            <p className="text-2xl font-semibold text-cue-400">{estimatedCurrent}</p>
-            <p className="text-sm text-ivory-200">
-              Confidence range: {confidenceRange[0]}-{confidenceRange[1]} · Confidence: {Math.round(confidence * 100)}% ({confidenceLabel})
-            </p>
-            <p className="text-xs text-chalk-300">Projection in 4 weeks: {projectedIn4Weeks} · Based on KPI-to-Fargo benchmark inversion and recent target rates.</p>
-          </div>
-
-          <div className="mb-3 rounded-xl border border-felt-600 bg-felt-800/70 p-3">
-            <p className="text-xs uppercase tracking-wide text-chalk-300">Model Diagnostics</p>
-            <div className="mt-2 grid grid-cols-1 gap-2 text-sm text-ivory-100 sm:grid-cols-2">
-              <p>Data sufficiency: {diagnostics.dataSufficiency}%</p>
-              <p>Calibration fit: {diagnostics.calibrationFitQuality}%</p>
-              <p>Sessions used: {diagnostics.contributingSessions}</p>
-              <p>Drill results used: {diagnostics.contributingDrillResults}</p>
-              <p>KPI signals used: {diagnostics.contributingKpis}</p>
-              <p>Calibration points: {diagnostics.calibrationPoints}</p>
-            </div>
-          </div>
-
-          <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <input
-              type="date"
-              value={entryDate}
-              onChange={(event) => setEntryDate(event.target.value)}
-              className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-            <input
-              type="number"
-              value={entryRating}
-              onChange={(event) => setEntryRating(event.target.value)}
-              className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-            <Button onClick={logFargo}>Log Rating</Button>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" stroke="#d0eaf5" />
-                <YAxis stroke="#d0eaf5" />
-                <Tooltip />
-                <Line type="monotone" dataKey="rating" name="Logged Fargo" stroke="#e0bf6b" strokeWidth={3} dot={false} />
-                <Line
-                  type="monotone"
-                  dataKey="estimatedRating"
-                  name="Estimated Fargo"
-                  stroke="#5fc5ff"
-                  strokeWidth={2}
-                  strokeDasharray="6 4"
-                  dot={{ r: 3 }}
-                  connectNulls={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      ) : null}
-
-      {tab === 'kpi' ? (
-        <Card title="KPI Radar">
-          {plateau.isOnPlateau ? (
-            <div className="mb-3 rounded-lg border border-amber-500/60 bg-amber-500/10 p-3 text-sm text-amber-200">
-              Plateau alert: {plateau.weeksAtSameLevel}+ weeks stable/declining. Review protocol in KPI Tracker.
-            </div>
-          ) : null}
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadarChart data={radarData}>
-                <PolarGrid />
-                <PolarAngleAxis dataKey="subject" />
-                <Radar dataKey="value" stroke="#e0bf6b" fill="#e0bf6b" fillOpacity={0.3} />
-              </RadarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-3 space-y-2">
-            {kpiScores.map((entry) => (
-              <div key={entry.id} className="flex items-center justify-between rounded-lg bg-felt-800 p-2 text-sm">
-                <span className="text-ivory-100">{entry.name}</span>
-                <span className="text-chalk-300">
-                  {entry.normalizedScore}% of benchmark · {trendByKpi.get(entry.id) ?? 'stable'}
-                </span>
-              </div>
-            ))}
-          </div>
-        </Card>
-      ) : null}
-
-      {tab === 'scorecard' ? (
-        <Card title="Weekly Scorecard">
+      {tab === 'weekly' ? (
+        <Card title="Weekly Summary">
           <div className="overflow-x-auto">
-            <table className="min-w-full text-left text-sm text-ivory-100">
+            <table className="min-w-full text-left text-xs text-ivory-100">
               <thead>
                 <tr className="border-b border-felt-600 text-chalk-300">
-                  <th className="px-2 py-2">Drill</th>
-                  <th className="px-2 py-2">Target</th>
-                  <th className="px-2 py-2">W1</th>
-                  <th className="px-2 py-2">W2</th>
-                  <th className="px-2 py-2">W3</th>
-                  <th className="px-2 py-2">W4</th>
+                  <th className="px-2 py-2">Week</th>
+                  <th className="px-2 py-2">Sessions</th>
+                  <th className="px-2 py-2">Minutes</th>
+                  <th className="px-2 py-2">DrillRoom %</th>
+                  <th className="px-2 py-2">Bullseye Avg</th>
+                  <th className="px-2 py-2">Ghost Best %</th>
+                  <th className="px-2 py-2">WPB Lessons</th>
+                  <th className="px-2 py-2">Line-Up Best</th>
                 </tr>
               </thead>
               <tbody>
-                {scorecardRows.map((row) => (
-                  <tr key={row.drillName} className="border-b border-felt-800">
-                    <td className="px-2 py-2">{row.drillName}</td>
-                    <td className="px-2 py-2">{row.target}</td>
-                    {row.scores.map((value, index) => (
-                      <td key={`${row.drillName}-${index}`} className="px-2 py-2">{value}</td>
-                    ))}
+                {sortedWeekly.map((item) => (
+                  <tr key={item.id} className="border-b border-felt-800">
+                    <td className="px-2 py-2">{item.weekNumber}</td>
+                    <td className="px-2 py-2">{item.sessionsCompleted}</td>
+                    <td className="px-2 py-2">{item.totalTrainingMinutes}</td>
+                    <td className="px-2 py-2">{item.avgDrillRoomShotmakingPct}</td>
+                    <td className="px-2 py-2">{item.avgBullseyeProximityScore}</td>
+                    <td className="px-2 py-2">{item.ghostDrillBestWinRatePct}</td>
+                    <td className="px-2 py-2">{item.wpbLessonsCompleted}</td>
+                    <td className="px-2 py-2">{item.lineUpBestScore}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : null}
+
+      {tab === 'fargo' ? (
+        <>
+          <Card className="mb-4" title="Log Official Fargo Rating Update">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Event / Tournament Name" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input value={opponent} onChange={(event) => setOpponent(event.target.value)} placeholder="Opponent Fargo Rating" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <select value={matchResult} onChange={(event) => setMatchResult(event.target.value as MatchResult)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100">
+                <option value="Win">Win</option>
+                <option value="Loss">Loss</option>
+              </select>
+              <input type="number" value={gamesWon} onChange={(event) => setGamesWon(Number(event.target.value) || 0)} placeholder="Games Won" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input type="number" value={gamesLost} onChange={(event) => setGamesLost(Number(event.target.value) || 0)} placeholder="Games Lost" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input type="number" value={newRating} onChange={(event) => setNewRating(Number(event.target.value) || 0)} placeholder="New Fargo Rating" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+            </div>
+            <Button className="mt-3 w-full" onClick={saveFargoLog} disabled={!eventName.trim()}>Save Fargo Log Entry</Button>
+          </Card>
+
+          <Card title="Official Fargo Rating Log">
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-xs text-ivory-100">
+                <thead>
+                  <tr className="border-b border-felt-600 text-chalk-300">
+                    <th className="px-2 py-2">Date</th>
+                    <th className="px-2 py-2">Event</th>
+                    <th className="px-2 py-2">Opponent</th>
+                    <th className="px-2 py-2">Result</th>
+                    <th className="px-2 py-2">W-L</th>
+                    <th className="px-2 py-2">New Rating</th>
+                    <th className="px-2 py-2">Change</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...fargoLog].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).map((item) => (
+                    <tr key={item.id} className="border-b border-felt-800">
+                      <td className="px-2 py-2">{item.date}</td>
+                      <td className="px-2 py-2">{item.eventTournamentName}</td>
+                      <td className="px-2 py-2">{item.opponentFargoRating ?? ''}</td>
+                      <td className="px-2 py-2">{item.matchResult}</td>
+                      <td className="px-2 py-2">{item.gamesWon}-{item.gamesLost}</td>
+                      <td className="px-2 py-2">{item.newFargoRating}</td>
+                      <td className="px-2 py-2">{item.ratingChange ?? ''}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </>
+      ) : null}
+
+      {tab === 'bullseye' ? (
+        <Card title="Bullseye Category Tracker">
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-xs text-ivory-100">
+              <thead>
+                <tr className="border-b border-felt-600 text-chalk-300">
+                  <th className="px-2 py-2">Category</th>
+                  <th className="px-2 py-2">Level</th>
+                  <th className="px-2 py-2">Last Tested</th>
+                  <th className="px-2 py-2">Best Score</th>
+                  <th className="px-2 py-2">Sessions</th>
+                  <th className="px-2 py-2">Target by Phase</th>
+                  <th className="px-2 py-2">Achievement</th>
+                </tr>
+              </thead>
+              <tbody>
+                {bullseye.map((item) => (
+                  <tr key={item.id} className="border-b border-felt-800">
+                    <td className="px-2 py-2">{item.category}</td>
+                    <td className="px-2 py-2">{item.currentProficiencyLevel}</td>
+                    <td className="px-2 py-2">{item.lastTestedDate ?? ''}</td>
+                    <td className="px-2 py-2">{item.bestProximityScore ?? ''}</td>
+                    <td className="px-2 py-2">{item.sessionsPracticed}</td>
+                    <td className="px-2 py-2">{item.targetByPhase}</td>
+                    <td className="px-2 py-2">{item.achievementUnlocked}</td>
                   </tr>
                 ))}
               </tbody>

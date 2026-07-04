@@ -8,6 +8,8 @@ import { useNotificationStore } from '../store/useNotificationStore';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSessionStore } from '../store/useSessionStore';
 import { useGamificationStore } from '../store/useGamificationStore';
+import { useTrackerStore } from '../store/useTrackerStore';
+import { bullseyeCategorySeed, mechanicsChecklistSeed, milestoneRows, phaseStatuses } from '../data/trackerPlan';
 
 export default function Settings() {
   const profile = useSettingsStore((s) => s.profile);
@@ -19,6 +21,7 @@ export default function Settings() {
   const setReminderTime = useNotificationStore((s) => s.setReminderTime);
   const progress = useProgressStore();
   const session = useSessionStore();
+  const tracker = useTrackerStore();
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
   const setSoundEnabled = useGamificationStore((s) => s.setSoundEnabled);
@@ -44,6 +47,18 @@ export default function Settings() {
         weeklyKpis: progress.weeklyKpis,
         breakChartEntries: progress.breakChartEntries,
         tournamentPreps: progress.tournamentPreps,
+      },
+      tracker: {
+        dailySessionLogs: tracker.dailySessionLogs,
+        weeklySummaries: tracker.weeklySummaries,
+        fargoRatingLog: tracker.fargoRatingLog,
+        bullseyeCategoryTracker: tracker.bullseyeCategoryTracker,
+        milestoneTrackerRows: tracker.milestoneTrackerRows,
+        milestonePhaseStatuses: tracker.milestonePhaseStatuses,
+        mechanicsChecklist: tracker.mechanicsChecklist,
+        mechanicsWeeklyAuditLog: tracker.mechanicsWeeklyAuditLog,
+        competitionLog: tracker.competitionLog,
+        syncState: tracker.syncState,
       },
       session: {
         activeDate: session.activeDate,
@@ -81,6 +96,18 @@ export default function Settings() {
           breakChartEntries?: typeof progress.breakChartEntries;
           tournamentPreps?: typeof progress.tournamentPreps;
         };
+        tracker?: {
+          dailySessionLogs?: typeof tracker.dailySessionLogs;
+          weeklySummaries?: typeof tracker.weeklySummaries;
+          fargoRatingLog?: typeof tracker.fargoRatingLog;
+          bullseyeCategoryTracker?: typeof tracker.bullseyeCategoryTracker;
+          milestoneTrackerRows?: typeof tracker.milestoneTrackerRows;
+          milestonePhaseStatuses?: typeof tracker.milestonePhaseStatuses;
+          mechanicsChecklist?: typeof tracker.mechanicsChecklist;
+          mechanicsWeeklyAuditLog?: typeof tracker.mechanicsWeeklyAuditLog;
+          competitionLog?: typeof tracker.competitionLog;
+          syncState?: typeof tracker.syncState;
+        };
         session?: {
           activeDate?: string;
           activeFocus?: string;
@@ -117,6 +144,21 @@ export default function Settings() {
           tournamentPreps: parsed.progress?.tournamentPreps ?? state.tournamentPreps,
         }));
       }
+      if (parsed.tracker) {
+        useTrackerStore.setState((state) => ({
+          ...state,
+          dailySessionLogs: parsed.tracker?.dailySessionLogs ?? state.dailySessionLogs,
+          weeklySummaries: parsed.tracker?.weeklySummaries ?? state.weeklySummaries,
+          fargoRatingLog: parsed.tracker?.fargoRatingLog ?? state.fargoRatingLog,
+          bullseyeCategoryTracker: parsed.tracker?.bullseyeCategoryTracker ?? state.bullseyeCategoryTracker,
+          milestoneTrackerRows: parsed.tracker?.milestoneTrackerRows ?? state.milestoneTrackerRows,
+          milestonePhaseStatuses: parsed.tracker?.milestonePhaseStatuses ?? state.milestonePhaseStatuses,
+          mechanicsChecklist: parsed.tracker?.mechanicsChecklist ?? state.mechanicsChecklist,
+          mechanicsWeeklyAuditLog: parsed.tracker?.mechanicsWeeklyAuditLog ?? state.mechanicsWeeklyAuditLog,
+          competitionLog: parsed.tracker?.competitionLog ?? state.competitionLog,
+          syncState: parsed.tracker?.syncState ?? state.syncState,
+        }));
+      }
       if (parsed.session) {
         useSessionStore.setState((state) => ({
           ...state,
@@ -145,6 +187,19 @@ export default function Settings() {
       weeklyKpis: [],
       breakChartEntries: [],
       tournamentPreps: [],
+    }));
+    useTrackerStore.setState((state) => ({
+      ...state,
+      dailySessionLogs: [],
+      weeklySummaries: [],
+      fargoRatingLog: [],
+      bullseyeCategoryTracker: bullseyeCategorySeed,
+      milestoneTrackerRows: milestoneRows,
+      milestonePhaseStatuses: phaseStatuses,
+      mechanicsChecklist: mechanicsChecklistSeed,
+      mechanicsWeeklyAuditLog: [],
+      competitionLog: [],
+      syncState: { pendingLogIds: [], lastSyncAt: undefined },
     }));
     useSessionStore.setState((state) => ({
       ...state,

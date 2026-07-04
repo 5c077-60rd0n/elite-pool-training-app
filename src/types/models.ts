@@ -1,4 +1,4 @@
-export type ProgramPhaseId = 1 | 2 | 3 | 4;
+export type ProgramPhaseId = 1 | 2 | 3 | 4 | 5;
 
 export type DayOfWeek =
   | 'monday'
@@ -126,6 +126,7 @@ export interface DrillTarget {
   phase2: number;
   phase3: number;
   phase4: number;
+  phase5?: number;
 }
 
 export interface KPI {

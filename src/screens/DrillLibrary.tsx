@@ -28,7 +28,7 @@ export default function DrillLibrary() {
   const currentPhase = useMemo(() => {
     const parsed = Number(currentPhaseRaw);
     if (!Number.isFinite(parsed)) return 1;
-    return Math.min(4, Math.max(1, Math.round(parsed)));
+    return Math.min(5, Math.max(1, Math.round(parsed)));
   }, [currentPhaseRaw]);
 
   const filtered = useMemo(() => {
@@ -36,7 +36,8 @@ export default function DrillLibrary() {
     return drills.filter((drill) => {
       const matchesQuery = !q || `${drill.name} ${drill.description}`.toLowerCase().includes(q);
       const matchesCategory = category === 'all' || drill.category === category;
-      const matchesPhase = !phaseOnly || drill.applicablePhases.includes(currentPhase);
+      const effectivePhase = currentPhase > 4 ? 4 : currentPhase;
+      const matchesPhase = !phaseOnly || drill.applicablePhases.includes(effectivePhase);
       return matchesQuery && matchesCategory && matchesPhase;
     });
   }, [category, currentPhase, phaseOnly, query]);

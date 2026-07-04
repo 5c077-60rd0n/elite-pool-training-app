@@ -1,0 +1,161 @@
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { idbStorage } from './idbStorage';
+import {
+  bullseyeCategorySeed,
+  mechanicsChecklistSeed,
+  milestoneRows,
+  phaseStatuses,
+} from '../data/trackerPlan';
+import type {
+  CompetitionLogEntry,
+  DailySessionLog,
+  FargoRatingLogEntry,
+  MechanicsChecklistItem,
+  MechanicsWeeklyAuditLog,
+  MilestonePhaseStatus,
+  MilestoneTrackerRow,
+  TrackerSyncState,
+  WeeklySummary,
+  BullseyeCategoryTrackerEntry,
+} from '../types/tracker';
+import {
+  calculateWeeklySummary,
+  estimateFargo,
+  milestonePhaseStatus,
+  milestoneStatusRows,
+} from '../utils/trackerCalculations';
+
+interface TrackerState {
+  dailySessionLogs: DailySessionLog[];
+  weeklySummaries: WeeklySummary[];
+  fargoRatingLog: FargoRatingLogEntry[];
+  bullseyeCategoryTracker: BullseyeCategoryTrackerEntry[];
+  milestoneTrackerRows: MilestoneTrackerRow[];
+  milestonePhaseStatuses: MilestonePhaseStatus[];
+  mechanicsChecklist: MechanicsChecklistItem[];
+  mechanicsWeeklyAuditLog: MechanicsWeeklyAuditLog[];
+  competitionLog: CompetitionLogEntry[];
+  syncState: TrackerSyncState;
+  addDailySessionLog: (entry: DailySessionLog, currentFargo: number) => void;
+  addFargoRating: (entry: FargoRatingLogEntry) => void;
+  addMechanicsWeeklyAudit: (entry: MechanicsWeeklyAuditLog) => void;
+  upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
+  addCompetitionLog: (entry: CompetitionLogEntry) => void;
+  flushSyncQueue: () => void;
+}
+
+export const useTrackerStore = create<TrackerState>()(
+  persist(
+    (set, get) => ({
+      dailySessionLogs: [],
+      weeklySummaries: [],
+      fargoRatingLog: [],
+      bullseyeCategoryTracker: bullseyeCategorySeed,
+      milestoneTrackerRows: milestoneRows,
+      milestonePhaseStatuses: phaseStatuses,
+      mechanicsChecklist: mechanicsChecklistSeed,
+      mechanicsWeeklyAuditLog: [],
+      competitionLog: [],
+      syncState: { pendingLogIds: [], lastSyncAt: undefined },
+      addDailySessionLog: (entry, currentFargo) =>
+        set((state) => {
+          const nextLogs = [entry, ...state.dailySessionLogs.filter((item) => item.id !== entry.id)];
+          const weekNumbers = Array.from(new Set(nextLogs.map((item) => item.weekNumber))).sort((a, b) => a - b);
+          const weeklySummaries = weekNumbers
+            .map((weekNumber) => calculateWeeklySummary(nextLogs, weekNumber, state.weeklySummaries))
+            .filter((item): item is WeeklySummary => Boolean(item));
+
+          const estFargo = estimateFargo(currentFargo, nextLogs, state.fargoRatingLog);
+          const updatedRows = milestoneStatusRows(state.milestoneTrackerRows, estFargo);
+          const updatedStatuses = milestonePhaseStatus(state.milestonePhaseStatuses, updatedRows);
+
+          const nextBullseye =
+            entry.bullseyeCategory && entry.bullseyeProximity > 0
+              ? state.bullseyeCategoryTracker.map((item) =>
+                  item.category === entry.bullseyeCategory
+                    ? {
+                        ...item,
+                        lastTestedDate: entry.date,
+                        bestProximityScore:
+                          item.bestProximityScore && item.bestProximityScore > 0
+                            ? Math.min(item.bestProximityScore, entry.bullseyeProximity)
+                            : entry.bullseyeProximity,
+                        sessionsPracticed: item.sessionsPracticed + 1,
+                      }
+                    : item,
+                )
+              : state.bullseyeCategoryTracker;
+
+          return {
+            dailySessionLogs: nextLogs,
+            weeklySummaries,
+            milestoneTrackerRows: updatedRows,
+            milestonePhaseStatuses: updatedStatuses,
+            bullseyeCategoryTracker: nextBullseye,
+            syncState: {
+              ...state.syncState,
+              pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+            },
+          };
+        }),
+      addFargoRating: (entry) =>
+        set((state) => {
+          const nextFargo = [entry, ...state.fargoRatingLog.filter((item) => item.id !== entry.id)];
+          const estFargo = estimateFargo(550, state.dailySessionLogs, nextFargo);
+          const updatedRows = milestoneStatusRows(state.milestoneTrackerRows, estFargo);
+          const updatedStatuses = milestonePhaseStatus(state.milestonePhaseStatuses, updatedRows);
+          return {
+            fargoRatingLog: nextFargo,
+            milestoneTrackerRows: updatedRows,
+            milestonePhaseStatuses: updatedStatuses,
+          };
+        }),
+      addMechanicsWeeklyAudit: (entry) =>
+        set((state) => ({
+          mechanicsWeeklyAuditLog: [
+            entry,
+            ...state.mechanicsWeeklyAuditLog.filter((item) => item.id !== entry.id),
+          ],
+        })),
+      upsertMechanicsChecklistItem: (entry) =>
+        set((state) => ({
+          mechanicsChecklist: [
+            ...state.mechanicsChecklist.filter((item) => item.id !== entry.id),
+            entry,
+          ],
+        })),
+      addCompetitionLog: (entry) =>
+        set((state) => ({
+          competitionLog: [entry, ...state.competitionLog.filter((item) => item.id !== entry.id)],
+          syncState: {
+            ...state.syncState,
+            pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+          },
+        })),
+      flushSyncQueue: () => {
+        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+        const pending = get().syncState.pendingLogIds;
+        if (!pending.length) return;
+        set((state) => ({
+          dailySessionLogs: state.dailySessionLogs.map((item) =>
+            pending.includes(item.id)
+              ? {
+                  ...item,
+                  syncedAt: new Date().toISOString(),
+                }
+              : item,
+          ),
+          syncState: {
+            pendingLogIds: [],
+            lastSyncAt: new Date().toISOString(),
+          },
+        }));
+      },
+    }),
+    {
+      name: 'fargo-climb-tracker',
+      storage: createJSONStorage(() => idbStorage),
+    },
+  ),
+);
