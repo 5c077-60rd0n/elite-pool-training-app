@@ -11,6 +11,7 @@ import { useGamificationStore } from '../store/useGamificationStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { bullseyeCategorySeed, mechanicsChecklistSeed, milestoneRows, phaseStatuses } from '../data/trackerPlan';
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
+import { buildCoachReviewExport } from '../utils/coachExport';
 
 type BackupPayload = {
   version?: string;
@@ -38,6 +39,7 @@ type BackupPayload = {
     opponentPrepCards?: ReturnType<typeof useTrackerStore.getState>['opponentPrepCards'];
     personalRecords?: ReturnType<typeof useTrackerStore.getState>['personalRecords'];
     confidenceIndexHistory?: ReturnType<typeof useTrackerStore.getState>['confidenceIndexHistory'];
+    coachExportHistory?: ReturnType<typeof useTrackerStore.getState>['coachExportHistory'];
     adaptiveDailyPlan?: ReturnType<typeof useTrackerStore.getState>['adaptiveDailyPlan'];
     recoveryRecommendationPlan?: ReturnType<typeof useTrackerStore.getState>['recoveryRecommendationPlan'];
     syncState?: ReturnType<typeof useTrackerStore.getState>['syncState'];
@@ -74,6 +76,7 @@ export default function Settings() {
   const progress = useProgressStore();
   const session = useSessionStore();
   const tracker = useTrackerStore();
+  const addCoachExportHistoryEntry = useTrackerStore((s) => s.addCoachExportHistoryEntry);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
@@ -93,6 +96,7 @@ export default function Settings() {
       opponentPrepCards: tracker.opponentPrepCards.length,
       personalRecords: tracker.personalRecords.length,
       confidenceEntries: tracker.confidenceIndexHistory.length,
+      coachExports: tracker.coachExportHistory.length,
       pendingSync: tracker.syncState.pendingLogIds.length,
       lastSyncAt: tracker.syncState.lastSyncAt,
     }),
@@ -136,6 +140,7 @@ export default function Settings() {
         opponentPrepCards: tracker.opponentPrepCards,
         personalRecords: tracker.personalRecords,
         confidenceIndexHistory: tracker.confidenceIndexHistory,
+        coachExportHistory: tracker.coachExportHistory,
         adaptiveDailyPlan: tracker.adaptiveDailyPlan,
         recoveryRecommendationPlan: tracker.recoveryRecommendationPlan,
         syncState: tracker.syncState,
@@ -225,6 +230,7 @@ export default function Settings() {
           opponentPrepCards: trackerData.opponentPrepCards ?? state.opponentPrepCards,
           personalRecords: trackerData.personalRecords ?? state.personalRecords,
           confidenceIndexHistory: trackerData.confidenceIndexHistory ?? state.confidenceIndexHistory,
+          coachExportHistory: trackerData.coachExportHistory ?? state.coachExportHistory,
           adaptiveDailyPlan: trackerData.adaptiveDailyPlan ?? state.adaptiveDailyPlan,
           recoveryRecommendationPlan: trackerData.recoveryRecommendationPlan ?? state.recoveryRecommendationPlan,
           syncState: trackerData.syncState ?? state.syncState,
@@ -252,6 +258,40 @@ export default function Settings() {
   function syncNow(): void {
     flushSyncQueue();
     setStatus('Sync attempted. Pending logs clear automatically when online.');
+  }
+
+  function exportCoachReview(): void {
+    const payload = buildCoachReviewExport({
+      athlete: {
+        name: profile.name,
+        currentFargoRating: profile.currentFargoRating,
+        targetFargoRating: profile.targetFargoRating,
+        currentWeek: profile.currentWeek,
+      },
+      logs: tracker.dailySessionLogs,
+      weeklySummaries: tracker.weeklySummaries,
+      competitionLog: tracker.competitionLog,
+      confidenceIndexHistory: tracker.confidenceIndexHistory,
+      personalRecords: tracker.personalRecords,
+    });
+
+    const stamp = payload.generatedAt.slice(0, 10);
+    const fileName = `coach-review-${stamp}.json`;
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = fileName;
+    anchor.click();
+    URL.revokeObjectURL(url);
+
+    addCoachExportHistoryEntry({
+      id: `coach-export-${Date.now()}`,
+      generatedAt: payload.generatedAt,
+      fileName,
+      payload,
+    });
+    setStatus('Coach review export generated.');
   }
 
   function resetAllData(): void {
@@ -285,6 +325,7 @@ export default function Settings() {
       opponentPrepCards: opponentPrepCardSeed,
       personalRecords: [],
       confidenceIndexHistory: [],
+      coachExportHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
@@ -499,6 +540,7 @@ export default function Settings() {
           <p>Fargo Entries: {trackerSummary.fargoEntries}</p>
           <p>Mechanics Audits: {trackerSummary.mechanicsAudits}</p>
           <p>Competition Logs: {trackerSummary.competitionEntries}</p>
+          <p>Coach Exports: {trackerSummary.coachExports}</p>
           <p>Pending Sync: {trackerSummary.pendingSync}</p>
         </div>
         <p className="mb-3 text-xs text-chalk-300">
@@ -506,10 +548,18 @@ export default function Settings() {
         </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button onClick={exportData}>Export Backup</Button>
+          <Button onClick={exportCoachReview}>Generate Coach Review Export</Button>
           <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Import Backup</Button>
           <Button variant="secondary" onClick={syncNow}>Sync Pending Logs</Button>
           <Button variant="secondary" onClick={resetAllData}>Reset Tracker Data</Button>
         </div>
+        {tracker.coachExportHistory.length ? (
+          <div className="mt-3 space-y-1 rounded-lg border border-felt-600 bg-felt-800/60 p-2 text-xs text-chalk-300">
+            {tracker.coachExportHistory.slice(0, 3).map((entry) => (
+              <p key={entry.id}>{entry.fileName} · {new Date(entry.generatedAt).toLocaleString()}</p>
+            ))}
+          </div>
+        ) : null}
         <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={(event) => void importData(event)} />
         {status ? <p className="mt-3 text-sm text-chalk-300">{status}</p> : null}
       </Card>

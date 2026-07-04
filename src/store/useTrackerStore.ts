@@ -10,6 +10,7 @@ import {
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import type {
   AdaptiveDailyPlan,
+  CoachExportHistoryEntry,
   ConfidenceIndexEntry,
   PersonalRecord,
   RecoveryRecommendationPlan,
@@ -52,6 +53,7 @@ interface TrackerState {
   opponentPrepCards: OpponentPrepCard[];
   personalRecords: PersonalRecord[];
   confidenceIndexHistory: ConfidenceIndexEntry[];
+  coachExportHistory: CoachExportHistoryEntry[];
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
   syncState: TrackerSyncState;
@@ -62,6 +64,7 @@ interface TrackerState {
   addCompetitionLog: (entry: CompetitionLogEntry) => void;
   addMatchSimSession: (entry: MatchSimulatorSession) => void;
   upsertOpponentPrepCard: (entry: OpponentPrepCard) => void;
+  addCoachExportHistoryEntry: (entry: CoachExportHistoryEntry) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
@@ -85,6 +88,7 @@ export const useTrackerStore = create<TrackerState>()(
       opponentPrepCards: opponentPrepCardSeed,
       personalRecords: [],
       confidenceIndexHistory: [],
+      coachExportHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined },
@@ -256,6 +260,13 @@ export const useTrackerStore = create<TrackerState>()(
             entry,
             ...state.opponentPrepCards.filter((item) => item.id !== entry.id),
           ],
+        })),
+      addCoachExportHistoryEntry: (entry) =>
+        set((state) => ({
+          coachExportHistory: [entry, ...state.coachExportHistory.filter((item) => item.id !== entry.id)].slice(
+            0,
+            30,
+          ),
         })),
       addMilestoneVerificationAttempt: (entry) =>
         set((state) => {

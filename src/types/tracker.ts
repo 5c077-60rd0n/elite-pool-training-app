@@ -201,6 +201,46 @@ export interface ConfidenceIndexEntry {
   rationale: string;
 }
 
+export interface CoachReviewExportPayload {
+  generatedAt: string;
+  athlete: {
+    name: string;
+    currentFargoRating: number;
+    targetFargoRating: number;
+    currentWeek: number;
+  };
+  period: {
+    startDate?: string;
+    endDate?: string;
+    sessionCount: number;
+  };
+  weeklySummary?: WeeklySummary;
+  recentKpis: {
+    drillRoomShotmakingPct: number;
+    ghostDrillWinRatePct: number;
+    safetyExchangeSuccessPct: number;
+    lineUpShotCount: number;
+    wpbLessonsCompleted: number;
+  };
+  competitionSnapshot: {
+    eventsPlayed: number;
+    wins: number;
+    losses: number;
+    latestEvent?: string;
+  };
+  confidenceIndex?: ConfidenceIndexEntry;
+  personalRecords: PersonalRecord[];
+  focusPriorities: string[];
+  coachNotes: string[];
+}
+
+export interface CoachExportHistoryEntry {
+  id: string;
+  generatedAt: string;
+  fileName: string;
+  payload: CoachReviewExportPayload;
+}
+
 export interface EstimatedFargoModel {
   id: string;
   baseRating: number;
