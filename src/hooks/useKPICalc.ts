@@ -1,10 +1,22 @@
 import { useMemo } from 'react';
-import { kpis } from '../data/kpis';
-import { useProgressStore } from '../store/useProgressStore';
+import {
+  trackerKpis,
+  type Benchmarks,
+  type TrackerKpiDirection,
+  type WeeklyMetrics,
+} from '../data/trackerKpis';
+import type { DailySessionLog, WeeklySummary } from '../types/tracker';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { useTrackerStore } from '../store/useTrackerStore';
+
+type TrackerWeeklyKpi = {
+  kpiId: string;
+  week: number;
+  value: number;
+};
 
 function interpolateBenchmark(
-  benchmarks: { fargo550: number; fargo600: number; fargo650: number; fargo700: number; fargo750: number; fargo800: number },
+  benchmarks: Benchmarks,
   rating: number,
 ): number {
   const points: Array<[number, number]> = [
@@ -31,58 +43,93 @@ function interpolateBenchmark(
   return points[0][1];
 }
 
+function average(values: number[]): number {
+  if (!values.length) return 0;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function normalizeScore(value: number, benchmarkTarget: number, direction: TrackerKpiDirection): number {
+  if (benchmarkTarget <= 0 || value <= 0) return 0;
+  const ratio = direction === 'lower' ? benchmarkTarget / value : value / benchmarkTarget;
+  return Math.max(0, Math.min(130, Math.round(ratio * 100)));
+}
+
+function weeklyMetricsFromDailyLogs(
+  logs: DailySessionLog[],
+): WeeklyMetrics[] {
+  const grouped = new Map<number, DailySessionLog[]>();
+  logs.forEach((log) => {
+    const list = grouped.get(log.weekNumber) ?? [];
+    list.push(log);
+    grouped.set(log.weekNumber, list);
+  });
+
+  return Array.from(grouped.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([week, weekLogs]) => ({
+      week,
+      drillRoomShotmakingPct: Math.round(average(weekLogs.map((item) => item.drillRoomShotmakingPct).filter((v) => v > 0))),
+      bullseyeProximity: Number(average(weekLogs.map((item) => item.bullseyeProximity).filter((v) => v > 0)).toFixed(1)),
+      ghostDrillWinRatePct: Math.round(Math.max(...weekLogs.map((item) => item.ghostDrillWinRatePct))),
+      lineUpShotCount: Math.round(Math.min(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0))),
+      safetyExchangeSuccessPct: Math.round(average(weekLogs.map((item) => item.safetyExchangeSuccessPct).filter((v) => v > 0))),
+      wpbLessonsCompleted: weekLogs.filter((item) => item.wpbLesson === 'Yes').length,
+    }));
+}
+
+function mergeWeeklyMetrics(
+  weeklySummaries: WeeklySummary[],
+  derivedFromLogs: WeeklyMetrics[],
+): WeeklyMetrics[] {
+  const merged = new Map<number, WeeklyMetrics>();
+
+  derivedFromLogs.forEach((metrics) => {
+    merged.set(metrics.week, metrics);
+  });
+
+  weeklySummaries.forEach((summary) => {
+    const fromLogs = merged.get(summary.weekNumber);
+    merged.set(summary.weekNumber, {
+      week: summary.weekNumber,
+      drillRoomShotmakingPct: summary.avgDrillRoomShotmakingPct,
+      bullseyeProximity: summary.avgBullseyeProximityScore,
+      ghostDrillWinRatePct: summary.ghostDrillBestWinRatePct,
+      lineUpShotCount: summary.lineUpBestScore,
+      safetyExchangeSuccessPct: fromLogs?.safetyExchangeSuccessPct ?? 0,
+      wpbLessonsCompleted: summary.wpbLessonsCompleted,
+    });
+  });
+
+  return Array.from(merged.values()).sort((a, b) => a.week - b.week);
+}
+
 export function useKPICalc() {
-  const { weeklyKpis, logs } = useProgressStore();
+  const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const rating = useSettingsStore((s) => s.profile.currentFargoRating);
 
-  const weeklyKpisFromLogs = useMemo(() => {
-    return kpis.flatMap((kpi) => {
-      const rows = logs
-        .map((log) => {
-          const related = log.drillResults.filter((result) => kpi.relatedDrillIds.includes(result.drillId));
-          if (!related.length) return null;
-          const avg = related.reduce((sum, result) => sum + result.calculatedScore, 0) / related.length;
-          return {
-            kpiId: kpi.id,
-            week: log.week,
-            month: Math.max(1, Math.ceil(log.week / 4.34)),
-            phase: log.phase,
-            value: Math.round(avg),
-            sessionCount: related.length,
-            trend: 'stable' as const,
-          };
-        })
-        .filter((item): item is NonNullable<typeof item> => Boolean(item));
-
-      const dedup = new Map<number, (typeof rows)[number]>();
-      rows.forEach((row) => {
-        const existing = dedup.get(row.week);
-        if (!existing) {
-          dedup.set(row.week, row);
-          return;
-        }
-        const mergedCount = existing.sessionCount + row.sessionCount;
-        dedup.set(row.week, {
-          ...row,
-          value: Math.round((existing.value * existing.sessionCount + row.value * row.sessionCount) / mergedCount),
-          sessionCount: mergedCount,
-        });
-      });
-
-      return Array.from(dedup.values());
-    });
-  }, [logs]);
-
-  const sourceWeeklyKpis = weeklyKpis.length > 0 ? weeklyKpis : weeklyKpisFromLogs;
+  const sourceWeeklyKpis = useMemo(() => {
+    const derived = weeklyMetricsFromDailyLogs(logs);
+    const merged = mergeWeeklyMetrics(weeklySummaries, derived);
+    return trackerKpis.flatMap((kpi) =>
+      merged
+        .map((metrics) => ({
+          kpiId: kpi.id,
+          week: metrics.week,
+          value: kpi.getValue(metrics),
+        }))
+        .filter((entry) => entry.value > 0),
+    );
+  }, [logs, weeklySummaries]);
 
   const kpiScores = useMemo(() => {
-    return kpis.map((kpi) => {
+    return trackerKpis.map((kpi) => {
       const latest = sourceWeeklyKpis
         .filter((entry) => entry.kpiId === kpi.id)
         .sort((a, b) => b.week - a.week)[0];
       const benchmarkTarget = interpolateBenchmark(kpi.benchmarks, rating);
       const rawScore = latest?.value ?? 0;
-      const normalizedScore = benchmarkTarget > 0 ? Math.min(100, Math.round((rawScore / benchmarkTarget) * 100)) : 0;
+      const normalizedScore = normalizeScore(rawScore, benchmarkTarget, kpi.direction);
       return { ...kpi, score: rawScore, benchmarkTarget, normalizedScore };
     });
   }, [rating, sourceWeeklyKpis]);
@@ -92,20 +139,27 @@ export function useKPICalc() {
       kpiScores.map((entry) => ({
         subject: entry.name,
         value: entry.normalizedScore,
-        fullMark: 100,
+        fullMark: 130,
       })),
     [kpiScores],
   );
 
   const trends = useMemo(() => {
     return kpiScores.map((entry) => {
-      const history = sourceWeeklyKpis.filter((item) => item.kpiId === entry.id).sort((a, b) => a.week - b.week);
+      const history: TrackerWeeklyKpi[] = sourceWeeklyKpis
+        .filter((item) => item.kpiId === entry.id)
+        .sort((a, b) => a.week - b.week);
       const recent = history.slice(-6);
       if (recent.length < 2) return { kpiId: entry.id, trend: 'stable' as const, delta: 0, weeks: history.length };
       const delta = recent[recent.length - 1].value - recent[0].value;
-      if (delta > 2) return { kpiId: entry.id, trend: 'improving' as const, delta, weeks: history.length };
-      if (delta < -2) return { kpiId: entry.id, trend: 'declining' as const, delta, weeks: history.length };
-      return { kpiId: entry.id, trend: 'stable' as const, delta, weeks: history.length };
+      const directionAdjustedDelta = entry.direction === 'lower' ? -delta : delta;
+      if (directionAdjustedDelta > 2) {
+        return { kpiId: entry.id, trend: 'improving' as const, delta: directionAdjustedDelta, weeks: history.length };
+      }
+      if (directionAdjustedDelta < -2) {
+        return { kpiId: entry.id, trend: 'declining' as const, delta: directionAdjustedDelta, weeks: history.length };
+      }
+      return { kpiId: entry.id, trend: 'stable' as const, delta: directionAdjustedDelta, weeks: history.length };
     });
   }, [kpiScores, sourceWeeklyKpis]);
 
