@@ -14,8 +14,10 @@ import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { PageWrapper } from '../components/layout/PageWrapper';
+import { useNotificationStore } from '../store/useNotificationStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getNotificationInsights } from '../utils/notificationIntelligence';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
@@ -29,6 +31,9 @@ export default function Dashboard() {
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
   const syncState = useTrackerStore((s) => s.syncState);
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
+  const notificationsEnabled = useNotificationStore((s) => s.enabled);
+  const lastSmartAlertAt = useNotificationStore((s) => s.lastSmartAlertAt);
+  const markSmartAlertTriggered = useNotificationStore((s) => s.markSmartAlertTriggered);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -74,6 +79,10 @@ export default function Dashboard() {
   );
 
   const gamification = useMemo(() => getTrackerGamificationSnapshot(logs), [logs]);
+  const notificationInsights = useMemo(
+    () => getNotificationInsights(logs, gamification, adaptiveDailyPlan, recoveryRecommendationPlan),
+    [adaptiveDailyPlan, gamification, logs, recoveryRecommendationPlan],
+  );
   const levelProgressPct =
     gamification.nextLevelXp > gamification.levelFloorXp
       ? Math.round(
@@ -82,6 +91,26 @@ export default function Dashboard() {
             100,
         )
       : 0;
+
+  useEffect(() => {
+    if (!notificationsEnabled) return;
+    if (typeof window === 'undefined' || !('Notification' in window)) return;
+    if (Notification.permission !== 'granted') return;
+
+    const nextAlert = notificationInsights[0];
+    if (!nextAlert) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (lastSmartAlertAt[nextAlert.id] === today) return;
+
+    const notification = new Notification(nextAlert.title, {
+      body: nextAlert.message,
+      tag: `smart-alert-${nextAlert.id}`,
+    });
+    notification.onclick = () => window.focus();
+
+    markSmartAlertTriggered(nextAlert.id, today);
+  }, [lastSmartAlertAt, markSmartAlertTriggered, notificationInsights, notificationsEnabled]);
 
   return (
     <PageWrapper title="Dashboard">
@@ -118,6 +147,19 @@ export default function Dashboard() {
           <p className="text-right text-ivory-100">{milestonesMet}</p>
         </div>
       </Card>
+
+      {notificationInsights.length ? (
+        <Card className="mb-4" title="Notification Intelligence">
+          <div className="space-y-2">
+            {notificationInsights.map((insight) => (
+              <div key={insight.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-2">
+                <p className="text-sm text-ivory-100">{insight.title}</p>
+                <p className="text-xs text-chalk-300">{insight.message}</p>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       {adaptiveDailyPlan ? (
         <Card className="mb-4" title="Adaptive Next Session Plan">

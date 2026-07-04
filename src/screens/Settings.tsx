@@ -16,7 +16,11 @@ type BackupPayload = {
   app?: string;
   exportedAt?: string;
   settings?: ReturnType<typeof useSettingsStore.getState>['profile'];
-  notifications?: { enabled?: boolean; reminderTime?: string };
+  notifications?: {
+    enabled?: boolean;
+    reminderTime?: string;
+    lastSmartAlertAt?: ReturnType<typeof useNotificationStore.getState>['lastSmartAlertAt'];
+  };
   gamification?: { soundEnabled?: boolean; hapticsEnabled?: boolean };
   tracker?: {
     dailySessionLogs?: ReturnType<typeof useTrackerStore.getState>['dailySessionLogs'];
@@ -95,6 +99,7 @@ export default function Settings() {
       notifications: {
         enabled: useNotificationStore.getState().enabled,
         reminderTime: useNotificationStore.getState().reminderTime,
+        lastSmartAlertAt: useNotificationStore.getState().lastSmartAlertAt,
       },
       gamification: {
         soundEnabled: useGamificationStore.getState().soundEnabled,
@@ -169,6 +174,7 @@ export default function Settings() {
           ...state,
           enabled: parsed.notifications?.enabled ?? state.enabled,
           reminderTime: parsed.notifications?.reminderTime ?? state.reminderTime,
+          lastSmartAlertAt: parsed.notifications?.lastSmartAlertAt ?? state.lastSmartAlertAt,
         }));
       }
       if (parsed.gamification) {
@@ -236,7 +242,7 @@ export default function Settings() {
     if (!confirmed) return;
 
     useSettingsStore.setState((state) => ({ profile: { ...state.profile, onboardingComplete: false, currentWeek: 1, currentPhase: 1 } }));
-    useNotificationStore.setState((state) => ({ ...state, enabled: false, reminderTime: '19:00' }));
+    useNotificationStore.setState((state) => ({ ...state, enabled: false, reminderTime: '19:00', lastSmartAlertAt: {} }));
     useGamificationStore.setState((state) => ({ ...state, soundEnabled: true, hapticsEnabled: true }));
     useProgressStore.setState((state) => ({
       ...state,
