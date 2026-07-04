@@ -26,6 +26,7 @@ function clamp(value: number, min: number, max: number): number {
 export default function EliteLab() {
   const eliteLab = useTrackerStore((s) => s.eliteLab);
   const setEliteLab = useTrackerStore((s) => s.setEliteLab);
+  const promoteEliteActionToAdaptivePlan = useTrackerStore((s) => s.promoteEliteActionToAdaptivePlan);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const confidence = useTrackerStore((s) => s.confidenceIndexHistory[0]);
 
@@ -80,6 +81,7 @@ export default function EliteLab() {
   const [soreness, setSoreness] = useState<1 | 2 | 3 | 4 | 5>(2);
   const [focus, setFocus] = useState<1 | 2 | 3 | 4 | 5>(4);
   const [readinessNotes, setReadinessNotes] = useState('');
+  const [bridgeMessage, setBridgeMessage] = useState('');
 
   const benchmarks = useMemo(() => {
     const current = {
@@ -282,6 +284,18 @@ export default function EliteLab() {
   const routineCompliance = eliteLab.preShotRoutineLogs.length
     ? Math.round((eliteLab.preShotRoutineLogs.filter((item) => item.routineUsed).length / eliteLab.preShotRoutineLogs.length) * 100)
     : 0;
+  const latestAutopsyPriority = eliteLab.tournamentAutopsies[0]?.nextWeekPriority?.trim() ?? '';
+  const weakestSystem = [
+    { label: 'Decision quality', score: avgDecisionIQ },
+    { label: 'Clutch conversion', score: avgClutch },
+    { label: 'Routine compliance', score: routineCompliance },
+  ].sort((a, b) => a.score - b.score)[0];
+
+  function promoteToToday(actionItem: string, focusKpiName: string, minutes: number): void {
+    if (!actionItem.trim()) return;
+    promoteEliteActionToAdaptivePlan(actionItem, focusKpiName, minutes);
+    setBridgeMessage(`Promoted to Adaptive Daily Plan: ${actionItem}`);
+  }
 
   return (
     <PageWrapper title="Elite Performance Lab">
@@ -292,6 +306,45 @@ export default function EliteLab() {
           <p className="text-chalk-300">Routine Compliance</p><p className="text-right text-ivory-100">{routineCompliance}%</p>
           <p className="text-chalk-300">Confidence Index</p><p className="text-right text-ivory-100">{confidence?.score ?? 0}</p>
         </div>
+      </Card>
+
+      <Card className="mb-4" title="Elite -> Today Session Bridge">
+        <p className="text-xs text-chalk-300">One tap pushes your elite priority into the Adaptive Daily Plan checklist shown on Daily Session Flow.</p>
+        <div className="mt-3 grid gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => promoteToToday(
+              latestAutopsyPriority || 'Run post-event correction set: 20 pressure reps + 10 safety exchanges',
+              'Tournament error correction',
+              85,
+            )}
+          >
+            Promote Latest Tournament Priority
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => promoteToToday(
+              `Fix weakest system: ${weakestSystem.label} (${weakestSystem.score})`,
+              weakestSystem.label,
+              75,
+            )}
+          >
+            Promote Weakest System Focus
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => promoteToToday(
+              readinessScore < 55
+                ? 'Recovery bias: lower intensity and prioritize clean reps + fundamentals'
+                : 'Green-light intensity: pressure reps and race-pace execution block',
+              'Readiness-guided load',
+              readinessScore < 55 ? 55 : 90,
+            )}
+          >
+            Promote Readiness-Based Plan
+          </Button>
+        </div>
+        {bridgeMessage ? <p className="mt-2 text-xs text-cue-300">{bridgeMessage}</p> : null}
       </Card>
 
       <Card className="mb-4" title="1) Shot Decision IQ Engine">

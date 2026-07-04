@@ -75,6 +75,7 @@ interface TrackerState {
   addCoachExportHistoryEntry: (entry: CoachExportHistoryEntry) => void;
   addMilestoneVerificationAttempt: (entry: MilestoneVerificationAttempt) => void;
   setEliteLab: (updater: (state: ElitePerformanceLabData) => ElitePerformanceLabData) => void;
+  promoteEliteActionToAdaptivePlan: (actionItem: string, focusKpiName?: string, recommendedMinutes?: number) => void;
   refreshSeasonProgress: () => void;
   refreshAdaptiveDailyPlan: (currentFargo: number, currentWeek: number) => void;
   refreshRecoveryRecommendationPlan: () => void;
@@ -314,6 +315,52 @@ export const useTrackerStore = create<TrackerState>()(
         set((state) => ({
           eliteLab: updater(state.eliteLab),
         })),
+      promoteEliteActionToAdaptivePlan: (actionItem, focusKpiName, recommendedMinutes) =>
+        set((state) => {
+          const now = new Date();
+          const isoNow = now.toISOString();
+          const weekNumber = Math.max(1, ...state.dailySessionLogs.map((item) => item.weekNumber));
+          const eliteAction = `Elite priority: ${actionItem.trim()}`;
+
+          const basePlan =
+            state.adaptiveDailyPlan ?? {
+              id: `adaptive-${Date.now()}`,
+              generatedAt: isoNow,
+              forDate: isoNow.slice(0, 10),
+              weekNumber,
+              focusKpiId: 'elite-priority',
+              focusKpiName: 'Elite Priority',
+              rationale: 'Elite Performance Lab promoted a same-day execution priority.',
+              recommendedMinutes: 75,
+              targetMetrics: {
+                drillRoomShotmakingPct: 75,
+                ghostDrillWinRatePct: 55,
+                safetyExchangeSuccessPct: 60,
+                lineUpShotCount: 3,
+                bullseyeProximity: 3,
+                wpbLessonsThisWeek: 3,
+              },
+              actionChecklist: [],
+            };
+
+          const actionChecklist = [
+            eliteAction,
+            ...basePlan.actionChecklist.filter((item) => item !== eliteAction),
+          ].slice(0, 10);
+
+          return {
+            adaptiveDailyPlan: {
+              ...basePlan,
+              generatedAt: isoNow,
+              focusKpiName: focusKpiName?.trim() || basePlan.focusKpiName,
+              recommendedMinutes: typeof recommendedMinutes === 'number'
+                ? Math.max(20, Math.min(180, recommendedMinutes))
+                : basePlan.recommendedMinutes,
+              rationale: `${basePlan.rationale} Elite override active for today's session.`,
+              actionChecklist,
+            },
+          };
+        }),
       refreshSeasonProgress: () =>
         set((state) => {
           const seasonSnapshot = getTrackerGamificationSnapshot(state.dailySessionLogs);
