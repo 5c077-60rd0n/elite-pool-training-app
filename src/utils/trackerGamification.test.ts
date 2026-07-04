@@ -1,0 +1,62 @@
+import { describe, expect, it } from 'vitest';
+import { getTrackerGamificationSnapshot } from './trackerGamification';
+import type { DailySessionLog } from '../types/tracker';
+
+function session(id: string, date: string, focusArea: string, qualitySeed = 0): DailySessionLog {
+  return {
+    id,
+    date,
+    dayOfWeek: 'Monday',
+    weekNumber: 1,
+    focusArea,
+    lengthMinutes: 90,
+    drillRoomShotmakingPct: 76 + qualitySeed,
+    bullseyeProximity: 2.0,
+    bullseyeCategory: 'Mixed',
+    wpbLesson: 'Yes',
+    wpbModuleName: 'Module',
+    ghostDrillWinRatePct: 60 + qualitySeed,
+    lineUpShotCount: 16,
+    safetyExchangeSuccessPct: 68,
+    notes: '',
+    createdAt: `${date}T12:00:00.000Z`,
+    updatedAt: `${date}T12:00:00.000Z`,
+  };
+}
+
+describe('getTrackerGamificationSnapshot seasonal data', () => {
+  it('returns season metadata and challenge structures', () => {
+    const logs = [
+      session('a', '2026-07-01', 'Pattern Play', 2),
+      session('b', '2026-07-02', 'Safety', 3),
+      session('c', '2026-07-03', 'Break', 4),
+    ];
+
+    const snapshot = getTrackerGamificationSnapshot(logs, new Date('2026-07-04T00:00:00.000Z'));
+
+    expect(snapshot.seasonMeta.id).toContain('Q3');
+    expect(snapshot.seasonChallenges.themedQuestChain.length).toBe(3);
+    expect(snapshot.seasonChallenges.bossChallenges.length).toBe(2);
+  });
+
+  it('marks challenge progress based on quality and variety', () => {
+    const logs = [
+      session('a', '2026-07-01', 'Pattern Play', 20),
+      session('b', '2026-07-02', 'Safety', 20),
+      session('c', '2026-07-03', 'Break', 20),
+      session('d', '2026-07-04', 'Mental Game', 20),
+      session('e', '2026-07-05', 'Pattern Play', 20),
+    ];
+
+    const snapshot = getTrackerGamificationSnapshot(logs, new Date('2026-07-05T00:00:00.000Z'));
+    const qualityCadence = snapshot.seasonChallenges.themedQuestChain.find(
+      (item) => item.id === 'season-quality-cadence',
+    );
+    const variety = snapshot.seasonChallenges.themedQuestChain.find(
+      (item) => item.id === 'season-variety-run',
+    );
+
+    expect(qualityCadence?.completed).toBe(true);
+    expect(variety?.progress).toBeGreaterThanOrEqual(4);
+  });
+});

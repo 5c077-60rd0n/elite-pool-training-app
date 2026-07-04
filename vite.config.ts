@@ -78,10 +78,10 @@ export default defineConfig({
             ],
           },
           {
-            name: 'Drill Library',
-            short_name: 'Drills',
-            url: '/drills',
-            description: 'Browse all drills by category and phase',
+            name: 'KPI Tracker',
+            short_name: 'KPI',
+            url: '/kpi',
+            description: 'Open KPI tracking and weekly benchmark status',
             icons: [
               {
                 src: '/icons/pwa-192.png',
