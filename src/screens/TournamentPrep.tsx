@@ -40,11 +40,13 @@ type SavedFeed = {
   url: string;
 };
 
+type FinderGameFilter = '9-ball' | '10-ball' | 'straight-pool';
+
 const TOURNAMENT_FEED_URL_KEY = 'fargo-climb-tournament-feed-url';
 const TOURNAMENT_FEED_PRESETS_KEY = 'fargo-climb-tournament-feed-presets';
 const BEST_FIT_FEED_ID = 'elite-best-fit-feed';
-const BEST_FIT_FEED_URL = '/demo/elite-best-fit-feed.json';
-const BEST_FIT_FEED_NAME = 'Elite Best-Fit Feed';
+const BEST_FIT_FEED_URL = 'https://wpapool.com/wp-json/wp/v2/posts?per_page=40&_fields=id,date,link,title';
+const BEST_FIT_FEED_NAME = 'Elite Best-Fit (Live WPA)';
 const STARTER_FEED_ID = 'starter-demo-feed';
 const STARTER_FEED_URL = '/demo/tournament-feed.json';
 const STARTER_FEED_NAME = 'Starter Demo Feed';
@@ -54,18 +56,113 @@ const LIVE_SNOOKER_UPCOMING_FEED_NAME = 'Live Feed: World Snooker Upcoming';
 const LIVE_SNOOKER_RECENT_FEED_ID = 'live-snooker-recent';
 const LIVE_SNOOKER_RECENT_FEED_URL = 'https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4555';
 const LIVE_SNOOKER_RECENT_FEED_NAME = 'Live Feed: World Snooker Recent';
-const MATCHROOM_FEED_ID = 'matchroom-events-feed';
-const MATCHROOM_FEED_URL = '/demo/matchroom-events-feed.json';
-const MATCHROOM_FEED_NAME = 'Matchroom Events';
+const WPA_9BALL_FEED_ID = 'wpa-9-ball';
+const WPA_9BALL_FEED_URL = 'https://wpapool.com/wp-json/wp/v2/posts?search=9-ball&per_page=40&_fields=id,date,link,title';
+const WPA_9BALL_FEED_NAME = 'WPA 9-Ball Tournaments';
+const WPA_10BALL_FEED_ID = 'wpa-10-ball';
+const WPA_10BALL_FEED_URL = 'https://wpapool.com/wp-json/wp/v2/posts?search=10-ball&per_page=40&_fields=id,date,link,title';
+const WPA_10BALL_FEED_NAME = 'WPA 10-Ball Tournaments';
+const WPA_STRAIGHT_POOL_FEED_ID = 'wpa-straight-pool';
+const WPA_STRAIGHT_POOL_FEED_URL = 'https://wpapool.com/wp-json/wp/v2/posts?search=straight%20pool&per_page=40&_fields=id,date,link,title';
+const WPA_STRAIGHT_POOL_FEED_NAME = 'WPA Straight Pool Tournaments';
 const SNOOKER_FEED_IDS = new Set([LIVE_SNOOKER_UPCOMING_FEED_ID, LIVE_SNOOKER_RECENT_FEED_ID]);
+const DEMO_FEED_IDS = new Set([STARTER_FEED_ID]);
+
+function isPlaceholderFeedUrl(url: string): boolean {
+  const normalized = url.toLowerCase();
+  return normalized.includes('elite-best-fit-feed.json') || normalized.includes('tournament-feed.json');
+}
+
+function isExternalFeedUrl(url: string): boolean {
+  return /^https?:\/\//i.test(url.trim());
+}
+
+function isPlaceholderCandidate(candidate: FinderCandidate): boolean {
+  const id = candidate.id.toLowerCase();
+  const name = candidate.name.toLowerCase();
+  return (
+    id.includes('bestfit-')
+    || id.includes('demo-')
+    || id.includes('starter-')
+    || name.includes('metro points')
+    || name.includes('city weekly')
+    || name.includes('tri-state')
+    || name.includes('state tour preview')
+  );
+}
 
 const DEFAULT_FEED_PRESETS: SavedFeed[] = [
   { id: BEST_FIT_FEED_ID, name: BEST_FIT_FEED_NAME, url: BEST_FIT_FEED_URL },
-  { id: MATCHROOM_FEED_ID, name: MATCHROOM_FEED_NAME, url: MATCHROOM_FEED_URL },
+  { id: WPA_9BALL_FEED_ID, name: WPA_9BALL_FEED_NAME, url: WPA_9BALL_FEED_URL },
+  { id: WPA_10BALL_FEED_ID, name: WPA_10BALL_FEED_NAME, url: WPA_10BALL_FEED_URL },
+  { id: WPA_STRAIGHT_POOL_FEED_ID, name: WPA_STRAIGHT_POOL_FEED_NAME, url: WPA_STRAIGHT_POOL_FEED_URL },
   { id: LIVE_SNOOKER_UPCOMING_FEED_ID, name: LIVE_SNOOKER_UPCOMING_FEED_NAME, url: LIVE_SNOOKER_UPCOMING_FEED_URL },
   { id: LIVE_SNOOKER_RECENT_FEED_ID, name: LIVE_SNOOKER_RECENT_FEED_NAME, url: LIVE_SNOOKER_RECENT_FEED_URL },
   { id: STARTER_FEED_ID, name: STARTER_FEED_NAME, url: STARTER_FEED_URL },
 ];
+
+function inferDisciplineFromText(value: string): FinderGameFilter | '8-ball' | 'snooker' | 'unknown' {
+  const text = value.toLowerCase();
+  if (text.includes('snooker')) return 'snooker';
+  if (/straight\s*-?\s*pool|14\.?1/.test(text)) return 'straight-pool';
+  if (/10\s*-?\s*ball|ten\s*-?\s*ball/.test(text)) return '10-ball';
+  if (/9\s*-?\s*ball|nine\s*-?\s*ball/.test(text)) return '9-ball';
+  if (/8\s*-?\s*ball|eight\s*-?\s*ball/.test(text)) return '8-ball';
+  return 'unknown';
+}
+
+function isLikelyTournamentName(name: string): boolean {
+  const lower = name.toLowerCase();
+  if (/(championship|open|masters|classic|cup|tour|festival|challenge|grand\s*prix)/.test(lower)) return true;
+  return inferDisciplineFromText(lower) !== 'unknown';
+}
+
+function parseEventDate(value: string | undefined): Date | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed;
+}
+
+function isWithinEventWindow(value: string | undefined): boolean {
+  const date = parseEventDate(value);
+  if (!date) return true;
+  const now = Date.now();
+  const deltaDays = Math.round((date.getTime() - now) / 86_400_000);
+  return deltaDays >= -540 && deltaDays <= 730;
+}
+
+function tournamentRelevanceScore(name: string, format: string, eventDate?: string): number {
+  const text = `${name} ${format}`.toLowerCase();
+  let score = 0;
+
+  if (/(world|european|us open|japan open|championship|masters|classic|cup|open|tour|challenge|festival|grand\s*prix)/.test(text)) {
+    score += 45;
+  }
+  if (/(qualifier|invitational|teams|women|men|junior|youth)/.test(text)) score += 15;
+  if (inferDisciplineFromText(text) !== 'unknown') score += 20;
+  if (/(announce|launched|celebrates|congratulates|athlete of the year|rankings|obituary|media|statement)/.test(text)) {
+    score -= 25;
+  }
+
+  const date = parseEventDate(eventDate);
+  if (date) {
+    const days = Math.round((date.getTime() - Date.now()) / 86_400_000);
+    if (days >= -30 && days <= 365) score += 15;
+    if (days > 365 || days < -365) score -= 10;
+  }
+
+  return score;
+}
+
+function inferFormat(name: string): string {
+  const discipline = inferDisciplineFromText(name);
+  if (discipline === 'straight-pool') return 'Straight Pool';
+  if (discipline === '10-ball') return '10-ball';
+  if (discipline === '9-ball') return '9-ball';
+  if (discipline === '8-ball') return '8-ball';
+  return 'Race format TBA';
+}
 
 function loadSavedFeeds(): SavedFeed[] {
   if (typeof localStorage === 'undefined') return [];
@@ -182,12 +279,17 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
       const row = asRecord(item);
       if (!row) return null;
 
-      const name = asString(row.name ?? row.title ?? row.eventName ?? row.strEvent);
+      const title = asRecord(row.title);
+      const name = asString(row.name ?? row.eventName ?? row.strEvent ?? title?.rendered ?? row.title);
       if (!name) return null;
+      if (!isLikelyTournamentName(name)) return null;
 
       const eventDate = asString(row.date ?? row.startDate ?? row.start_at ?? row.eventDate ?? row.dateEvent);
       const locationHint = asString(row.location ?? row.city ?? row.venue ?? row.room ?? row.strVenue ?? row.strCity) ?? 'Unknown venue';
-      const format = asString(row.format ?? row.raceFormat ?? row.gameFormat ?? row.strLeague ?? row.strSport) ?? 'Race format TBA';
+      const format = asString(row.format ?? row.raceFormat ?? row.gameFormat ?? row.strLeague ?? row.strSport) ?? inferFormat(name);
+      const relevance = tournamentRelevanceScore(name, format, eventDate);
+      if (relevance < 40) return null;
+      if (!isWithinEventWindow(eventDate)) return null;
       const minFargo = asNumber(row.minFargo ?? row.min_rating ?? row.minRating);
       const maxFargo = asNumber(row.maxFargo ?? row.max_rating ?? row.maxRating);
       const entryFee = asNumber(row.entryFee ?? row.fee ?? row.entry_fee);
@@ -207,8 +309,14 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
           ? `${Math.round((addedMoney / entryFee) * 10) / 10}x added/fee`
           : 'value ratio unavailable';
 
+      const rawId = asString(row.id)
+        ?? (typeof row.id === 'number' ? `api-${row.id}` : undefined)
+        ?? asString(row.slug)
+        ?? asString(row.link)
+        ?? `api-event-${index}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`;
+
       return {
-        id: asString(row.id) ?? `api-event-${index}`,
+        id: rawId,
         name,
         format,
         locationHint,
@@ -226,7 +334,12 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
         addedMoney,
       };
     })
-    .filter((item): item is FinderCandidate => Boolean(item));
+    .filter((item): item is FinderCandidate => Boolean(item))
+    .sort((a, b) => {
+      const aDate = parseEventDate(a.eventDate)?.getTime() ?? 0;
+      const bDate = parseEventDate(b.eventDate)?.getTime() ?? 0;
+      return bDate - aDate;
+    });
 
   return normalized.slice(0, 24);
 }
@@ -293,12 +406,13 @@ function variancePenalty(value: TournamentTemplate['variance'], readiness: numbe
 }
 
 function detectDiscipline(candidate: Pick<FinderCandidate, 'name' | 'format'>): 'snooker' | '9-ball' | '10-ball' | '8-ball' | 'unknown' {
-  const text = `${candidate.name} ${candidate.format}`.toLowerCase();
-  if (text.includes('snooker')) return 'snooker';
-  if (/10\s*-?\s*ball|ten\s*-?\s*ball/.test(text)) return '10-ball';
-  if (/9\s*-?\s*ball|nine\s*-?\s*ball/.test(text)) return '9-ball';
-  if (/8\s*-?\s*ball|eight\s*-?\s*ball/.test(text)) return '8-ball';
-  return 'unknown';
+  const text = `${candidate.name} ${candidate.format}`;
+  const discipline = inferDisciplineFromText(text);
+  return discipline === 'straight-pool' ? 'unknown' : discipline;
+}
+
+function detectFinderDiscipline(candidate: Pick<FinderCandidate, 'name' | 'format'>): FinderGameFilter | 'snooker' | '8-ball' | 'unknown' {
+  return inferDisciplineFromText(`${candidate.name} ${candidate.format}`);
 }
 
 function matchesPreferredGame(candidate: FinderCandidate, preferredBreakGame: '9-ball' | '10-ball' | '8-ball'): boolean {
@@ -384,6 +498,7 @@ export default function TournamentPrep() {
   const [feedEvents, setFeedEvents] = useState<FinderCandidate[]>([]);
   const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>(() => loadSavedFeeds());
   const [selectedFeedId, setSelectedFeedId] = useState('custom');
+  const [finderGameFilter, setFinderGameFilter] = useState<FinderGameFilter>('9-ball');
   const [selectedFinderId, setSelectedFinderId] = useState('');
   const [selectedTournamentEmbedUrl, setSelectedTournamentEmbedUrl] = useState('');
 
@@ -458,11 +573,23 @@ export default function TournamentPrep() {
   useEffect(() => {
     setSavedFeeds((state) => {
       const merged = [...state];
+      let changed = false;
       for (const preset of DEFAULT_FEED_PRESETS) {
-        const exists = merged.some((feed) => feed.id === preset.id || feed.url === preset.url);
-        if (!exists) merged.push(preset);
+        const index = merged.findIndex((feed) => feed.id === preset.id);
+        if (index >= 0) {
+          if (merged[index].name !== preset.name || merged[index].url !== preset.url) {
+            merged[index] = preset;
+            changed = true;
+          }
+          continue;
+        }
+        const existsByUrl = merged.some((feed) => feed.url === preset.url);
+        if (!existsByUrl) {
+          merged.push(preset);
+          changed = true;
+        }
       }
-      if (merged.length === state.length) return state;
+      if (!changed) return state;
       return merged.slice(0, 10);
     });
   }, []);
@@ -491,11 +618,16 @@ export default function TournamentPrep() {
 
       if (selectedFeedId === BEST_FIT_FEED_ID) {
         const poolResourceUrls = Array.from(new Set([
-          BEST_FIT_FEED_URL,
-          MATCHROOM_FEED_URL,
-          STARTER_FEED_URL,
+          WPA_9BALL_FEED_URL,
+          WPA_10BALL_FEED_URL,
+          WPA_STRAIGHT_POOL_FEED_URL,
           ...savedFeeds
-            .filter((feed) => !SNOOKER_FEED_IDS.has(feed.id))
+            .filter((feed) => (
+              !SNOOKER_FEED_IDS.has(feed.id)
+              && !DEMO_FEED_IDS.has(feed.id)
+              && !isPlaceholderFeedUrl(feed.url)
+              && isExternalFeedUrl(feed.url)
+            ))
             .map((feed) => feed.url),
         ]));
 
@@ -516,7 +648,8 @@ export default function TournamentPrep() {
       const isBestFitMode = selectedFeedId === BEST_FIT_FEED_ID;
       const filteredEvents = events.filter((candidate) => {
         if (isBestFitMode) {
-          return detectDiscipline(candidate) === '9-ball';
+          if (isPlaceholderCandidate(candidate)) return false;
+          return detectFinderDiscipline(candidate) === finderGameFilter;
         }
         return matchesPreferredGame(candidate, profile.preferredBreakGame);
       });
@@ -524,7 +657,7 @@ export default function TournamentPrep() {
       setFeedStatus('success');
       if (!filteredEvents.length) {
         setFeedError(isBestFitMode
-          ? 'Feed loaded but no 9-ball events matched your focus.'
+          ? `Feed loaded but no ${finderGameFilter} events matched your focus.`
           : `Feed loaded but no ${profile.preferredBreakGame} events matched your focus.`);
       }
     } catch (error) {
@@ -532,7 +665,7 @@ export default function TournamentPrep() {
       setFeedEvents([]);
       setFeedError(error instanceof Error ? error.message : 'Unable to load feed events.');
     }
-  }, [feedUrl, profile.preferredBreakGame, savedFeeds, selectedFeedId]);
+  }, [feedUrl, finderGameFilter, profile.preferredBreakGame, savedFeeds, selectedFeedId]);
 
   useEffect(() => {
     void refreshEventFeed();
@@ -908,12 +1041,22 @@ export default function TournamentPrep() {
         {feedError ? <p className="mt-2 text-xs text-chalk-300">Feed note: {feedError}</p> : null}
 
         <select
+          value={finderGameFilter}
+          onChange={(event) => setFinderGameFilter(event.target.value as FinderGameFilter)}
+          className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        >
+          <option value="9-ball">Best-Fit game: 9-ball</option>
+          <option value="10-ball">Best-Fit game: 10-ball</option>
+          <option value="straight-pool">Best-Fit game: Straight Pool</option>
+        </select>
+
+        <select
           value={selectedTournament?.id ?? ''}
           onChange={(event) => setSelectedFinderId(event.target.value)}
           className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         >
           {[tournamentFinder.best, ...tournamentFinder.alternatives].map((candidate, index) => (
-            <option key={candidate.id} value={candidate.id}>
+            <option key={`${candidate.id}|${candidate.eventDate ?? ''}|${candidate.name}`} value={candidate.id}>
               {index === 0 ? `Recommended: ${candidate.name}` : `${index}. ${candidate.name}`}
             </option>
           ))}
