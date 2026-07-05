@@ -329,6 +329,7 @@ export default function TournamentPrep() {
   const [feedEvents, setFeedEvents] = useState<FinderCandidate[]>([]);
   const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>(() => loadSavedFeeds());
   const [selectedFeedId, setSelectedFeedId] = useState('custom');
+  const [selectedFinderId, setSelectedFinderId] = useState('');
 
   const sortedPreps = useMemo(
     () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
@@ -483,6 +484,25 @@ export default function TournamentPrep() {
   }, [activePhase, confidenceScore, drillReadinessScore, estimatedFargo, finderCandidates]);
 
   useEffect(() => {
+    if (!tournamentFinder.best) {
+      setSelectedFinderId('');
+      return;
+    }
+
+    const stillExists = [tournamentFinder.best, ...tournamentFinder.alternatives]
+      .some((candidate) => candidate.id === selectedFinderId);
+
+    if (!stillExists) {
+      setSelectedFinderId(tournamentFinder.best.id);
+    }
+  }, [selectedFinderId, tournamentFinder]);
+
+  const selectedTournament = useMemo(
+    () => [tournamentFinder.best, ...tournamentFinder.alternatives].find((candidate) => candidate.id === selectedFinderId) ?? tournamentFinder.best,
+    [selectedFinderId, tournamentFinder],
+  );
+
+  useEffect(() => {
     if (!selectedCard && opponentPrepCards.length) {
       setSelectedCardId(opponentPrepCards[0].id);
       return;
@@ -630,12 +650,12 @@ export default function TournamentPrep() {
   }
 
   function applyFinderTemplate(): void {
-    if (!tournamentFinder.best) return;
-    setTournamentName(tournamentFinder.best.name);
-    setFormat(tournamentFinder.best.format);
-    setLocation(tournamentFinder.best.locationHint);
-    if (tournamentFinder.best.eventDate) {
-      setDate(tournamentFinder.best.eventDate);
+    if (!selectedTournament) return;
+    setTournamentName(selectedTournament.name);
+    setFormat(selectedTournament.format);
+    setLocation(selectedTournament.locationHint);
+    if (selectedTournament.eventDate) {
+      setDate(selectedTournament.eventDate);
     }
   }
 
@@ -678,8 +698,8 @@ export default function TournamentPrep() {
     setSelectedFeedId('custom');
   }
 
-  const bestTournamentMapUrl = tournamentFinder.best.mapUrl ?? buildMapSearchUrl(tournamentFinder.best.locationHint);
-  const bestTournamentMapEmbedUrl = tournamentFinder.best.mapUrl ?? buildMapEmbedUrl(tournamentFinder.best.locationHint);
+  const selectedTournamentMapUrl = selectedTournament?.mapUrl ?? buildMapSearchUrl(selectedTournament?.locationHint);
+  const selectedTournamentMapEmbedUrl = selectedTournament?.mapUrl ?? buildMapEmbedUrl(selectedTournament?.locationHint);
 
   return (
     <PageWrapper title="Tournament Prep">
@@ -762,31 +782,48 @@ export default function TournamentPrep() {
         {feedStatus === 'success' ? <p className="mt-2 text-xs text-cue-300">Feed loaded: {feedEvents.length} events</p> : null}
         {feedError ? <p className="mt-2 text-xs text-chalk-300">Feed note: {feedError}</p> : null}
 
+        <select
+          value={selectedTournament?.id ?? ''}
+          onChange={(event) => setSelectedFinderId(event.target.value)}
+          className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        >
+          {[tournamentFinder.best, ...tournamentFinder.alternatives].map((candidate, index) => (
+            <option key={candidate.id} value={candidate.id}>
+              {index === 0 ? `Recommended: ${candidate.name}` : `${index}. ${candidate.name}`}
+            </option>
+          ))}
+        </select>
+
         <p className="text-sm text-ivory-100">Recommended now: {tournamentFinder.best.name}</p>
         <p className="text-xs text-chalk-300">Phase {activePhase} · Est Fargo {estimatedFargo} · Readiness {tournamentFinder.readiness}</p>
-        <p className="mt-1 text-xs text-chalk-300">Value score: {tournamentFinder.best.score}/100 · {tournamentFinder.best.notes}</p>
-        <p className="mt-1 text-xs text-chalk-300">Format: {tournamentFinder.best.format} · Travel: {tournamentFinder.best.travelCost.toUpperCase()} · Variance: {tournamentFinder.best.variance.toUpperCase()}</p>
-        {tournamentFinder.best.eventDate ? (
-          <p className="mt-1 text-xs text-chalk-300">Event date: {tournamentFinder.best.eventDate}</p>
+        {selectedTournament ? (
+          <>
+            <p className="mt-2 text-sm text-ivory-100">Selected tournament: {selectedTournament.name}</p>
+            <p className="mt-1 text-xs text-chalk-300">Value score: {selectedTournament.score}/100 · {selectedTournament.notes}</p>
+            <p className="mt-1 text-xs text-chalk-300">Format: {selectedTournament.format} · Travel: {selectedTournament.travelCost.toUpperCase()} · Variance: {selectedTournament.variance.toUpperCase()}</p>
+          </>
         ) : null}
-        {bestTournamentMapEmbedUrl ? (
+        {selectedTournament?.eventDate ? (
+          <p className="mt-1 text-xs text-chalk-300">Event date: {selectedTournament.eventDate}</p>
+        ) : null}
+        {selectedTournamentMapEmbedUrl ? (
           <div className="mt-3 overflow-hidden rounded-xl border border-felt-600 bg-felt-800/60">
             <iframe
-              title={`Map for ${tournamentFinder.best.name}`}
-              src={bestTournamentMapEmbedUrl}
+              title={`Map for ${selectedTournament?.name ?? 'selected tournament'}`}
+              src={selectedTournamentMapEmbedUrl}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="h-48 w-full border-0"
             />
           </div>
         ) : null}
-        {bestTournamentMapUrl ? (
-          <a href={bestTournamentMapUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-cue-300 underline underline-offset-2">
+        {selectedTournamentMapUrl ? (
+          <a href={selectedTournamentMapUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-cue-300 underline underline-offset-2">
             Open venue map
           </a>
         ) : null}
-        {tournamentFinder.best.registrationUrl ? (
-          <a href={tournamentFinder.best.registrationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-cue-300 underline underline-offset-2">
+        {selectedTournament?.registrationUrl ? (
+          <a href={selectedTournament.registrationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-cue-300 underline underline-offset-2">
             Open registration link
           </a>
         ) : null}
