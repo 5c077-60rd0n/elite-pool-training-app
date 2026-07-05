@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
@@ -22,6 +22,127 @@ type TournamentTemplate = {
   variance: 'low' | 'medium' | 'high';
   notes: string;
 };
+
+type FinderCandidate = TournamentTemplate & {
+  source: 'template' | 'api';
+  eventDate?: string;
+  registrationUrl?: string;
+  entryFee?: number;
+  addedMoney?: number;
+};
+
+const TOURNAMENT_FEED_URL_KEY = 'fargo-climb-tournament-feed-url';
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined;
+}
+
+function asNumber(value: unknown): number | undefined {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(/[^\d.-]/g, ''));
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
+function mapTravelCost(value: unknown): 'low' | 'medium' | 'high' {
+  const normalized = asString(value)?.toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') return normalized;
+  const distance = asNumber(value);
+  if (typeof distance === 'number') {
+    if (distance <= 30) return 'low';
+    if (distance <= 120) return 'medium';
+    return 'high';
+  }
+  return 'medium';
+}
+
+function mapVariance(value: unknown, fieldSize?: number): 'low' | 'medium' | 'high' {
+  const normalized = asString(value)?.toLowerCase();
+  if (normalized === 'low' || normalized === 'medium' || normalized === 'high') return normalized;
+  if (typeof fieldSize === 'number') {
+    if (fieldSize <= 24) return 'low';
+    if (fieldSize <= 64) return 'medium';
+    return 'high';
+  }
+  return 'medium';
+}
+
+function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
+  const root = asRecord(payload);
+  const data = root?.events ?? root?.results ?? root?.data ?? payload;
+  if (!Array.isArray(data)) return [];
+
+  const normalized = data
+    .map((item, index): FinderCandidate | null => {
+      const row = asRecord(item);
+      if (!row) return null;
+
+      const name = asString(row.name ?? row.title ?? row.eventName);
+      if (!name) return null;
+
+      const eventDate = asString(row.date ?? row.startDate ?? row.start_at ?? row.eventDate);
+      const locationHint = asString(row.location ?? row.city ?? row.venue ?? row.room) ?? 'Unknown venue';
+      const format = asString(row.format ?? row.raceFormat ?? row.gameFormat) ?? 'Race format TBA';
+      const minFargo = asNumber(row.minFargo ?? row.min_rating ?? row.minRating);
+      const maxFargo = asNumber(row.maxFargo ?? row.max_rating ?? row.maxRating);
+      const entryFee = asNumber(row.entryFee ?? row.fee ?? row.entry_fee);
+      const addedMoney = asNumber(row.addedMoney ?? row.added_money ?? row.prizeAdded);
+      const fieldSize = asNumber(row.fieldSize ?? row.players ?? row.playerCount);
+
+      const lower = typeof minFargo === 'number' ? minFargo : 520;
+      const upper = typeof maxFargo === 'number' ? maxFargo : 780;
+
+      const travelCost = mapTravelCost(row.travelCost ?? row.distanceMiles ?? row.distance);
+      const variance = mapVariance(row.variance ?? row.volatility, fieldSize);
+
+      const valueEdge =
+        typeof addedMoney === 'number' && typeof entryFee === 'number' && entryFee > 0
+          ? `${Math.round((addedMoney / entryFee) * 10) / 10}x added/fee`
+          : 'value ratio unavailable';
+
+      return {
+        id: asString(row.id) ?? `api-event-${index}`,
+        name,
+        format,
+        locationHint,
+        baseFieldRange: [Math.round(lower), Math.round(upper)],
+        travelCost,
+        variance,
+        notes: `${valueEdge}${fieldSize ? ` · field ${fieldSize}` : ''}`,
+        source: 'api',
+        eventDate,
+        registrationUrl: asString(row.registrationUrl ?? row.url ?? row.link),
+        entryFee,
+        addedMoney,
+      };
+    })
+    .filter((item): item is FinderCandidate => Boolean(item));
+
+  return normalized.slice(0, 24);
+}
+
+async function fetchTournamentFeed(feedUrl: string): Promise<FinderCandidate[]> {
+  const response = await fetch(feedUrl, {
+    method: 'GET',
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Feed request failed (${response.status})`);
+  }
+
+  const payload = (await response.json()) as unknown;
+  return normalizeFeedCandidates(payload);
+}
 
 const tournamentTemplates: TournamentTemplate[] = [
   {
@@ -95,6 +216,7 @@ function buildChecklist(): PrepChecklist[] {
 }
 
 export default function TournamentPrep() {
+  const defaultFeedUrl = (import.meta.env.VITE_TOURNAMENT_FEED_URL as string | undefined) ?? '';
   const profile = useSettingsStore((s) => s.profile);
   const tournamentPreps = useProgressStore((s) => s.tournamentPreps);
   const upsertTournamentPrep = useProgressStore((s) => s.upsertTournamentPrep);
@@ -124,6 +246,13 @@ export default function TournamentPrep() {
   const [safetyPlansText, setSafetyPlansText] = useState('');
   const [bailoutChoicesText, setBailoutChoicesText] = useState('');
   const [cardNotes, setCardNotes] = useState('');
+  const [feedUrl, setFeedUrl] = useState(() => {
+    if (typeof localStorage === 'undefined') return defaultFeedUrl;
+    return localStorage.getItem(TOURNAMENT_FEED_URL_KEY) ?? defaultFeedUrl;
+  });
+  const [feedStatus, setFeedStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [feedError, setFeedError] = useState('');
+  const [feedEvents, setFeedEvents] = useState<FinderCandidate[]>([]);
 
   const sortedPreps = useMemo(
     () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
@@ -182,29 +311,73 @@ export default function TournamentPrep() {
   );
   const activePhase = useMemo(() => Math.max(profile.currentPhase, phaseFromFargo(estimatedFargo)), [estimatedFargo, profile.currentPhase]);
   const confidenceScore = confidenceIndexHistory[0]?.score ?? 0;
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(TOURNAMENT_FEED_URL_KEY, feedUrl);
+  }, [feedUrl]);
+
+  const refreshEventFeed = useCallback(async (): Promise<void> => {
+    if (!feedUrl.trim()) {
+      setFeedEvents([]);
+      setFeedStatus('idle');
+      setFeedError('');
+      return;
+    }
+
+    try {
+      setFeedStatus('loading');
+      setFeedError('');
+      const events = await fetchTournamentFeed(feedUrl.trim());
+      setFeedEvents(events);
+      setFeedStatus('success');
+      if (!events.length) {
+        setFeedError('Feed loaded but returned no usable events.');
+      }
+    } catch (error) {
+      setFeedStatus('error');
+      setFeedEvents([]);
+      setFeedError(error instanceof Error ? error.message : 'Unable to load feed events.');
+    }
+  }, [feedUrl]);
+
+  useEffect(() => {
+    void refreshEventFeed();
+  }, [refreshEventFeed]);
+
+  const finderCandidates = useMemo<FinderCandidate[]>(() => {
+    if (feedEvents.length) return feedEvents;
+    return tournamentTemplates.map((template) => ({ ...template, source: 'template' }));
+  }, [feedEvents]);
+
   const tournamentFinder = useMemo(() => {
     const readiness = Math.round((drillReadinessScore * 0.65) + (confidenceScore * 0.35));
 
-    const scored = tournamentTemplates.map((template) => {
-      const inBand = estimatedFargo >= template.baseFieldRange[0] && estimatedFargo <= template.baseFieldRange[1];
-      const nearBand = Math.abs(estimatedFargo - template.baseFieldRange[0]) <= 40 || Math.abs(estimatedFargo - template.baseFieldRange[1]) <= 40;
+    const scored = finderCandidates.map((candidate) => {
+      const inBand = estimatedFargo >= candidate.baseFieldRange[0] && estimatedFargo <= candidate.baseFieldRange[1];
+      const nearBand = Math.abs(estimatedFargo - candidate.baseFieldRange[0]) <= 40 || Math.abs(estimatedFargo - candidate.baseFieldRange[1]) <= 40;
 
       let score = 55;
       if (inBand) score += 18;
       else if (nearBand) score += 8;
 
-      if (activePhase <= 2 && template.id === 'local-weekly-handicap') score += 14;
-      if (activePhase === 3 && template.id === 'regional-race-open') score += 14;
-      if (activePhase >= 4 && template.id === 'state-major-open') score += 14;
+      if (activePhase <= 2 && candidate.id === 'local-weekly-handicap') score += 14;
+      if (activePhase === 3 && candidate.id === 'regional-race-open') score += 14;
+      if (activePhase >= 4 && candidate.id === 'state-major-open') score += 14;
 
-      if (readiness >= 72 && template.id !== 'local-weekly-handicap') score += 8;
-      if (readiness < 60 && template.id === 'local-weekly-handicap') score += 8;
+      if (readiness >= 72 && candidate.variance !== 'low') score += 8;
+      if (readiness < 60 && candidate.variance === 'low') score += 8;
 
-      score -= travelPenalty(template.travelCost);
-      score -= variancePenalty(template.variance, readiness);
+      if (candidate.source === 'api' && typeof candidate.entryFee === 'number' && typeof candidate.addedMoney === 'number') {
+        const ratio = candidate.entryFee > 0 ? candidate.addedMoney / candidate.entryFee : 0;
+        score += Math.max(0, Math.min(12, Math.round(ratio * 2)));
+      }
+
+      score -= travelPenalty(candidate.travelCost);
+      score -= variancePenalty(candidate.variance, readiness);
 
       return {
-        ...template,
+        ...candidate,
         score: Math.max(1, Math.min(100, Math.round(score))),
       };
     }).sort((a, b) => b.score - a.score);
@@ -214,7 +387,7 @@ export default function TournamentPrep() {
       best: scored[0],
       alternatives: scored.slice(1),
     };
-  }, [activePhase, confidenceScore, drillReadinessScore, estimatedFargo]);
+  }, [activePhase, confidenceScore, drillReadinessScore, estimatedFargo, finderCandidates]);
 
   useEffect(() => {
     if (!selectedCard && opponentPrepCards.length) {
@@ -368,6 +541,9 @@ export default function TournamentPrep() {
     setTournamentName(tournamentFinder.best.name);
     setFormat(tournamentFinder.best.format);
     setLocation(tournamentFinder.best.locationHint);
+    if (tournamentFinder.best.eventDate) {
+      setDate(tournamentFinder.best.eventDate);
+    }
   }
 
   return (
@@ -420,14 +596,35 @@ export default function TournamentPrep() {
       </Card>
 
       <Card className="mb-4" title="Tournament Value Finder">
+        <input
+          value={feedUrl}
+          onChange={(event) => setFeedUrl(event.target.value)}
+          placeholder="Tournament API feed URL (JSON)"
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+        <Button className="mt-2" variant="secondary" onClick={() => void refreshEventFeed()}>
+          {feedStatus === 'loading' ? 'Refreshing Feed...' : 'Refresh Event Feed'}
+        </Button>
+        {feedStatus === 'success' ? <p className="mt-2 text-xs text-cue-300">Feed loaded: {feedEvents.length} events</p> : null}
+        {feedError ? <p className="mt-2 text-xs text-chalk-300">Feed note: {feedError}</p> : null}
+
         <p className="text-sm text-ivory-100">Recommended now: {tournamentFinder.best.name}</p>
         <p className="text-xs text-chalk-300">Phase {activePhase} · Est Fargo {estimatedFargo} · Readiness {tournamentFinder.readiness}</p>
         <p className="mt-1 text-xs text-chalk-300">Value score: {tournamentFinder.best.score}/100 · {tournamentFinder.best.notes}</p>
         <p className="mt-1 text-xs text-chalk-300">Format: {tournamentFinder.best.format} · Travel: {tournamentFinder.best.travelCost.toUpperCase()} · Variance: {tournamentFinder.best.variance.toUpperCase()}</p>
+        {tournamentFinder.best.eventDate ? (
+          <p className="mt-1 text-xs text-chalk-300">Event date: {tournamentFinder.best.eventDate}</p>
+        ) : null}
+        {tournamentFinder.best.registrationUrl ? (
+          <a href={tournamentFinder.best.registrationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-cue-300 underline underline-offset-2">
+            Open registration link
+          </a>
+        ) : null}
 
         <div className="mt-3 space-y-1 text-xs text-chalk-300">
-          <p>Alternative 1: {tournamentFinder.alternatives[0].name} ({tournamentFinder.alternatives[0].score})</p>
-          <p>Alternative 2: {tournamentFinder.alternatives[1].name} ({tournamentFinder.alternatives[1].score})</p>
+          {tournamentFinder.alternatives.slice(0, 2).map((alternative, index) => (
+            <p key={alternative.id}>Alternative {index + 1}: {alternative.name} ({alternative.score})</p>
+          ))}
         </div>
 
         <Button className="mt-3 w-full" variant="secondary" onClick={applyFinderTemplate}>
