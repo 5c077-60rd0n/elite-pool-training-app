@@ -39,6 +39,25 @@ type SavedFeed = {
 
 const TOURNAMENT_FEED_URL_KEY = 'fargo-climb-tournament-feed-url';
 const TOURNAMENT_FEED_PRESETS_KEY = 'fargo-climb-tournament-feed-presets';
+const BEST_FIT_FEED_ID = 'elite-best-fit-feed';
+const BEST_FIT_FEED_URL = '/demo/elite-best-fit-feed.json';
+const BEST_FIT_FEED_NAME = 'Elite Best-Fit Feed';
+const STARTER_FEED_ID = 'starter-demo-feed';
+const STARTER_FEED_URL = '/demo/tournament-feed.json';
+const STARTER_FEED_NAME = 'Starter Demo Feed';
+const LIVE_SNOOKER_UPCOMING_FEED_ID = 'live-snooker-upcoming';
+const LIVE_SNOOKER_UPCOMING_FEED_URL = 'https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4555';
+const LIVE_SNOOKER_UPCOMING_FEED_NAME = 'Live Feed: World Snooker Upcoming';
+const LIVE_SNOOKER_RECENT_FEED_ID = 'live-snooker-recent';
+const LIVE_SNOOKER_RECENT_FEED_URL = 'https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4555';
+const LIVE_SNOOKER_RECENT_FEED_NAME = 'Live Feed: World Snooker Recent';
+
+const DEFAULT_FEED_PRESETS: SavedFeed[] = [
+  { id: BEST_FIT_FEED_ID, name: BEST_FIT_FEED_NAME, url: BEST_FIT_FEED_URL },
+  { id: LIVE_SNOOKER_UPCOMING_FEED_ID, name: LIVE_SNOOKER_UPCOMING_FEED_NAME, url: LIVE_SNOOKER_UPCOMING_FEED_URL },
+  { id: LIVE_SNOOKER_RECENT_FEED_ID, name: LIVE_SNOOKER_RECENT_FEED_NAME, url: LIVE_SNOOKER_RECENT_FEED_URL },
+  { id: STARTER_FEED_ID, name: STARTER_FEED_NAME, url: STARTER_FEED_URL },
+];
 
 function loadSavedFeeds(): SavedFeed[] {
   if (typeof localStorage === 'undefined') return [];
@@ -114,12 +133,12 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
       const row = asRecord(item);
       if (!row) return null;
 
-      const name = asString(row.name ?? row.title ?? row.eventName);
+      const name = asString(row.name ?? row.title ?? row.eventName ?? row.strEvent);
       if (!name) return null;
 
-      const eventDate = asString(row.date ?? row.startDate ?? row.start_at ?? row.eventDate);
-      const locationHint = asString(row.location ?? row.city ?? row.venue ?? row.room) ?? 'Unknown venue';
-      const format = asString(row.format ?? row.raceFormat ?? row.gameFormat) ?? 'Race format TBA';
+      const eventDate = asString(row.date ?? row.startDate ?? row.start_at ?? row.eventDate ?? row.dateEvent);
+      const locationHint = asString(row.location ?? row.city ?? row.venue ?? row.room ?? row.strVenue ?? row.strCity) ?? 'Unknown venue';
+      const format = asString(row.format ?? row.raceFormat ?? row.gameFormat ?? row.strLeague ?? row.strSport) ?? 'Race format TBA';
       const minFargo = asNumber(row.minFargo ?? row.min_rating ?? row.minRating);
       const maxFargo = asNumber(row.maxFargo ?? row.max_rating ?? row.maxRating);
       const entryFee = asNumber(row.entryFee ?? row.fee ?? row.entry_fee);
@@ -129,8 +148,8 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
       const lower = typeof minFargo === 'number' ? minFargo : 520;
       const upper = typeof maxFargo === 'number' ? maxFargo : 780;
 
-      const travelCost = mapTravelCost(row.travelCost ?? row.distanceMiles ?? row.distance);
-      const variance = mapVariance(row.variance ?? row.volatility, fieldSize);
+      const travelCost = mapTravelCost(row.travelCost ?? row.distanceMiles ?? row.distance ?? row.strCountry);
+      const variance = mapVariance(row.variance ?? row.volatility ?? row.strStatus, fieldSize);
 
       const valueEdge =
         typeof addedMoney === 'number' && typeof entryFee === 'number' && entryFee > 0
@@ -277,8 +296,8 @@ export default function TournamentPrep() {
   const [bailoutChoicesText, setBailoutChoicesText] = useState('');
   const [cardNotes, setCardNotes] = useState('');
   const [feedUrl, setFeedUrl] = useState(() => {
-    if (typeof localStorage === 'undefined') return defaultFeedUrl;
-    return localStorage.getItem(TOURNAMENT_FEED_URL_KEY) ?? defaultFeedUrl;
+    if (typeof localStorage === 'undefined') return defaultFeedUrl || BEST_FIT_FEED_URL;
+    return (localStorage.getItem(TOURNAMENT_FEED_URL_KEY) ?? defaultFeedUrl) || BEST_FIT_FEED_URL;
   });
   const [feedStatus, setFeedStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [feedError, setFeedError] = useState('');
@@ -353,6 +372,18 @@ export default function TournamentPrep() {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(TOURNAMENT_FEED_PRESETS_KEY, JSON.stringify(savedFeeds));
   }, [savedFeeds]);
+
+  useEffect(() => {
+    setSavedFeeds((state) => {
+      const merged = [...state];
+      for (const preset of DEFAULT_FEED_PRESETS) {
+        const exists = merged.some((feed) => feed.id === preset.id || feed.url === preset.url);
+        if (!exists) merged.push(preset);
+      }
+      if (merged.length === state.length) return state;
+      return merged.slice(0, 10);
+    });
+  }, []);
 
   const refreshEventFeed = useCallback(async (): Promise<void> => {
     if (!feedUrl.trim()) {
