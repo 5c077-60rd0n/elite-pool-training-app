@@ -1,0 +1,60 @@
+{
+  "events": [
+    {
+      "id": "matchroom-world-pool-championship",
+      "name": "World Pool Championship",
+      "date": "2026-07-20",
+      "location": "Jeddah, Saudi Arabia",
+      "format": "9-ball (open)",
+      "minFargo": 680,
+      "maxFargo": 820,
+      "travelCost": "high",
+      "variance": "high",
+      "entryFee": 250,
+      "addedMoney": 300000,
+      "registrationUrl": "https://matchroompool.com/events/"
+    },
+    {
+      "id": "matchroom-us-open-pool",
+      "name": "US Open Pool Championship",
+      "date": "2026-08-25",
+      "location": "Atlantic City, USA",
+      "format": "9-ball (open)",
+      "minFargo": 670,
+      "maxFargo": 820,
+      "travelCost": "high",
+      "variance": "high",
+      "entryFee": 1000,
+      "addedMoney": 250000,
+      "registrationUrl": "https://matchroompool.com/events/"
+    },
+    {
+      "id": "matchroom-premier-league-pool",
+      "name": "Premier League Pool",
+      "date": "2026-09-15",
+      "location": "TBA",
+      "format": "9-ball invitational",
+      "minFargo": 700,
+      "maxFargo": 830,
+      "travelCost": "high",
+      "variance": "medium",
+      "entryFee": 0,
+      "addedMoney": 100000,
+      "registrationUrl": "https://matchroompool.com/events/"
+    },
+    {
+      "id": "matchroom-world-pool-masters",
+      "name": "World Pool Masters",
+      "date": "2026-11-01",
+      "location": "TBA",
+      "format": "9-ball invitational",
+      "minFargo": 700,
+      "maxFargo": 830,
+      "travelCost": "high",
+      "variance": "medium",
+      "entryFee": 0,
+      "addedMoney": 100000,
+      "registrationUrl": "https://matchroompool.com/events/"
+    }
+  ]
+}

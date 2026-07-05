@@ -51,9 +51,13 @@ const LIVE_SNOOKER_UPCOMING_FEED_NAME = 'Live Feed: World Snooker Upcoming';
 const LIVE_SNOOKER_RECENT_FEED_ID = 'live-snooker-recent';
 const LIVE_SNOOKER_RECENT_FEED_URL = 'https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4555';
 const LIVE_SNOOKER_RECENT_FEED_NAME = 'Live Feed: World Snooker Recent';
+const MATCHROOM_FEED_ID = 'matchroom-events-feed';
+const MATCHROOM_FEED_URL = '/demo/matchroom-events-feed.json';
+const MATCHROOM_FEED_NAME = 'Matchroom Events';
 
 const DEFAULT_FEED_PRESETS: SavedFeed[] = [
   { id: BEST_FIT_FEED_ID, name: BEST_FIT_FEED_NAME, url: BEST_FIT_FEED_URL },
+  { id: MATCHROOM_FEED_ID, name: MATCHROOM_FEED_NAME, url: MATCHROOM_FEED_URL },
   { id: LIVE_SNOOKER_UPCOMING_FEED_ID, name: LIVE_SNOOKER_UPCOMING_FEED_NAME, url: LIVE_SNOOKER_UPCOMING_FEED_URL },
   { id: LIVE_SNOOKER_RECENT_FEED_ID, name: LIVE_SNOOKER_RECENT_FEED_NAME, url: LIVE_SNOOKER_RECENT_FEED_URL },
   { id: STARTER_FEED_ID, name: STARTER_FEED_NAME, url: STARTER_FEED_URL },
