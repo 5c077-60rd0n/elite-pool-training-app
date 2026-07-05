@@ -98,6 +98,8 @@ export default function TodaySession() {
   const [saveMessage, setSaveMessage] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [focusTouched, setFocusTouched] = useState(false);
+  const [lengthTouched, setLengthTouched] = useState(false);
 
   const ghostDrillWinRatePct = Math.round(calculateRate(ghostGamesWon, ghostGamesPlayed));
   const safetyExchangeSuccessPct = Math.round(calculateRate(safetySuccesses, safetyAttempts));
@@ -128,6 +130,24 @@ export default function TodaySession() {
     refreshAdaptiveDailyPlan,
     refreshRecoveryRecommendationPlan,
     logs.length,
+  ]);
+
+  useEffect(() => {
+    if (alreadyLogged || !adaptiveDailyPlan) return;
+
+    if (!focusTouched) {
+      setFocusArea(adaptiveDailyPlan.focusKpiName || template.focusArea);
+    }
+
+    if (!lengthTouched && adaptiveDailyPlan.recommendedMinutes > 0) {
+      setLengthMinutes(adaptiveDailyPlan.recommendedMinutes);
+    }
+  }, [
+    adaptiveDailyPlan,
+    alreadyLogged,
+    focusTouched,
+    lengthTouched,
+    template.focusArea,
   ]);
 
   useEffect(() => {
@@ -165,6 +185,15 @@ export default function TodaySession() {
   function saveSessionLog(): void {
     const now = new Date().toISOString();
     const before = getTrackerGamificationSnapshot(logs);
+    const missingCoreFields = dataConfidenceNudges.filter((item) => item !== 'Session notes');
+
+    if (missingCoreFields.length >= 3) {
+      const proceed = window.confirm(
+        `Quick quality check: ${missingCoreFields.join(', ')} are still zero/blank. Save anyway?`,
+      );
+      if (!proceed) return;
+    }
+
     let effectiveLengthMinutes = Math.max(0, lengthMinutes);
 
     if (timerRunning && liveElapsedSeconds > 0) {
@@ -355,7 +384,10 @@ export default function TodaySession() {
         <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
         <input
           value={focusArea}
-          onChange={(event) => setFocusArea(event.target.value)}
+          onChange={(event) => {
+            setFocusTouched(true);
+            setFocusArea(event.target.value);
+          }}
           className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
 
@@ -366,7 +398,10 @@ export default function TodaySession() {
               type="number"
               min={0}
               value={lengthMinutes}
-              onChange={(event) => setLengthMinutes(Math.max(0, Number(event.target.value) || 0))}
+              onChange={(event) => {
+                setLengthTouched(true);
+                setLengthMinutes(Math.max(0, Number(event.target.value) || 0));
+              }}
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
           </label>
