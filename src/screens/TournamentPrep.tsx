@@ -4,11 +4,69 @@ import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button } from '../components/ui/Button';
 import { useProgressStore } from '../store/useProgressStore';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { trackerKpis } from '../data/trackerKpis';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
+import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 import type { OpponentPrepCard } from '../types/tracker';
 import type { PrepChecklist, TournamentPrep } from '../types/models';
+
+type TournamentTemplate = {
+  id: string;
+  name: string;
+  format: string;
+  locationHint: string;
+  baseFieldRange: [number, number];
+  travelCost: 'low' | 'medium' | 'high';
+  variance: 'low' | 'medium' | 'high';
+  notes: string;
+};
+
+const tournamentTemplates: TournamentTemplate[] = [
+  {
+    id: 'local-weekly-handicap',
+    name: 'Local Weekly Handicap Tour',
+    format: 'Race to 5 (handicap)',
+    locationHint: 'Local room (<= 30 min)',
+    baseFieldRange: [500, 700],
+    travelCost: 'low',
+    variance: 'low',
+    notes: 'High reps, lower cost, steady pressure exposure.',
+  },
+  {
+    id: 'regional-race-open',
+    name: 'Regional Race Open',
+    format: 'Race to 7 (open)',
+    locationHint: 'Regional room (1-2h travel)',
+    baseFieldRange: [600, 760],
+    travelCost: 'medium',
+    variance: 'medium',
+    notes: 'Balanced growth event with stronger fields and manageable volatility.',
+  },
+  {
+    id: 'state-major-open',
+    name: 'State Major Open',
+    format: 'Race to 9 (open)',
+    locationHint: 'State major venue (2h+ travel)',
+    baseFieldRange: [680, 820],
+    travelCost: 'high',
+    variance: 'high',
+    notes: 'Maximum upside and test pressure, but higher fatigue and variance.',
+  },
+];
+
+function travelPenalty(cost: TournamentTemplate['travelCost']): number {
+  if (cost === 'low') return 0;
+  if (cost === 'medium') return 8;
+  return 16;
+}
+
+function variancePenalty(value: TournamentTemplate['variance'], readiness: number): number {
+  if (value === 'low') return 0;
+  if (value === 'medium') return readiness < 65 ? 6 : 2;
+  return readiness < 70 ? 14 : 8;
+}
 
 function prepStartDate(date: string): string {
   const target = new Date(`${date}T00:00:00`);
@@ -37,6 +95,7 @@ function buildChecklist(): PrepChecklist[] {
 }
 
 export default function TournamentPrep() {
+  const profile = useSettingsStore((s) => s.profile);
   const tournamentPreps = useProgressStore((s) => s.tournamentPreps);
   const upsertTournamentPrep = useProgressStore((s) => s.upsertTournamentPrep);
   const addCompetitionLog = useTrackerStore((s) => s.addCompetitionLog);
@@ -44,8 +103,8 @@ export default function TournamentPrep() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const opponentPrepCards = useTrackerStore((s) => s.opponentPrepCards);
   const upsertOpponentPrepCard = useTrackerStore((s) => s.upsertOpponentPrepCard);
-  const personalRecords = useTrackerStore((s) => s.personalRecords);
   const confidenceIndexHistory = useTrackerStore((s) => s.confidenceIndexHistory);
+  const fargoRatingLog = useTrackerStore((s) => s.fargoRatingLog);
 
   const [activePrepId, setActivePrepId] = useState('');
   const [tournamentName, setTournamentName] = useState('');
@@ -117,6 +176,45 @@ export default function TournamentPrep() {
     [opponentPrepCards],
   );
   const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
+  const estimatedFargo = useMemo(
+    () => estimateFargo(profile.currentFargoRating, logs, fargoRatingLog),
+    [fargoRatingLog, logs, profile.currentFargoRating],
+  );
+  const activePhase = useMemo(() => Math.max(profile.currentPhase, phaseFromFargo(estimatedFargo)), [estimatedFargo, profile.currentPhase]);
+  const confidenceScore = confidenceIndexHistory[0]?.score ?? 0;
+  const tournamentFinder = useMemo(() => {
+    const readiness = Math.round((drillReadinessScore * 0.65) + (confidenceScore * 0.35));
+
+    const scored = tournamentTemplates.map((template) => {
+      const inBand = estimatedFargo >= template.baseFieldRange[0] && estimatedFargo <= template.baseFieldRange[1];
+      const nearBand = Math.abs(estimatedFargo - template.baseFieldRange[0]) <= 40 || Math.abs(estimatedFargo - template.baseFieldRange[1]) <= 40;
+
+      let score = 55;
+      if (inBand) score += 18;
+      else if (nearBand) score += 8;
+
+      if (activePhase <= 2 && template.id === 'local-weekly-handicap') score += 14;
+      if (activePhase === 3 && template.id === 'regional-race-open') score += 14;
+      if (activePhase >= 4 && template.id === 'state-major-open') score += 14;
+
+      if (readiness >= 72 && template.id !== 'local-weekly-handicap') score += 8;
+      if (readiness < 60 && template.id === 'local-weekly-handicap') score += 8;
+
+      score -= travelPenalty(template.travelCost);
+      score -= variancePenalty(template.variance, readiness);
+
+      return {
+        ...template,
+        score: Math.max(1, Math.min(100, Math.round(score))),
+      };
+    }).sort((a, b) => b.score - a.score);
+
+    return {
+      readiness,
+      best: scored[0],
+      alternatives: scored.slice(1),
+    };
+  }, [activePhase, confidenceScore, drillReadinessScore, estimatedFargo]);
 
   useEffect(() => {
     if (!selectedCard && opponentPrepCards.length) {
@@ -265,6 +363,13 @@ export default function TournamentPrep() {
     });
   }
 
+  function applyFinderTemplate(): void {
+    if (!tournamentFinder.best) return;
+    setTournamentName(tournamentFinder.best.name);
+    setFormat(tournamentFinder.best.format);
+    setLocation(tournamentFinder.best.locationHint);
+  }
+
   return (
     <PageWrapper title="Tournament Prep">
       <Card className="mb-4" title="Create Tournament Plan">
@@ -314,24 +419,20 @@ export default function TournamentPrep() {
         </Link>
       </Card>
 
-      <Card className="mb-4" title="Confidence + Records">
-        {confidenceIndexHistory.length ? (
-          <>
-            <p className="text-sm text-ivory-100">Current Confidence Index: {confidenceIndexHistory[0].score}</p>
-            <p className="text-xs text-chalk-300">{confidenceIndexHistory[0].rationale}</p>
-            <p className="mt-2 text-xs text-chalk-300">Training {confidenceIndexHistory[0].components.trainingConsistency} · Match {confidenceIndexHistory[0].components.matchReadiness} · Results {confidenceIndexHistory[0].components.recentResults} · Pressure {confidenceIndexHistory[0].components.pressureExecution}</p>
-          </>
-        ) : (
-          <p className="text-sm text-chalk-300">Confidence index appears after training, match simulations, and competition entries are logged.</p>
-        )}
+      <Card className="mb-4" title="Tournament Value Finder">
+        <p className="text-sm text-ivory-100">Recommended now: {tournamentFinder.best.name}</p>
+        <p className="text-xs text-chalk-300">Phase {activePhase} · Est Fargo {estimatedFargo} · Readiness {tournamentFinder.readiness}</p>
+        <p className="mt-1 text-xs text-chalk-300">Value score: {tournamentFinder.best.score}/100 · {tournamentFinder.best.notes}</p>
+        <p className="mt-1 text-xs text-chalk-300">Format: {tournamentFinder.best.format} · Travel: {tournamentFinder.best.travelCost.toUpperCase()} · Variance: {tournamentFinder.best.variance.toUpperCase()}</p>
 
-        {personalRecords.length ? (
-          <div className="mt-3 space-y-1 text-xs text-chalk-300">
-            {personalRecords.slice(0, 4).map((record) => (
-              <p key={record.id}>{record.label}: {record.value} {record.unit} ({record.achievedAt})</p>
-            ))}
-          </div>
-        ) : null}
+        <div className="mt-3 space-y-1 text-xs text-chalk-300">
+          <p>Alternative 1: {tournamentFinder.alternatives[0].name} ({tournamentFinder.alternatives[0].score})</p>
+          <p>Alternative 2: {tournamentFinder.alternatives[1].name} ({tournamentFinder.alternatives[1].score})</p>
+        </div>
+
+        <Button className="mt-3 w-full" variant="secondary" onClick={applyFinderTemplate}>
+          Apply Recommended Template
+        </Button>
       </Card>
 
       <Card className="mb-4" title="Opponent Prep Cards">
