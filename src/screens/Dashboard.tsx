@@ -110,6 +110,36 @@ export default function Dashboard() {
             100,
         )
       : 0;
+  const weekIn60 = useMemo(() => {
+    if (currentWeekStats) {
+      return {
+        sessions: currentWeekStats.sessionsCompleted,
+        minutes: currentWeekStats.totalTrainingMinutes,
+        drillRoomAvg: currentWeekStats.avgDrillRoomShotmakingPct,
+        ghostBest: currentWeekStats.ghostDrillBestWinRatePct,
+        lineUpBest: currentWeekStats.lineUpBestScore,
+      };
+    }
+
+    const thisWeekLogs = logs.filter((item) => item.weekNumber === profile.currentWeek);
+    if (!thisWeekLogs.length) {
+      return {
+        sessions: 0,
+        minutes: 0,
+        drillRoomAvg: 0,
+        ghostBest: 0,
+        lineUpBest: 0,
+      };
+    }
+
+    return {
+      sessions: thisWeekLogs.length,
+      minutes: thisWeekLogs.reduce((sum, item) => sum + item.lengthMinutes, 0),
+      drillRoomAvg: Math.round(thisWeekLogs.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / thisWeekLogs.length),
+      ghostBest: Math.max(...thisWeekLogs.map((item) => item.ghostDrillWinRatePct)),
+      lineUpBest: Math.min(...thisWeekLogs.map((item) => item.lineUpShotCount).filter((value) => value > 0), 0),
+    };
+  }, [currentWeekStats, logs, profile.currentWeek]);
 
   useEffect(() => {
     if (!notificationsEnabled) return;
@@ -165,6 +195,32 @@ export default function Dashboard() {
           <p className="text-chalk-300">Milestones Met</p>
           <p className="text-right text-ivory-100">{milestonesMet}</p>
         </div>
+      </Card>
+
+      <Card className="mb-4" title="This Week in 60 Seconds">
+        {weekIn60.sessions ? (
+          <>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Sessions</p>
+              <p className="text-right text-ivory-100">{weekIn60.sessions}</p>
+              <p className="text-chalk-300">Minutes</p>
+              <p className="text-right text-ivory-100">{weekIn60.minutes}</p>
+              <p className="text-chalk-300">DrillRoom Avg</p>
+              <p className="text-right text-ivory-100">{weekIn60.drillRoomAvg}%</p>
+              <p className="text-chalk-300">Ghost Best</p>
+              <p className="text-right text-ivory-100">{weekIn60.ghostBest}%</p>
+              <p className="text-chalk-300">Line-Up Best</p>
+              <p className="text-right text-ivory-100">{weekIn60.lineUpBest}</p>
+              <p className="text-chalk-300">Confidence</p>
+              <p className="text-right text-ivory-100">{confidenceIndexHistory[0]?.score ?? 0}</p>
+            </div>
+            <Link to="/progress">
+              <Button className="mt-3">Open Weekly Review</Button>
+            </Link>
+          </>
+        ) : (
+          <p className="text-sm text-chalk-300">No sessions logged for this week yet. Complete one session to unlock your 60-second review.</p>
+        )}
       </Card>
 
       {notificationInsights.length ? (

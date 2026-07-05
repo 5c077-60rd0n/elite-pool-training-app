@@ -146,6 +146,15 @@ export default function TodaySession() {
   const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
     ? Math.max(0, Math.floor((nowMs - Date.parse(timerStartedAt)) / 1000))
     : 0);
+  const dataConfidenceNudges = useMemo(() => {
+    const nudges: string[] = [];
+    if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom %');
+    if (ghostGamesWon === 0) nudges.push('Ghost wins');
+    if (lineUpShotCount === 0) nudges.push('Line-up shots');
+    if (safetySuccesses === 0) nudges.push('Safety successes');
+    if (!notes.trim()) nudges.push('Session notes');
+    return nudges;
+  }, [drillRoomShotmakingPct, ghostGamesWon, lineUpShotCount, notes, safetySuccesses]);
 
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
@@ -156,6 +165,19 @@ export default function TodaySession() {
   function saveSessionLog(): void {
     const now = new Date().toISOString();
     const before = getTrackerGamificationSnapshot(logs);
+    let effectiveLengthMinutes = Math.max(0, lengthMinutes);
+
+    if (timerRunning && liveElapsedSeconds > 0) {
+      const suggestedMinutes = Math.max(1, Math.round(liveElapsedSeconds / 60));
+      const applyTimerLength = window.confirm(
+        `Session timer is still running (${formatElapsed(liveElapsedSeconds)}). Apply ${suggestedMinutes} minutes to session length before saving?`,
+      );
+      if (applyTimerLength) {
+        effectiveLengthMinutes = suggestedMinutes;
+        setLengthMinutes(suggestedMinutes);
+      }
+      stopTimer();
+    }
 
     const log: DailySessionLog = {
       id: `session-${Date.now()}`,
@@ -163,7 +185,7 @@ export default function TodaySession() {
       dayOfWeek: day,
       weekNumber: currentWeek,
       focusArea,
-      lengthMinutes: Math.max(0, lengthMinutes),
+      lengthMinutes: effectiveLengthMinutes,
       drillRoomShotmakingPct: clampPct(drillRoomShotmakingPct),
       bullseyeProximity: Math.max(0, bullseyeProximity),
       bullseyeCategory,
@@ -479,6 +501,11 @@ export default function TodaySession() {
           onChange={(event) => setNotes(event.target.value)}
           className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
         />
+        {dataConfidenceNudges.length ? (
+          <p className="mb-3 text-xs text-chalk-300">
+            Data confidence nudge: still zero or blank: {dataConfidenceNudges.join(' · ')}
+          </p>
+        ) : null}
         <Button className="w-full" onClick={saveSessionLog}>Save Today's Log</Button>
         {alreadyLogged ? <p className="mt-2 text-sm text-cue-300">Today's session is already logged.</p> : null}
         {saveMessage ? <p className="mt-2 text-sm text-cue-300">{saveMessage}</p> : null}
