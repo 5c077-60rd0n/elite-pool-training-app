@@ -28,6 +28,8 @@ type FinderCandidate = TournamentTemplate & {
   eventDate?: string;
   registrationUrl?: string;
   mapUrl?: string;
+  latitude?: number;
+  longitude?: number;
   entryFee?: number;
   addedMoney?: number;
 };
@@ -138,13 +140,35 @@ function normalizeMapQuery(value: string | undefined): string | undefined {
 function buildMapSearchUrl(value: string | undefined): string | undefined {
   const query = normalizeMapQuery(value);
   if (!query) return undefined;
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+  return `https://www.openstreetmap.org/search?query=${encodeURIComponent(query)}`;
 }
 
-function buildMapEmbedUrl(value: string | undefined): string | undefined {
-  const query = normalizeMapQuery(value);
-  if (!query) return undefined;
-  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+function buildMapEmbedUrl(lat: number, lon: number): string {
+  const delta = 0.02;
+  const left = lon - delta;
+  const right = lon + delta;
+  const top = lat + delta;
+  const bottom = lat - delta;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lon}`;
+}
+
+async function geocodeLocation(query: string): Promise<{ lat: number; lon: number } | null> {
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`, {
+    headers: {
+      Accept: 'application/json',
+    },
+  });
+
+  if (!response.ok) return null;
+
+  const payload = (await response.json()) as unknown;
+  if (!Array.isArray(payload) || payload.length === 0) return null;
+
+  const first = asRecord(payload[0]);
+  const lat = asNumber(first?.lat);
+  const lon = asNumber(first?.lon);
+  if (typeof lat !== 'number' || typeof lon !== 'number') return null;
+  return { lat, lon };
 }
 
 function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
@@ -168,6 +192,8 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
       const entryFee = asNumber(row.entryFee ?? row.fee ?? row.entry_fee);
       const addedMoney = asNumber(row.addedMoney ?? row.added_money ?? row.prizeAdded);
       const fieldSize = asNumber(row.fieldSize ?? row.players ?? row.playerCount);
+      const latitude = asNumber(row.latitude ?? row.lat);
+      const longitude = asNumber(row.longitude ?? row.lon ?? row.lng);
 
       const lower = typeof minFargo === 'number' ? minFargo : 520;
       const upper = typeof maxFargo === 'number' ? maxFargo : 780;
@@ -193,6 +219,8 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
         eventDate,
         registrationUrl: asString(row.registrationUrl ?? row.url ?? row.link),
         mapUrl: asString(row.mapUrl ?? row.map ?? row.strMap),
+        latitude,
+        longitude,
         entryFee,
         addedMoney,
       };
@@ -330,6 +358,7 @@ export default function TournamentPrep() {
   const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>(() => loadSavedFeeds());
   const [selectedFeedId, setSelectedFeedId] = useState('custom');
   const [selectedFinderId, setSelectedFinderId] = useState('');
+  const [selectedTournamentEmbedUrl, setSelectedTournamentEmbedUrl] = useState('');
 
   const sortedPreps = useMemo(
     () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
@@ -501,6 +530,33 @@ export default function TournamentPrep() {
     () => [tournamentFinder.best, ...tournamentFinder.alternatives].find((candidate) => candidate.id === selectedFinderId) ?? tournamentFinder.best,
     [selectedFinderId, tournamentFinder],
   );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMapEmbed(): Promise<void> {
+      const query = normalizeMapQuery(selectedTournament?.locationHint);
+      if (typeof selectedTournament?.latitude === 'number' && typeof selectedTournament?.longitude === 'number') {
+        setSelectedTournamentEmbedUrl(buildMapEmbedUrl(selectedTournament.latitude, selectedTournament.longitude));
+        return;
+      }
+
+      if (!query) {
+        setSelectedTournamentEmbedUrl('');
+        return;
+      }
+
+      const coordinates = await geocodeLocation(query);
+      if (cancelled) return;
+      setSelectedTournamentEmbedUrl(coordinates ? buildMapEmbedUrl(coordinates.lat, coordinates.lon) : '');
+    }
+
+    void loadMapEmbed();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTournament?.latitude, selectedTournament?.locationHint, selectedTournament?.longitude]);
 
   useEffect(() => {
     if (!selectedCard && opponentPrepCards.length) {
@@ -699,7 +755,6 @@ export default function TournamentPrep() {
   }
 
   const selectedTournamentMapUrl = selectedTournament?.mapUrl ?? buildMapSearchUrl(selectedTournament?.locationHint);
-  const selectedTournamentMapEmbedUrl = selectedTournament?.mapUrl ?? buildMapEmbedUrl(selectedTournament?.locationHint);
 
   return (
     <PageWrapper title="Tournament Prep">
@@ -806,11 +861,11 @@ export default function TournamentPrep() {
         {selectedTournament?.eventDate ? (
           <p className="mt-1 text-xs text-chalk-300">Event date: {selectedTournament.eventDate}</p>
         ) : null}
-        {selectedTournamentMapEmbedUrl ? (
+        {selectedTournamentEmbedUrl ? (
           <div className="mt-3 overflow-hidden rounded-xl border border-felt-600 bg-felt-800/60">
             <iframe
               title={`Map for ${selectedTournament?.name ?? 'selected tournament'}`}
-              src={selectedTournamentMapEmbedUrl}
+              src={selectedTournamentEmbedUrl}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
               className="h-48 w-full border-0"
