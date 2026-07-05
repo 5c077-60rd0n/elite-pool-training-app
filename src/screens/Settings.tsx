@@ -64,6 +64,10 @@ type BackupPayload = {
       drillResults?: ReturnType<typeof useSessionStore.getState>['drillResults'];
       isComplete?: boolean;
       sessionNotes?: string;
+      timerDate?: ReturnType<typeof useSessionStore.getState>['timerDate'];
+      timerRunning?: ReturnType<typeof useSessionStore.getState>['timerRunning'];
+      timerStartedAt?: ReturnType<typeof useSessionStore.getState>['timerStartedAt'];
+      timerAccumulatedSeconds?: ReturnType<typeof useSessionStore.getState>['timerAccumulatedSeconds'];
     };
   };
   progress?: BackupPayload['legacyCompatibility'] extends { progress?: infer T } ? T : never;
@@ -167,6 +171,10 @@ export default function Settings() {
           drillResults: session.drillResults,
           isComplete: session.isComplete,
           sessionNotes: session.sessionNotes,
+          timerDate: session.timerDate,
+          timerRunning: session.timerRunning,
+          timerStartedAt: session.timerStartedAt,
+          timerAccumulatedSeconds: session.timerAccumulatedSeconds,
         },
       },
     };
@@ -255,6 +263,10 @@ export default function Settings() {
           drillResults: legacySession.drillResults ?? state.drillResults,
           isComplete: legacySession.isComplete ?? state.isComplete,
           sessionNotes: legacySession.sessionNotes ?? state.sessionNotes,
+          timerDate: legacySession.timerDate ?? state.timerDate,
+          timerRunning: legacySession.timerRunning ?? state.timerRunning,
+          timerStartedAt: legacySession.timerStartedAt ?? state.timerStartedAt,
+          timerAccumulatedSeconds: legacySession.timerAccumulatedSeconds ?? state.timerAccumulatedSeconds,
         }));
       }
 
@@ -352,6 +364,10 @@ export default function Settings() {
       drillResults: [],
       isComplete: false,
       sessionNotes: '',
+      timerDate: new Date().toISOString().slice(0, 10),
+      timerRunning: false,
+      timerStartedAt: undefined,
+      timerAccumulatedSeconds: 0,
     }));
     setStatus('Tracker data reset.');
   }

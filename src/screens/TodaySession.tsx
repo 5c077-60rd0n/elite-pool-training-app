@@ -27,6 +27,14 @@ function clampPct(value: number): number {
   return Math.max(0, Math.min(100, value));
 }
 
+function formatElapsed(seconds: number): string {
+  const clamped = Math.max(0, seconds);
+  const hours = Math.floor(clamped / 3600);
+  const minutes = Math.floor((clamped % 3600) / 60);
+  const secs = clamped % 60;
+  return [hours, minutes, secs].map((part) => part.toString().padStart(2, '0')).join(':');
+}
+
 const bullseyeOptions: BullseyeCategory[] = [
   'Follow',
   'Stun',
@@ -46,6 +54,15 @@ export default function TodaySession() {
   const currentWeek = useProgramStore((s) => s.currentWeek);
   const profile = useSettingsStore((s) => s.profile);
   const markComplete = useSessionStore((s) => s.markComplete);
+  const timerDate = useSessionStore((s) => s.timerDate);
+  const timerRunning = useSessionStore((s) => s.timerRunning);
+  const timerStartedAt = useSessionStore((s) => s.timerStartedAt);
+  const timerAccumulatedSeconds = useSessionStore((s) => s.timerAccumulatedSeconds);
+  const startTimer = useSessionStore((s) => s.startTimer);
+  const pauseTimer = useSessionStore((s) => s.pauseTimer);
+  const resumeTimer = useSessionStore((s) => s.resumeTimer);
+  const stopTimer = useSessionStore((s) => s.stopTimer);
+  const resetTimer = useSessionStore((s) => s.resetTimer);
   const addDailySessionLog = useTrackerStore((s) => s.addDailySessionLog);
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
@@ -80,6 +97,7 @@ export default function TodaySession() {
   const [notes, setNotes] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const ghostDrillWinRatePct = Math.round(calculateRate(ghostGamesWon, ghostGamesPlayed));
   const safetyExchangeSuccessPct = Math.round(calculateRate(safetySuccesses, safetyAttempts));
@@ -111,6 +129,29 @@ export default function TodaySession() {
     refreshRecoveryRecommendationPlan,
     logs.length,
   ]);
+
+  useEffect(() => {
+    if (timerDate === today) return;
+    resetTimer();
+  }, [resetTimer, timerDate, today]);
+
+  useEffect(() => {
+    if (!timerRunning) return;
+    const interval = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [timerRunning]);
+
+  const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
+    ? Math.max(0, Math.floor((nowMs - Date.parse(timerStartedAt)) / 1000))
+    : 0);
+
+  function handleTimerEndAndApply(): void {
+    const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
+    const roundedMinutes = Math.max(1, Math.round(totalSeconds / 60));
+    setLengthMinutes(roundedMinutes);
+  }
 
   function saveSessionLog(): void {
     const now = new Date().toISOString();
@@ -227,6 +268,24 @@ export default function TodaySession() {
         <p className="text-lg text-ivory-100">{template.focusArea}</p>
         <p className="text-sm text-ivory-200">Primary App: {template.primaryApp} · {template.sessionLengthLabel}</p>
         <p className="mt-2 text-xs text-chalk-300">Key Drills: {template.keyDrills.join(' · ')}</p>
+      </Card>
+
+      <Card className="mb-4" title="Session Timer">
+        <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
+        <p className="mt-1 text-xs text-chalk-300">Use Start/Pause during practice. End & Apply auto-fills session length (you can still edit manually).</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {!timerRunning && liveElapsedSeconds === 0 ? (
+            <Button onClick={startTimer}>Start</Button>
+          ) : null}
+          {timerRunning ? (
+            <Button variant="secondary" onClick={pauseTimer}>Pause</Button>
+          ) : null}
+          {!timerRunning && liveElapsedSeconds > 0 ? (
+            <Button variant="secondary" onClick={resumeTimer}>Resume</Button>
+          ) : null}
+          <Button variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0}>End & Apply</Button>
+          <Button variant="secondary" onClick={resetTimer} disabled={timerRunning || liveElapsedSeconds === 0}>Reset</Button>
+        </div>
       </Card>
 
       {adaptiveDailyPlan ? (
