@@ -57,6 +57,7 @@ const LIVE_SNOOKER_RECENT_FEED_NAME = 'Live Feed: World Snooker Recent';
 const MATCHROOM_FEED_ID = 'matchroom-events-feed';
 const MATCHROOM_FEED_URL = '/demo/matchroom-events-feed.json';
 const MATCHROOM_FEED_NAME = 'Matchroom Events';
+const SNOOKER_FEED_IDS = new Set([LIVE_SNOOKER_UPCOMING_FEED_ID, LIVE_SNOOKER_RECENT_FEED_ID]);
 
 const DEFAULT_FEED_PRESETS: SavedFeed[] = [
   { id: BEST_FIT_FEED_ID, name: BEST_FIT_FEED_NAME, url: BEST_FIT_FEED_URL },
@@ -250,7 +251,7 @@ const tournamentTemplates: TournamentTemplate[] = [
   {
     id: 'local-weekly-handicap',
     name: 'Local Weekly Handicap Tour',
-    format: 'Race to 5 (handicap)',
+    format: '9-ball Race to 5 (handicap)',
     locationHint: 'Local room (<= 30 min)',
     baseFieldRange: [500, 700],
     travelCost: 'low',
@@ -260,7 +261,7 @@ const tournamentTemplates: TournamentTemplate[] = [
   {
     id: 'regional-race-open',
     name: 'Regional Race Open',
-    format: 'Race to 7 (open)',
+    format: '9-ball Race to 7 (open)',
     locationHint: 'Regional room (1-2h travel)',
     baseFieldRange: [600, 760],
     travelCost: 'medium',
@@ -270,7 +271,7 @@ const tournamentTemplates: TournamentTemplate[] = [
   {
     id: 'state-major-open',
     name: 'State Major Open',
-    format: 'Race to 9 (open)',
+    format: '9-ball Race to 9 (open)',
     locationHint: 'State major venue (2h+ travel)',
     baseFieldRange: [680, 820],
     travelCost: 'high',
@@ -289,6 +290,32 @@ function variancePenalty(value: TournamentTemplate['variance'], readiness: numbe
   if (value === 'low') return 0;
   if (value === 'medium') return readiness < 65 ? 6 : 2;
   return readiness < 70 ? 14 : 8;
+}
+
+function detectDiscipline(candidate: Pick<FinderCandidate, 'name' | 'format'>): 'snooker' | '9-ball' | '10-ball' | '8-ball' | 'unknown' {
+  const text = `${candidate.name} ${candidate.format}`.toLowerCase();
+  if (text.includes('snooker')) return 'snooker';
+  if (/10\s*-?\s*ball|ten\s*-?\s*ball/.test(text)) return '10-ball';
+  if (/9\s*-?\s*ball|nine\s*-?\s*ball/.test(text)) return '9-ball';
+  if (/8\s*-?\s*ball|eight\s*-?\s*ball/.test(text)) return '8-ball';
+  return 'unknown';
+}
+
+function matchesPreferredGame(candidate: FinderCandidate, preferredBreakGame: '9-ball' | '10-ball' | '8-ball'): boolean {
+  const discipline = detectDiscipline(candidate);
+  if (discipline === 'snooker') return false;
+  if (preferredBreakGame === '9-ball') return discipline === '9-ball';
+  if (preferredBreakGame === '10-ball') return discipline === '10-ball';
+  return discipline === '8-ball';
+}
+
+function mergeUniqueCandidates(candidates: FinderCandidate[]): FinderCandidate[] {
+  const map = new Map<string, FinderCandidate>();
+  for (const candidate of candidates) {
+    const key = `${candidate.id}|${candidate.eventDate ?? ''}|${candidate.name}`;
+    if (!map.has(key)) map.set(key, candidate);
+  }
+  return [...map.values()];
 }
 
 function prepStartDate(date: string): string {
@@ -440,8 +467,17 @@ export default function TournamentPrep() {
     });
   }, []);
 
+  useEffect(() => {
+    const matchingPreset = savedFeeds.find((feed) => feed.url === feedUrl);
+    if (!matchingPreset) {
+      setSelectedFeedId('custom');
+      return;
+    }
+    setSelectedFeedId(matchingPreset.id);
+  }, [feedUrl, savedFeeds]);
+
   const refreshEventFeed = useCallback(async (): Promise<void> => {
-    if (!feedUrl.trim()) {
+    if (selectedFeedId !== BEST_FIT_FEED_ID && !feedUrl.trim()) {
       setFeedEvents([]);
       setFeedStatus('idle');
       setFeedError('');
@@ -451,18 +487,52 @@ export default function TournamentPrep() {
     try {
       setFeedStatus('loading');
       setFeedError('');
-      const events = await fetchTournamentFeed(feedUrl.trim());
-      setFeedEvents(events);
+      let events: FinderCandidate[] = [];
+
+      if (selectedFeedId === BEST_FIT_FEED_ID) {
+        const poolResourceUrls = Array.from(new Set([
+          BEST_FIT_FEED_URL,
+          MATCHROOM_FEED_URL,
+          STARTER_FEED_URL,
+          ...savedFeeds
+            .filter((feed) => !SNOOKER_FEED_IDS.has(feed.id))
+            .map((feed) => feed.url),
+        ]));
+
+        const sourceResults = await Promise.allSettled(poolResourceUrls.map((url) => fetchTournamentFeed(url)));
+        const merged = sourceResults
+          .filter((result): result is PromiseFulfilledResult<FinderCandidate[]> => result.status === 'fulfilled')
+          .flatMap((result) => result.value);
+        events = mergeUniqueCandidates(merged);
+
+        const failedSources = sourceResults.filter((result) => result.status === 'rejected').length;
+        if (failedSources > 0) {
+          setFeedError(`Loaded with partial coverage: ${failedSources} source${failedSources === 1 ? '' : 's'} unavailable.`);
+        }
+      } else {
+        events = await fetchTournamentFeed(feedUrl.trim());
+      }
+
+      const isBestFitMode = selectedFeedId === BEST_FIT_FEED_ID;
+      const filteredEvents = events.filter((candidate) => {
+        if (isBestFitMode) {
+          return detectDiscipline(candidate) === '9-ball';
+        }
+        return matchesPreferredGame(candidate, profile.preferredBreakGame);
+      });
+      setFeedEvents(filteredEvents);
       setFeedStatus('success');
-      if (!events.length) {
-        setFeedError('Feed loaded but returned no usable events.');
+      if (!filteredEvents.length) {
+        setFeedError(isBestFitMode
+          ? 'Feed loaded but no 9-ball events matched your focus.'
+          : `Feed loaded but no ${profile.preferredBreakGame} events matched your focus.`);
       }
     } catch (error) {
       setFeedStatus('error');
       setFeedEvents([]);
       setFeedError(error instanceof Error ? error.message : 'Unable to load feed events.');
     }
-  }, [feedUrl]);
+  }, [feedUrl, profile.preferredBreakGame, savedFeeds, selectedFeedId]);
 
   useEffect(() => {
     void refreshEventFeed();
