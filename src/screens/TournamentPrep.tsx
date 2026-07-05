@@ -27,6 +27,7 @@ type FinderCandidate = TournamentTemplate & {
   source: 'template' | 'api';
   eventDate?: string;
   registrationUrl?: string;
+  mapUrl?: string;
   entryFee?: number;
   addedMoney?: number;
 };
@@ -127,6 +128,25 @@ function mapVariance(value: unknown, fieldSize?: number): 'low' | 'medium' | 'hi
   return 'medium';
 }
 
+function normalizeMapQuery(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.trim();
+  if (!trimmed || trimmed === 'TBA' || trimmed === 'Unknown venue') return undefined;
+  return trimmed;
+}
+
+function buildMapSearchUrl(value: string | undefined): string | undefined {
+  const query = normalizeMapQuery(value);
+  if (!query) return undefined;
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
+}
+
+function buildMapEmbedUrl(value: string | undefined): string | undefined {
+  const query = normalizeMapQuery(value);
+  if (!query) return undefined;
+  return `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+}
+
 function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
   const root = asRecord(payload);
   const data = root?.events ?? root?.results ?? root?.data ?? payload;
@@ -172,6 +192,7 @@ function normalizeFeedCandidates(payload: unknown): FinderCandidate[] {
         source: 'api',
         eventDate,
         registrationUrl: asString(row.registrationUrl ?? row.url ?? row.link),
+        mapUrl: asString(row.mapUrl ?? row.map ?? row.strMap),
         entryFee,
         addedMoney,
       };
@@ -657,6 +678,9 @@ export default function TournamentPrep() {
     setSelectedFeedId('custom');
   }
 
+  const bestTournamentMapUrl = tournamentFinder.best.mapUrl ?? buildMapSearchUrl(tournamentFinder.best.locationHint);
+  const bestTournamentMapEmbedUrl = tournamentFinder.best.mapUrl ?? buildMapEmbedUrl(tournamentFinder.best.locationHint);
+
   return (
     <PageWrapper title="Tournament Prep">
       <Card className="mb-4" title="Create Tournament Plan">
@@ -744,6 +768,22 @@ export default function TournamentPrep() {
         <p className="mt-1 text-xs text-chalk-300">Format: {tournamentFinder.best.format} · Travel: {tournamentFinder.best.travelCost.toUpperCase()} · Variance: {tournamentFinder.best.variance.toUpperCase()}</p>
         {tournamentFinder.best.eventDate ? (
           <p className="mt-1 text-xs text-chalk-300">Event date: {tournamentFinder.best.eventDate}</p>
+        ) : null}
+        {bestTournamentMapEmbedUrl ? (
+          <div className="mt-3 overflow-hidden rounded-xl border border-felt-600 bg-felt-800/60">
+            <iframe
+              title={`Map for ${tournamentFinder.best.name}`}
+              src={bestTournamentMapEmbedUrl}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+              className="h-48 w-full border-0"
+            />
+          </div>
+        ) : null}
+        {bestTournamentMapUrl ? (
+          <a href={bestTournamentMapUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-cue-300 underline underline-offset-2">
+            Open venue map
+          </a>
         ) : null}
         {tournamentFinder.best.registrationUrl ? (
           <a href={tournamentFinder.best.registrationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-cue-300 underline underline-offset-2">
