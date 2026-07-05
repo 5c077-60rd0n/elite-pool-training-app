@@ -31,7 +31,37 @@ type FinderCandidate = TournamentTemplate & {
   addedMoney?: number;
 };
 
+type SavedFeed = {
+  id: string;
+  name: string;
+  url: string;
+};
+
 const TOURNAMENT_FEED_URL_KEY = 'fargo-climb-tournament-feed-url';
+const TOURNAMENT_FEED_PRESETS_KEY = 'fargo-climb-tournament-feed-presets';
+
+function loadSavedFeeds(): SavedFeed[] {
+  if (typeof localStorage === 'undefined') return [];
+  const raw = localStorage.getItem(TOURNAMENT_FEED_PRESETS_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item): SavedFeed | null => {
+        const row = asRecord(item);
+        if (!row) return null;
+        const id = asString(row.id);
+        const name = asString(row.name);
+        const url = asString(row.url);
+        if (!id || !name || !url) return null;
+        return { id, name, url };
+      })
+      .filter((item): item is SavedFeed => Boolean(item));
+  } catch {
+    return [];
+  }
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -253,6 +283,8 @@ export default function TournamentPrep() {
   const [feedStatus, setFeedStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [feedError, setFeedError] = useState('');
   const [feedEvents, setFeedEvents] = useState<FinderCandidate[]>([]);
+  const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>(() => loadSavedFeeds());
+  const [selectedFeedId, setSelectedFeedId] = useState('custom');
 
   const sortedPreps = useMemo(
     () => [...tournamentPreps].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)),
@@ -316,6 +348,11 @@ export default function TournamentPrep() {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(TOURNAMENT_FEED_URL_KEY, feedUrl);
   }, [feedUrl]);
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(TOURNAMENT_FEED_PRESETS_KEY, JSON.stringify(savedFeeds));
+  }, [savedFeeds]);
 
   const refreshEventFeed = useCallback(async (): Promise<void> => {
     if (!feedUrl.trim()) {
@@ -546,6 +583,45 @@ export default function TournamentPrep() {
     }
   }
 
+  function applySavedFeed(feedId: string): void {
+    setSelectedFeedId(feedId);
+    if (feedId === 'custom') return;
+    const preset = savedFeeds.find((item) => item.id === feedId);
+    if (!preset) return;
+    setFeedUrl(preset.url);
+  }
+
+  function saveCurrentFeedPreset(): void {
+    const url = feedUrl.trim();
+    if (!url) return;
+    const suggestedName = (() => {
+      try {
+        return new URL(url).hostname;
+      } catch {
+        return 'Tournament Feed';
+      }
+    })();
+    const name = window.prompt('Name this feed preset', suggestedName)?.trim();
+    if (!name) return;
+
+    const existing = savedFeeds.find((item) => item.url === url);
+    if (existing) {
+      setSavedFeeds((state) => state.map((item) => item.id === existing.id ? { ...item, name } : item));
+      setSelectedFeedId(existing.id);
+      return;
+    }
+
+    const id = `feed-${Date.now()}`;
+    setSavedFeeds((state) => [{ id, name, url }, ...state].slice(0, 10));
+    setSelectedFeedId(id);
+  }
+
+  function removeSelectedFeedPreset(): void {
+    if (selectedFeedId === 'custom') return;
+    setSavedFeeds((state) => state.filter((item) => item.id !== selectedFeedId));
+    setSelectedFeedId('custom');
+  }
+
   return (
     <PageWrapper title="Tournament Prep">
       <Card className="mb-4" title="Create Tournament Plan">
@@ -596,6 +672,25 @@ export default function TournamentPrep() {
       </Card>
 
       <Card className="mb-4" title="Tournament Value Finder">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+          <select
+            value={selectedFeedId}
+            onChange={(event) => applySavedFeed(event.target.value)}
+            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+          >
+            <option value="custom">Custom feed URL</option>
+            {savedFeeds.map((feed) => (
+              <option key={feed.id} value={feed.id}>{feed.name}</option>
+            ))}
+          </select>
+          <Button variant="secondary" onClick={saveCurrentFeedPreset} disabled={!feedUrl.trim()}>
+            Save Feed
+          </Button>
+          <Button variant="secondary" onClick={removeSelectedFeedPreset} disabled={selectedFeedId === 'custom'}>
+            Remove
+          </Button>
+        </div>
+
         <input
           value={feedUrl}
           onChange={(event) => setFeedUrl(event.target.value)}
