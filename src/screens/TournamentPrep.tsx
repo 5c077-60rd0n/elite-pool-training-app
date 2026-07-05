@@ -41,9 +41,12 @@ type SavedFeed = {
 };
 
 type FinderGameFilter = '9-ball' | '10-ball' | 'straight-pool';
+type FinderDivisionFilter = 'men' | 'open' | 'women';
 
 const TOURNAMENT_FEED_URL_KEY = 'fargo-climb-tournament-feed-url';
 const TOURNAMENT_FEED_PRESETS_KEY = 'fargo-climb-tournament-feed-presets';
+const TOURNAMENT_FEED_GAME_FILTER_KEY = 'fargo-climb-tournament-game-filter';
+const TOURNAMENT_FEED_DIVISION_FILTER_KEY = 'fargo-climb-tournament-division-filter';
 const BEST_FIT_FEED_ID = 'elite-best-fit-feed';
 const BEST_FIT_FEED_URL = 'https://wpapool.com/wp-json/wp/v2/posts?per_page=40&_fields=id,date,link,title';
 const BEST_FIT_FEED_NAME = 'Elite Best-Fit (Live WPA)';
@@ -405,22 +408,20 @@ function variancePenalty(value: TournamentTemplate['variance'], readiness: numbe
   return readiness < 70 ? 14 : 8;
 }
 
-function detectDiscipline(candidate: Pick<FinderCandidate, 'name' | 'format'>): 'snooker' | '9-ball' | '10-ball' | '8-ball' | 'unknown' {
-  const text = `${candidate.name} ${candidate.format}`;
-  const discipline = inferDisciplineFromText(text);
-  return discipline === 'straight-pool' ? 'unknown' : discipline;
-}
-
 function detectFinderDiscipline(candidate: Pick<FinderCandidate, 'name' | 'format'>): FinderGameFilter | 'snooker' | '8-ball' | 'unknown' {
   return inferDisciplineFromText(`${candidate.name} ${candidate.format}`);
 }
 
-function matchesPreferredGame(candidate: FinderCandidate, preferredBreakGame: '9-ball' | '10-ball' | '8-ball'): boolean {
-  const discipline = detectDiscipline(candidate);
-  if (discipline === 'snooker') return false;
-  if (preferredBreakGame === '9-ball') return discipline === '9-ball';
-  if (preferredBreakGame === '10-ball') return discipline === '10-ball';
-  return discipline === '8-ball';
+function hasWomenMarker(candidate: Pick<FinderCandidate, 'name' | 'format'>): boolean {
+  const text = `${candidate.name} ${candidate.format}`.toLowerCase();
+  return /(women|woman|ladies|female|girls)/.test(text);
+}
+
+function matchesDivision(candidate: Pick<FinderCandidate, 'name' | 'format'>, division: FinderDivisionFilter): boolean {
+  const women = hasWomenMarker(candidate);
+  if (division === 'women') return women;
+  if (division === 'men') return !women;
+  return true;
 }
 
 function mergeUniqueCandidates(candidates: FinderCandidate[]): FinderCandidate[] {
@@ -498,7 +499,18 @@ export default function TournamentPrep() {
   const [feedEvents, setFeedEvents] = useState<FinderCandidate[]>([]);
   const [savedFeeds, setSavedFeeds] = useState<SavedFeed[]>(() => loadSavedFeeds());
   const [selectedFeedId, setSelectedFeedId] = useState('custom');
-  const [finderGameFilter, setFinderGameFilter] = useState<FinderGameFilter>('9-ball');
+  const [finderGameFilter, setFinderGameFilter] = useState<FinderGameFilter>(() => {
+    if (typeof localStorage === 'undefined') return '9-ball';
+    const value = localStorage.getItem(TOURNAMENT_FEED_GAME_FILTER_KEY);
+    if (value === '9-ball' || value === '10-ball' || value === 'straight-pool') return value;
+    return '9-ball';
+  });
+  const [finderDivisionFilter, setFinderDivisionFilter] = useState<FinderDivisionFilter>(() => {
+    if (typeof localStorage === 'undefined') return 'men';
+    const value = localStorage.getItem(TOURNAMENT_FEED_DIVISION_FILTER_KEY);
+    if (value === 'men' || value === 'open' || value === 'women') return value;
+    return 'men';
+  });
   const [selectedFinderId, setSelectedFinderId] = useState('');
   const [selectedTournamentEmbedUrl, setSelectedTournamentEmbedUrl] = useState('');
 
@@ -569,6 +581,16 @@ export default function TournamentPrep() {
     if (typeof localStorage === 'undefined') return;
     localStorage.setItem(TOURNAMENT_FEED_PRESETS_KEY, JSON.stringify(savedFeeds));
   }, [savedFeeds]);
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(TOURNAMENT_FEED_GAME_FILTER_KEY, finderGameFilter);
+  }, [finderGameFilter]);
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(TOURNAMENT_FEED_DIVISION_FILTER_KEY, finderDivisionFilter);
+  }, [finderDivisionFilter]);
 
   useEffect(() => {
     setSavedFeeds((state) => {
@@ -649,23 +671,21 @@ export default function TournamentPrep() {
       const filteredEvents = events.filter((candidate) => {
         if (isBestFitMode) {
           if (isPlaceholderCandidate(candidate)) return false;
-          return detectFinderDiscipline(candidate) === finderGameFilter;
+          return detectFinderDiscipline(candidate) === finderGameFilter && matchesDivision(candidate, finderDivisionFilter);
         }
-        return matchesPreferredGame(candidate, profile.preferredBreakGame);
+        return detectFinderDiscipline(candidate) === finderGameFilter && matchesDivision(candidate, finderDivisionFilter);
       });
       setFeedEvents(filteredEvents);
       setFeedStatus('success');
       if (!filteredEvents.length) {
-        setFeedError(isBestFitMode
-          ? `Feed loaded but no ${finderGameFilter} events matched your focus.`
-          : `Feed loaded but no ${profile.preferredBreakGame} events matched your focus.`);
+        setFeedError(`Feed loaded but no ${finderDivisionFilter} ${finderGameFilter} events matched your focus.`);
       }
     } catch (error) {
       setFeedStatus('error');
       setFeedEvents([]);
       setFeedError(error instanceof Error ? error.message : 'Unable to load feed events.');
     }
-  }, [feedUrl, finderGameFilter, profile.preferredBreakGame, savedFeeds, selectedFeedId]);
+  }, [feedUrl, finderDivisionFilter, finderGameFilter, savedFeeds, selectedFeedId]);
 
   useEffect(() => {
     void refreshEventFeed();
@@ -673,8 +693,10 @@ export default function TournamentPrep() {
 
   const finderCandidates = useMemo<FinderCandidate[]>(() => {
     if (feedEvents.length) return feedEvents;
+    if (feedStatus === 'success') return [];
+    if (finderGameFilter !== '9-ball') return [];
     return tournamentTemplates.map((template) => ({ ...template, source: 'template' }));
-  }, [feedEvents]);
+  }, [feedEvents, feedStatus, finderGameFilter]);
 
   const tournamentFinder = useMemo(() => {
     const readiness = Math.round((drillReadinessScore * 0.65) + (confidenceScore * 0.35));
@@ -715,23 +737,28 @@ export default function TournamentPrep() {
     };
   }, [activePhase, confidenceScore, drillReadinessScore, estimatedFargo, finderCandidates]);
 
+  const rankedFinderCandidates = useMemo(
+    () => [tournamentFinder.best, ...tournamentFinder.alternatives].filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate)),
+    [tournamentFinder],
+  );
+
   useEffect(() => {
     if (!tournamentFinder.best) {
       setSelectedFinderId('');
       return;
     }
 
-    const stillExists = [tournamentFinder.best, ...tournamentFinder.alternatives]
+    const stillExists = rankedFinderCandidates
       .some((candidate) => candidate.id === selectedFinderId);
 
     if (!stillExists) {
       setSelectedFinderId(tournamentFinder.best.id);
     }
-  }, [selectedFinderId, tournamentFinder]);
+  }, [rankedFinderCandidates, selectedFinderId, tournamentFinder.best]);
 
   const selectedTournament = useMemo(
-    () => [tournamentFinder.best, ...tournamentFinder.alternatives].find((candidate) => candidate.id === selectedFinderId) ?? tournamentFinder.best,
-    [selectedFinderId, tournamentFinder],
+    () => rankedFinderCandidates.find((candidate) => candidate.id === selectedFinderId) ?? tournamentFinder.best,
+    [rankedFinderCandidates, selectedFinderId, tournamentFinder.best],
   );
 
   useEffect(() => {
@@ -1045,24 +1072,36 @@ export default function TournamentPrep() {
           onChange={(event) => setFinderGameFilter(event.target.value as FinderGameFilter)}
           className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         >
-          <option value="9-ball">Best-Fit game: 9-ball</option>
-          <option value="10-ball">Best-Fit game: 10-ball</option>
-          <option value="straight-pool">Best-Fit game: Straight Pool</option>
+          <option value="9-ball">Tournament game: 9-ball</option>
+          <option value="10-ball">Tournament game: 10-ball</option>
+          <option value="straight-pool">Tournament game: Straight Pool</option>
         </select>
 
         <select
-          value={selectedTournament?.id ?? ''}
-          onChange={(event) => setSelectedFinderId(event.target.value)}
+          value={finderDivisionFilter}
+          onChange={(event) => setFinderDivisionFilter(event.target.value as FinderDivisionFilter)}
           className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         >
-          {[tournamentFinder.best, ...tournamentFinder.alternatives].map((candidate, index) => (
-            <option key={`${candidate.id}|${candidate.eventDate ?? ''}|${candidate.name}`} value={candidate.id}>
-              {index === 0 ? `Recommended: ${candidate.name}` : `${index}. ${candidate.name}`}
-            </option>
-          ))}
+          <option value="men">Division: Men</option>
+          <option value="open">Division: Open</option>
+          <option value="women">Division: Women</option>
         </select>
 
-        <p className="text-sm text-ivory-100">Recommended now: {tournamentFinder.best.name}</p>
+        {rankedFinderCandidates.length ? (
+          <select
+            value={selectedTournament?.id ?? ''}
+            onChange={(event) => setSelectedFinderId(event.target.value)}
+            className="mt-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+          >
+            {rankedFinderCandidates.map((candidate, index) => (
+              <option key={`${candidate.id}|${candidate.eventDate ?? ''}|${candidate.name}`} value={candidate.id}>
+                {index === 0 ? `Recommended: ${candidate.name}` : `${index}. ${candidate.name}`}
+              </option>
+            ))}
+          </select>
+        ) : null}
+
+        <p className="text-sm text-ivory-100">Recommended now: {tournamentFinder.best?.name ?? 'No matching tournaments found yet'}</p>
         <p className="text-xs text-chalk-300">Phase {activePhase} · Est Fargo {estimatedFargo} · Readiness {tournamentFinder.readiness}</p>
         {selectedTournament ? (
           <>
