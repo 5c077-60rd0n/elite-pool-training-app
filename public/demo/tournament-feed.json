@@ -1,0 +1,46 @@
+{
+  "events": [
+    {
+      "id": "demo-local-weekly",
+      "name": "City Weekly Handicapped 9-Ball",
+      "date": "2026-07-18",
+      "location": "Downtown Billiards",
+      "format": "Race to 5 (handicap)",
+      "minFargo": 500,
+      "maxFargo": 700,
+      "travelCost": "low",
+      "variance": "low",
+      "entryFee": 35,
+      "addedMoney": 300,
+      "registrationUrl": "https://example.com/register/city-weekly"
+    },
+    {
+      "id": "demo-regional-open",
+      "name": "Regional Summer Open",
+      "date": "2026-08-02",
+      "location": "Riverfront Cue Club",
+      "format": "Race to 7 (open)",
+      "minFargo": 610,
+      "maxFargo": 760,
+      "travelCost": "medium",
+      "variance": "medium",
+      "entryFee": 75,
+      "addedMoney": 1200,
+      "registrationUrl": "https://example.com/register/regional-open"
+    },
+    {
+      "id": "demo-state-major",
+      "name": "State Major Championship",
+      "date": "2026-08-23",
+      "location": "Capital Convention Hall",
+      "format": "Race to 9 (open)",
+      "minFargo": 680,
+      "maxFargo": 820,
+      "travelCost": "high",
+      "variance": "high",
+      "entryFee": 150,
+      "addedMoney": 4000,
+      "registrationUrl": "https://example.com/register/state-major"
+    }
+  ]
+}
