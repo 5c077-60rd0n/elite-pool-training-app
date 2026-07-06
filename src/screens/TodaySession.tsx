@@ -11,6 +11,7 @@ import { useTrackerStore } from '../store/useTrackerStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { calculateRate } from '../utils/trackerCalculations';
 import { triggerRewardCue } from '../utils/rewardEffects';
+import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import type { BullseyeCategory, DailySessionLog, YesNo } from '../types/tracker';
 
@@ -70,6 +71,7 @@ export default function TodaySession() {
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const competitionLog = useTrackerStore((s) => s.competitionLog);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
 
@@ -100,11 +102,18 @@ export default function TodaySession() {
   const [safetySuccesses, setSafetySuccesses] = useState(0);
   const [safetyAttempts, setSafetyAttempts] = useState(10);
   const [notes, setNotes] = useState('');
+  const [coachTagsInput, setCoachTagsInput] = useState('');
+  const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [focusTouched, setFocusTouched] = useState(false);
   const [lengthTouched, setLengthTouched] = useState(false);
+
+  const smartAutofill = useMemo(
+    () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
+    [adaptiveDailyPlan, competitionLog, logs, recoveryRecommendationPlan],
+  );
 
   const ghostDrillWinRatePct = Math.round(calculateRate(ghostGamesWon, ghostGamesPlayed));
   const safetyExchangeSuccessPct = Math.round(calculateRate(safetySuccesses, safetyAttempts));
@@ -199,6 +208,29 @@ export default function TodaySession() {
     setSafetySuccesses(Math.round((adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct / 100) * 10));
   }
 
+  function applySmartAutofill(): void {
+    setFocusTouched(true);
+    setLengthTouched(true);
+    setFocusArea(smartAutofill.focusArea);
+    setLengthMinutes(Math.max(1, smartAutofill.lengthMinutes));
+    setDrillRoomShotmakingPct(clampPct(smartAutofill.drillRoomShotmakingPct));
+    setGhostGamesPlayed(10);
+    setGhostGamesWon(Math.round((smartAutofill.ghostDrillWinRatePct / 100) * 10));
+    setSafetyAttempts(10);
+    setSafetySuccesses(Math.round((smartAutofill.safetyExchangeSuccessPct / 100) * 10));
+    setLineUpShotCount(Math.max(0, smartAutofill.lineUpShotCount));
+    setBullseyeProximity(Math.max(0, smartAutofill.bullseyeProximity));
+  }
+
+  function applyRecoveryProtocol(): void {
+    if (!recoveryRecommendationPlan) return;
+    const lowLoadMinutes = recoveryRecommendationPlan.severity === 'high' ? 50 : 60;
+    setLengthTouched(true);
+    setLengthMinutes(lowLoadMinutes);
+    setFocusArea(recoveryRecommendationPlan.recommendedFocusArea);
+    setNotes((prev) => `${prev ? `${prev}\n` : ''}Recovery protocol: ${recoveryRecommendationPlan.actions.join(' | ')}`);
+  }
+
   function applyLastSession(): void {
     if (!lastLoggedSession) return;
     setFocusTouched(true);
@@ -216,6 +248,8 @@ export default function TodaySession() {
     setSafetyAttempts(10);
     setSafetySuccesses(Math.round((lastLoggedSession.safetyExchangeSuccessPct / 100) * 10));
     setNotes(lastLoggedSession.notes);
+    setCoachTagsInput((lastLoggedSession.coachTags ?? []).join(', '));
+    setVideoClipRefsInput((lastLoggedSession.videoClipRefs ?? []).join(', '));
   }
 
   function saveSessionLog(): void {
@@ -260,6 +294,14 @@ export default function TodaySession() {
       lineUpShotCount: Math.max(0, lineUpShotCount),
       safetyExchangeSuccessPct,
       notes,
+      coachTags: coachTagsInput
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+      videoClipRefs: videoClipRefsInput
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
       createdAt: now,
       updatedAt: now,
     };
@@ -398,8 +440,27 @@ export default function TodaySession() {
               <p key={item}>- {item}</p>
             ))}
           </div>
+          {adaptiveDailyPlan.prescribedDrills?.length ? (
+            <div className="mt-2 rounded-lg border border-felt-600 bg-felt-800/70 p-2 text-xs text-ivory-200">
+              <p className="text-chalk-300">Prescribed drills</p>
+              {adaptiveDailyPlan.prescribedDrills.map((item) => (
+                <p key={item}>- {item}</p>
+              ))}
+            </div>
+          ) : null}
         </Card>
       ) : null}
+
+      <Card className="mb-4" title="Smart Session Autofill">
+        <p className="text-sm text-ivory-100">Fatigue: {smartAutofill.fatigueLevel.toUpperCase()} · Recommended length: {smartAutofill.lengthMinutes} min</p>
+        <p className="mt-1 text-xs text-chalk-300">{smartAutofill.rationale}</p>
+        {smartAutofill.upcomingEvent ? (
+          <p className="mt-1 text-xs text-cue-300">Event prep signal: {smartAutofill.upcomingEvent.name} in {smartAutofill.upcomingEvent.daysOut} days.</p>
+        ) : null}
+        <Button className="mt-3 w-full" type="button" variant="secondary" onClick={applySmartAutofill}>
+          Apply Smart Autofill
+        </Button>
+      </Card>
 
       {recoveryRecommendationPlan ? (
         <Card className="mb-4" title="Recovery Plan (3-Day)">
@@ -413,6 +474,9 @@ export default function TodaySession() {
               <p key={item}>- {item}</p>
             ))}
           </div>
+          <Button className="mt-3 w-full" type="button" variant="secondary" onClick={applyRecoveryProtocol}>
+            Apply Recovery-Day Protocol
+          </Button>
         </Card>
       ) : null}
 
@@ -565,6 +629,20 @@ export default function TodaySession() {
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+        />
+        <label className="mb-2 block text-sm text-chalk-300">Coach Tags (comma separated)</label>
+        <input
+          value={coachTagsInput}
+          onChange={(event) => setCoachTagsInput(event.target.value)}
+          placeholder="break, pressure, safety, rhythm"
+          className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+        <label className="mb-2 block text-sm text-chalk-300">Video Clip Refs (comma separated links or labels)</label>
+        <input
+          value={videoClipRefsInput}
+          onChange={(event) => setVideoClipRefsInput(event.target.value)}
+          placeholder="Clip 12 @ 00:42, https://..."
+          className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
         {dataConfidenceNudges.length ? (
           <p className="mb-3 text-xs text-chalk-300">

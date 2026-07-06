@@ -8,6 +8,10 @@ interface MatchReadinessInput {
   safetyWins: number;
   pressureShotsMade: number;
   pressureShotsAttempted: number;
+  startingScoreline?: string;
+  inningCap?: number;
+  mustMakeShots?: number;
+  mustMakeMade?: number;
   hillHillResult: 'Win' | 'Loss' | 'N/A';
   result: 'Win' | 'Loss';
   pressureLevel: MatchSimulatorPressureLevel;
@@ -23,16 +27,33 @@ export function calculateMatchReadinessScore(input: MatchReadinessInput): number
   const safetyConversion = input.inningsPlayed > 0 ? (input.safetyWins / input.inningsPlayed) * 100 : 0;
   const pressureExecution =
     input.pressureShotsAttempted > 0 ? (input.pressureShotsMade / input.pressureShotsAttempted) * 100 : 0;
+  const mustMakeExecution =
+    (input.mustMakeShots ?? 0) > 0 ? ((input.mustMakeMade ?? 0) / Math.max(1, input.mustMakeShots ?? 0)) * 100 : 0;
 
   const pressureWeight =
     input.pressureLevel === 'high' ? 1.1 : input.pressureLevel === 'medium' ? 1.0 : 0.9;
+  const scorelinePressure = (() => {
+    const raw = (input.startingScoreline ?? '').trim();
+    if (!raw.includes('-')) return 0;
+    const [leftRaw, rightRaw] = raw.split('-');
+    const left = Number(leftRaw);
+    const right = Number(rightRaw);
+    if (!Number.isFinite(left) || !Number.isFinite(right)) return 0;
+    const delta = Math.abs(left - right);
+    return delta <= 1 ? 4 : delta === 2 ? 2 : 0;
+  })();
+  const inningPaceBonus = input.inningCap && input.inningCap > 0 && input.inningsPlayed <= input.inningCap ? 3 : 0;
   const hillHillBonus = input.hillHillResult === 'Win' ? 6 : input.hillHillResult === 'Loss' ? -4 : 0;
   const resultBonus = input.result === 'Win' ? 5 : -5;
 
   const base =
-    breakControl * 0.2 + runoutRate * 0.2 + safetyConversion * 0.2 + pressureExecution * 0.4;
+    breakControl * 0.18 +
+    runoutRate * 0.18 +
+    safetyConversion * 0.18 +
+    pressureExecution * 0.3 +
+    mustMakeExecution * 0.16;
 
-  return clampScore(base * pressureWeight + hillHillBonus + resultBonus);
+  return clampScore(base * pressureWeight + hillHillBonus + resultBonus + scorelinePressure + inningPaceBonus);
 }
 
 export function calculateDrillReadinessScore(logs: DailySessionLog[]): number {

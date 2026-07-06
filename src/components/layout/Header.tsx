@@ -11,10 +11,19 @@ export function Header() {
   );
   const streak = useMemo(() => getTrainingStreak(logs.map((log) => log.date)), [logs]);
   const pendingSyncCount = syncState.pendingLogIds.length;
-  const syncLabel = !isOnline ? 'Offline' : pendingSyncCount ? `Sync ${pendingSyncCount}` : 'Synced';
+  const conflictCount = syncState.conflicts?.length ?? 0;
+  const syncLabel = !isOnline
+    ? 'Offline'
+    : conflictCount
+      ? `Conflicts ${conflictCount}`
+      : pendingSyncCount
+        ? `Sync ${pendingSyncCount}`
+        : 'Synced';
   const syncToneClass = !isOnline
     ? 'fill-cue-400 text-cue-400'
-    : pendingSyncCount
+    : conflictCount
+      ? 'fill-rose-400 text-rose-400'
+      : pendingSyncCount
       ? 'fill-flash-400 text-flash-400'
       : 'fill-emerald-400 text-emerald-400';
 

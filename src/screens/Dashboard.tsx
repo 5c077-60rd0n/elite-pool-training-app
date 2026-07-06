@@ -19,6 +19,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { getNotificationInsights } from '../utils/notificationIntelligence';
+import { calculateTournamentReadinessScore } from '../utils/progressIntelligence';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
@@ -98,6 +99,10 @@ export default function Dashboard() {
     [matchSimSessions],
   );
   const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
+  const tournamentReadiness = useMemo(
+    () => calculateTournamentReadinessScore(logs, matchSimSessions, confidenceIndexHistory, recoveryRecommendationPlan),
+    [confidenceIndexHistory, logs, matchSimSessions, recoveryRecommendationPlan],
+  );
   const notificationInsights = useMemo(
     () => getNotificationInsights(logs, gamification, adaptiveDailyPlan, recoveryRecommendationPlan),
     [adaptiveDailyPlan, gamification, logs, recoveryRecommendationPlan],
@@ -194,6 +199,19 @@ export default function Dashboard() {
           <p className="text-right text-ivory-100">{weeksLogged}</p>
           <p className="text-chalk-300">Milestones Met</p>
           <p className="text-right text-ivory-100">{milestonesMet}</p>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Tournament Readiness">
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">Readiness score</p>
+          <p className="text-right text-ivory-100">{tournamentReadiness.score}</p>
+          <p className="text-chalk-300">Status</p>
+          <p className="text-right text-ivory-100">{tournamentReadiness.status.toUpperCase()}</p>
+          <p className="text-chalk-300">Drill readiness</p>
+          <p className="text-right text-ivory-100">{drillReadinessScore}</p>
+          <p className="text-chalk-300">Latest match readiness</p>
+          <p className="text-right text-ivory-100">{latestMatchSimulation?.matchReadinessScore ?? 0}</p>
         </div>
       </Card>
 

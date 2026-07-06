@@ -1,4 +1,5 @@
 import { trackerKpis } from '../data/trackerKpis';
+import { trackerDrills } from '../data/trackerPlan';
 import type { AdaptiveDailyPlan, DailySessionLog } from '../types/tracker';
 
 function clamp(value: number, min: number, max: number): number {
@@ -80,7 +81,31 @@ function defaultPlan(currentWeek: number, forDate: string): AdaptiveDailyPlan {
       'Run one pressure set at race pace before ending the session.',
       'Log one objective adjustment note for tomorrow.',
     ],
+    prescribedDrills: [
+      'Center-Ball Straight Shots',
+      'Ghost Drill Race-to-10',
+      '2-Ball Safety Exchange',
+    ],
   };
+}
+
+function prescribedDrillsForMetric(metricId: string): string[] {
+  const metricMap: Record<string, string> = {
+    'drillroom-shotmaking': 'drillRoomShotmakingPct',
+    'ghost-drill-win-rate': 'ghostDrillWinRatePct',
+    'safety-exchange-success': 'safetyExchangeSuccessPct',
+    'lineup-efficiency': 'lineUpShotCount',
+    'bullseye-proximity': 'bullseyeProximity',
+    'wpb-lessons-weekly': 'wpbLesson',
+  };
+
+  const metricField = metricMap[metricId];
+  if (!metricField) return [];
+
+  return trackerDrills
+    .filter((drill) => drill.metricField === metricField)
+    .slice(0, 3)
+    .map((drill) => drill.name);
 }
 
 export function generateAdaptiveDailyPlan(
@@ -159,5 +184,6 @@ export function generateAdaptiveDailyPlan(
       'Run one race-pace pressure set and compare against target metrics.',
       'Record one tactical adjustment in notes before ending the session.',
     ],
+    prescribedDrills: prescribedDrillsForMetric(weakest.id),
   };
 }

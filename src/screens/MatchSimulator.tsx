@@ -25,6 +25,10 @@ export default function MatchSimulator() {
   const [pressureLevel, setPressureLevel] = useState<MatchSimulatorPressureLevel>('high');
   const [pressureShotsMade, setPressureShotsMade] = useState(5);
   const [pressureShotsAttempted, setPressureShotsAttempted] = useState(8);
+  const [startingScoreline, setStartingScoreline] = useState('0-0');
+  const [inningCap, setInningCap] = useState(12);
+  const [mustMakeShots, setMustMakeShots] = useState(3);
+  const [mustMakeMade, setMustMakeMade] = useState(2);
   const [hillHillResult, setHillHillResult] = useState<'Win' | 'Loss' | 'N/A'>('N/A');
   const [result, setResult] = useState<'Win' | 'Loss'>('Win');
   const [notes, setNotes] = useState('');
@@ -41,6 +45,10 @@ export default function MatchSimulator() {
         safetyWins,
         pressureShotsMade,
         pressureShotsAttempted,
+        startingScoreline,
+        inningCap,
+        mustMakeShots,
+        mustMakeMade,
         hillHillResult,
         result,
         pressureLevel,
@@ -53,6 +61,10 @@ export default function MatchSimulator() {
       safetyWins,
       pressureShotsMade,
       pressureShotsAttempted,
+      startingScoreline,
+      inningCap,
+      mustMakeShots,
+      mustMakeMade,
       hillHillResult,
       result,
       pressureLevel,
@@ -72,6 +84,10 @@ export default function MatchSimulator() {
       pressureLevel,
       pressureShotsMade,
       pressureShotsAttempted,
+      startingScoreline,
+      inningCap,
+      mustMakeShots,
+      mustMakeMade,
       hillHillResult,
       result,
       matchReadinessScore: projectedScore,
@@ -160,6 +176,33 @@ export default function MatchSimulator() {
             min={0}
             onChange={(next) => setPressureShotsAttempted(Math.max(0, next))}
           />
+          <label className="text-sm text-chalk-300">
+            Starting scoreline (you-opponent)
+            <input
+              value={startingScoreline}
+              onChange={(event) => setStartingScoreline(event.target.value)}
+              placeholder="0-0"
+              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+          </label>
+          <NumberStepperField
+            label="Inning cap"
+            value={inningCap}
+            min={1}
+            onChange={(next) => setInningCap(Math.max(1, next))}
+          />
+          <NumberStepperField
+            label="Must-make shots"
+            value={mustMakeShots}
+            min={0}
+            onChange={(next) => setMustMakeShots(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Must-make made"
+            value={mustMakeMade}
+            min={0}
+            onChange={(next) => setMustMakeMade(Math.max(0, Math.min(mustMakeShots, next)))}
+          />
           <select
             value={hillHillResult}
             onChange={(event) => setHillHillResult(event.target.value as 'Win' | 'Loss' | 'N/A')}
@@ -203,6 +246,7 @@ export default function MatchSimulator() {
           <p className="text-sm text-ivory-100">{latest.date} · {latest.opponentArchetype} · Race to {latest.raceTo}</p>
           <p className="text-xs text-chalk-300">Match readiness {latest.matchReadinessScore} vs drill readiness {latest.drillReadinessScore}</p>
           <p className="text-xs text-chalk-300">Break and run: {latest.breakAndRuns}/{latest.breaksMade} · Pressure: {latest.pressureShotsMade}/{latest.pressureShotsAttempted}</p>
+          <p className="text-xs text-chalk-300">Scoreline {latest.startingScoreline ?? 'n/a'} · Must-make {latest.mustMakeMade ?? 0}/{latest.mustMakeShots ?? 0}</p>
           <Link to="/tournament">
             <Button className="mt-3" variant="secondary">Apply Insights To Tournament Prep</Button>
           </Link>
@@ -215,7 +259,8 @@ export default function MatchSimulator() {
             <div key={entry.id} className="rounded-lg border border-felt-600 bg-felt-800/60 p-3 text-sm">
               <p className="text-ivory-100">{entry.date} · {entry.result} · Race to {entry.raceTo}</p>
               <p className="text-chalk-300">{entry.opponentArchetype} · Readiness {entry.matchReadinessScore}/{entry.drillReadinessScore}</p>
-              <p className="text-chalk-300">Innings {entry.inningsPlayed} · Safety wins {entry.safetyWins}</p>
+              <p className="text-chalk-300">Innings {entry.inningsPlayed}/{entry.inningCap ?? '-'} · Safety wins {entry.safetyWins}</p>
+              <p className="text-chalk-300">Scoreline {entry.startingScoreline ?? 'n/a'} · Must-make {entry.mustMakeMade ?? 0}/{entry.mustMakeShots ?? 0}</p>
               {entry.notes ? <p className="text-ivory-200">{entry.notes}</p> : null}
             </div>
           ))}

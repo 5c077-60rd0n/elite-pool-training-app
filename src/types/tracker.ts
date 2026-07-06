@@ -36,6 +36,8 @@ export interface DailySessionLog {
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
   notes: string;
+  coachTags?: string[];
+  videoClipRefs?: string[];
   createdAt: string;
   updatedAt: string;
   syncedAt?: string;
@@ -164,6 +166,10 @@ export interface MatchSimulatorSession {
   pressureLevel: MatchSimulatorPressureLevel;
   pressureShotsMade: number;
   pressureShotsAttempted: number;
+  startingScoreline?: string;
+  inningCap?: number;
+  mustMakeShots?: number;
+  mustMakeMade?: number;
   hillHillResult: 'Win' | 'Loss' | 'N/A';
   result: MatchResult;
   matchReadinessScore: number;
@@ -430,6 +436,16 @@ export interface DailyTemplate {
 export interface TrackerSyncState {
   pendingLogIds: string[];
   lastSyncAt?: string;
+  conflicts?: TrackerSyncConflict[];
+}
+
+export interface TrackerSyncConflict {
+  id: string;
+  date: string;
+  existingId: string;
+  incomingId: string;
+  mergedAt: string;
+  fieldsMerged: string[];
 }
 
 export interface AdaptiveTargetMetrics {
@@ -452,6 +468,7 @@ export interface AdaptiveDailyPlan {
   recommendedMinutes: number;
   targetMetrics: AdaptiveTargetMetrics;
   actionChecklist: string[];
+  prescribedDrills?: string[];
   eliteOverride?: {
     lockedForDate: string;
     source: string;

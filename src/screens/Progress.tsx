@@ -3,17 +3,31 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
+import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import {
+  buildWeeklyReviewAssistant,
+  calculateTournamentReadinessScore,
+  estimateGoalDate,
+} from '../utils/progressIntelligence';
 import type { MatchResult } from '../types/tracker';
 
-type Tab = 'weekly' | 'fargo' | 'bullseye';
+type Tab = 'weekly' | 'fargo' | 'bullseye' | 'insights';
 
 export default function Progress() {
   const [tab, setTab] = useState<Tab>('weekly');
+  const profile = useSettingsStore((s) => s.profile);
   const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
   const bullseye = useTrackerStore((s) => s.bullseyeCategoryTracker);
+  const logs = useTrackerStore((s) => s.dailySessionLogs);
+  const sims = useTrackerStore((s) => s.matchSimSessions);
+  const competition = useTrackerStore((s) => s.competitionLog);
+  const confidence = useTrackerStore((s) => s.confidenceIndexHistory);
+  const recoveryPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const addFargoRating = useTrackerStore((s) => s.addFargoRating);
+  const [forecastSessionsPerWeek, setForecastSessionsPerWeek] = useState(4);
+  const [forecastQualityLiftPct, setForecastQualityLiftPct] = useState(5);
 
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [eventName, setEventName] = useState('');
@@ -28,6 +42,38 @@ export default function Progress() {
     () => [...weeklySummaries].sort((a, b) => a.weekNumber - b.weekNumber),
     [weeklySummaries],
   );
+  const forecast = useMemo(
+    () =>
+      estimateGoalDate(
+        profile.currentFargoRating,
+        profile.targetFargoRating,
+        fargoLog.map((item) => ({ date: item.date, rating: item.newFargoRating })),
+        forecastSessionsPerWeek,
+        forecastQualityLiftPct,
+      ),
+    [fargoLog, forecastQualityLiftPct, forecastSessionsPerWeek, profile.currentFargoRating, profile.targetFargoRating],
+  );
+  const weeklyAssistant = useMemo(
+    () => buildWeeklyReviewAssistant(logs, sims, competition, profile.currentWeek),
+    [competition, logs, profile.currentWeek, sims],
+  );
+  const tournamentReadiness = useMemo(
+    () => calculateTournamentReadinessScore(logs, sims, confidence, recoveryPlan),
+    [confidence, logs, recoveryPlan, sims],
+  );
+  const topCoachTags = useMemo(() => {
+    const tagCounts = new Map<string, number>();
+    logs.forEach((item) => {
+      (item.coachTags ?? []).forEach((tag) => {
+        const key = tag.trim().toLowerCase();
+        if (!key) return;
+        tagCounts.set(key, (tagCounts.get(key) ?? 0) + 1);
+      });
+    });
+    return [...tagCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6);
+  }, [logs]);
 
   function saveFargoLog(): void {
     const previous = [...fargoLog].sort((a, b) => Date.parse(a.date) - Date.parse(b.date)).at(-1);
@@ -55,6 +101,7 @@ export default function Progress() {
         <Button variant={tab === 'weekly' ? 'primary' : 'secondary'} onClick={() => setTab('weekly')}>Weekly Summary</Button>
         <Button variant={tab === 'fargo' ? 'primary' : 'secondary'} onClick={() => setTab('fargo')}>Fargo Rating Log</Button>
         <Button variant={tab === 'bullseye' ? 'primary' : 'secondary'} onClick={() => setTab('bullseye')}>Bullseye Tracker</Button>
+        <Button variant={tab === 'insights' ? 'primary' : 'secondary'} onClick={() => setTab('insights')}>Insights</Button>
       </div>
 
       {tab === 'weekly' ? (
@@ -175,6 +222,65 @@ export default function Progress() {
             </table>
           </div>
         </Card>
+      ) : null}
+
+      {tab === 'insights' ? (
+        <>
+          <Card className="mb-4" title="Goal Engine Forecast">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Sessions per week"
+                value={forecastSessionsPerWeek}
+                min={1}
+                max={14}
+                onChange={(next) => setForecastSessionsPerWeek(Math.max(1, next))}
+              />
+              <NumberStepperField
+                label="Quality lift %"
+                value={forecastQualityLiftPct}
+                min={-20}
+                max={60}
+                onChange={(next) => setForecastQualityLiftPct(next)}
+              />
+            </div>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Weekly Fargo gain (model)</p>
+              <p className="text-right text-ivory-100">{forecast.weeklyGain}</p>
+              <p className="text-chalk-300">Points remaining</p>
+              <p className="text-right text-ivory-100">{forecast.pointsRemaining}</p>
+              <p className="text-chalk-300">Forecast confidence</p>
+              <p className="text-right text-ivory-100">{forecast.confidence.toUpperCase()}</p>
+              <p className="text-chalk-300">Estimated target date</p>
+              <p className="text-right text-cue-300">{forecast.projectedDate ?? 'Insufficient trajectory yet'}</p>
+            </div>
+          </Card>
+
+          <Card className="mb-4" title="Tournament Readiness Score">
+            <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
+            <p className="text-sm text-chalk-300">Status: {tournamentReadiness.status.toUpperCase()}</p>
+          </Card>
+
+          <Card className="mb-4" title="Weekly Review Assistant">
+            <p className="text-sm text-ivory-100">{weeklyAssistant.headline}</p>
+            <div className="mt-2 space-y-1 text-xs text-chalk-300">
+              {weeklyAssistant.improved.length ? weeklyAssistant.improved.map((item) => <p key={item}>- Improved: {item}</p>) : <p>- Improved: No clear gains yet.</p>}
+              {weeklyAssistant.slipped.length ? weeklyAssistant.slipped.map((item) => <p key={item}>- Slipped: {item}</p>) : <p>- Slipped: No major regression detected.</p>}
+              {weeklyAssistant.nextFocus.map((item) => <p key={item}>- Next focus: {item}</p>)}
+            </div>
+          </Card>
+
+          <Card title="Coach Notes Patterns">
+            {topCoachTags.length ? (
+              <div className="space-y-1 text-sm text-ivory-100">
+                {topCoachTags.map(([tag, count]) => (
+                  <p key={tag}>#{tag} · {count} sessions</p>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-chalk-300">No coach tags logged yet. Add tags in Today Session to unlock pattern insights.</p>
+            )}
+          </Card>
+        </>
       ) : null}
     </PageWrapper>
   );

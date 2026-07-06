@@ -28,6 +28,7 @@ import type {
   OpponentPrepCard,
   SeasonChallengeProgress,
   SeasonMeta,
+  TrackerSyncConflict,
   TrackerSyncState,
   WeeklySummary,
   BullseyeCategoryTrackerEntry,
@@ -47,6 +48,50 @@ const ELITE_OVERRIDE_SUFFIX = " Elite override active for today's session.";
 
 function withEliteOverrideRationale(rationale: string): string {
   return `${rationale.replace(ELITE_OVERRIDE_SUFFIX, '')}${ELITE_OVERRIDE_SUFFIX}`;
+}
+
+function mergeSessionLogs(existing: DailySessionLog, incoming: DailySessionLog): {
+  merged: DailySessionLog;
+  fieldsMerged: string[];
+} {
+  const fieldsMerged: string[] = [];
+  const merged = { ...existing };
+
+  const mergeField = <K extends keyof DailySessionLog>(field: K, preferIncoming = true): void => {
+    const nextValue = incoming[field];
+    const previousValue = merged[field];
+    const hasIncoming = nextValue !== undefined && nextValue !== null && `${nextValue}`.trim() !== '';
+    if (!hasIncoming) return;
+    if (preferIncoming && nextValue !== previousValue) {
+      merged[field] = nextValue;
+      fieldsMerged.push(String(field));
+    }
+  };
+
+  mergeField('focusArea');
+  mergeField('lengthMinutes');
+  mergeField('drillRoomShotmakingPct');
+  mergeField('bullseyeProximity');
+  mergeField('bullseyeCategory');
+  mergeField('wpbLesson');
+  mergeField('wpbModuleName');
+  mergeField('ghostDrillWinRatePct');
+  mergeField('lineUpShotCount');
+  mergeField('safetyExchangeSuccessPct');
+  mergeField('notes');
+
+  const mergedTags = Array.from(new Set([...(existing.coachTags ?? []), ...(incoming.coachTags ?? [])]));
+  if (mergedTags.length !== (existing.coachTags ?? []).length) fieldsMerged.push('coachTags');
+  merged.coachTags = mergedTags;
+
+  const mergedClipRefs = Array.from(new Set([...(existing.videoClipRefs ?? []), ...(incoming.videoClipRefs ?? [])]));
+  if (mergedClipRefs.length !== (existing.videoClipRefs ?? []).length) fieldsMerged.push('videoClipRefs');
+  merged.videoClipRefs = mergedClipRefs;
+
+  merged.updatedAt = incoming.updatedAt;
+  merged.syncedAt = undefined;
+
+  return { merged, fieldsMerged };
 }
 
 interface TrackerState {
@@ -111,10 +156,33 @@ export const useTrackerStore = create<TrackerState>()(
       coachExportHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
-      syncState: { pendingLogIds: [], lastSyncAt: undefined },
+      syncState: { pendingLogIds: [], lastSyncAt: undefined, conflicts: [] },
       addDailySessionLog: (entry, currentFargo) =>
         set((state) => {
-          const nextLogs = [entry, ...state.dailySessionLogs.filter((item) => item.id !== entry.id)];
+          const sameDateExisting = state.dailySessionLogs.find((item) => item.date === entry.date && item.id !== entry.id);
+          let nextLogs = [entry, ...state.dailySessionLogs.filter((item) => item.id !== entry.id)];
+          let nextConflicts: TrackerSyncConflict[] = state.syncState.conflicts ?? [];
+
+          if (sameDateExisting) {
+            const { merged, fieldsMerged } = mergeSessionLogs(sameDateExisting, entry);
+            nextLogs = [
+              merged,
+              ...state.dailySessionLogs.filter((item) => item.id !== sameDateExisting.id && item.id !== entry.id),
+            ];
+
+            nextConflicts = [
+              {
+                id: `sync-conflict-${Date.now()}`,
+                date: entry.date,
+                existingId: sameDateExisting.id,
+                incomingId: entry.id,
+                mergedAt: new Date().toISOString(),
+                fieldsMerged,
+              },
+              ...nextConflicts,
+            ].slice(0, 20);
+          }
+
           const weekNumbers = Array.from(new Set(nextLogs.map((item) => item.weekNumber))).sort((a, b) => a - b);
           const weeklySummaries = weekNumbers
             .map((weekNumber) => calculateWeeklySummary(nextLogs, weekNumber, state.weeklySummaries))
@@ -172,7 +240,13 @@ export const useTrackerStore = create<TrackerState>()(
             recoveryRecommendationPlan,
             syncState: {
               ...state.syncState,
-              pendingLogIds: Array.from(new Set([...state.syncState.pendingLogIds, entry.id])),
+              pendingLogIds: Array.from(
+                new Set([
+                  ...state.syncState.pendingLogIds,
+                  sameDateExisting ? sameDateExisting.id : entry.id,
+                ]),
+              ),
+              conflicts: nextConflicts,
             },
           };
         }),
@@ -443,6 +517,7 @@ export const useTrackerStore = create<TrackerState>()(
           syncState: {
             pendingLogIds: [],
             lastSyncAt: new Date().toISOString(),
+            conflicts: state.syncState.conflicts ?? [],
           },
         }));
       },
