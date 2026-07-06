@@ -426,13 +426,13 @@ export default function TodaySession() {
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
           <p className="mt-2 text-sm text-chalk-300">Recommended Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
 
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-ivory-200">
-            <p>DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
-            <p>Ghost Target: {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}%</p>
-            <p>Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
-            <p>Line-Up Best Run Target: {'>= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
-            <p>Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
-            <p>WPB Lessons: {adaptiveDailyPlan.targetMetrics.wpbLessonsThisWeek}/week</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Ghost Target: {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}%</p>
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Line-Up Best Run Target: {'>= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
+            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">WPB Lessons: {adaptiveDailyPlan.targetMetrics.wpbLessonsThisWeek}/week</p>
           </div>
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
@@ -452,10 +452,13 @@ export default function TodaySession() {
       ) : null}
 
       <Card className="mb-4" title="Smart Session Autofill">
-        <p className="text-sm text-ivory-100">Fatigue: {smartAutofill.fatigueLevel.toUpperCase()} · Recommended length: {smartAutofill.lengthMinutes} min</p>
-        <p className="mt-1 text-xs text-chalk-300">{smartAutofill.rationale}</p>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-ivory-100">Fatigue: {smartAutofill.fatigueLevel.toUpperCase()}</span>
+          <span className="rounded-full border border-cue-600/60 bg-cue-900/20 px-2 py-1 text-cue-200">Recommended: {smartAutofill.lengthMinutes} min</span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-chalk-300">{smartAutofill.rationale}</p>
         {smartAutofill.upcomingEvent ? (
-          <p className="mt-1 text-xs text-cue-300">Event prep signal: {smartAutofill.upcomingEvent.name} in {smartAutofill.upcomingEvent.daysOut} days.</p>
+          <p className="mt-2 rounded-lg border border-cue-600/40 bg-cue-900/10 px-2 py-1 text-xs text-cue-300">Event prep signal: {smartAutofill.upcomingEvent.name} in {smartAutofill.upcomingEvent.daysOut} days.</p>
         ) : null}
         <Button className="mt-3 w-full" type="button" variant="secondary" onClick={applySmartAutofill}>
           Apply Smart Autofill
@@ -466,7 +469,10 @@ export default function TodaySession() {
         <Card className="mb-4" title="Recovery Plan (3-Day)">
           <p className="text-sm text-ivory-100">Focus: {recoveryRecommendationPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{recoveryRecommendationPlan.rationale}</p>
-          <p className="mt-2 text-xs text-ivory-200">Intensity: {recoveryRecommendationPlan.severity.toUpperCase()} · Horizon: {recoveryRecommendationPlan.horizonDays} days</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-ivory-200">Intensity: {recoveryRecommendationPlan.severity.toUpperCase()}</span>
+            <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-ivory-200">Horizon: {recoveryRecommendationPlan.horizonDays} days</span>
+          </div>
           <p className="mt-1 text-xs text-ivory-200">Recommended Focus Area: {recoveryRecommendationPlan.recommendedFocusArea}</p>
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">

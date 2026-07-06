@@ -203,6 +203,11 @@ export default function Dashboard() {
       </Card>
 
       <Card className="mb-4" title="Tournament Readiness">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
+          <p className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-xs text-chalk-200">{tournamentReadiness.status.toUpperCase()}</p>
+        </div>
+        <p className="mb-2 text-xs text-chalk-300">One-glance readiness from training consistency, pressure simulation, and confidence trend.</p>
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">Readiness score</p>
           <p className="text-right text-ivory-100">{tournamentReadiness.score}</p>

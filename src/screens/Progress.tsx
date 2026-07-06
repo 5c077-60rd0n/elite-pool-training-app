@@ -243,7 +243,7 @@ export default function Progress() {
                 onChange={(next) => setForecastQualityLiftPct(next)}
               />
             </div>
-            <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+            <div className="mt-3 grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <p className="text-chalk-300">Weekly Fargo gain (model)</p>
               <p className="text-right text-ivory-100">{forecast.weeklyGain}</p>
               <p className="text-chalk-300">Points remaining</p>
@@ -251,18 +251,21 @@ export default function Progress() {
               <p className="text-chalk-300">Forecast confidence</p>
               <p className="text-right text-ivory-100">{forecast.confidence.toUpperCase()}</p>
               <p className="text-chalk-300">Estimated target date</p>
-              <p className="text-right text-cue-300">{forecast.projectedDate ?? 'Insufficient trajectory yet'}</p>
+              <p className="text-right font-medium text-cue-300">{forecast.projectedDate ?? 'Insufficient trajectory yet'}</p>
             </div>
           </Card>
 
           <Card className="mb-4" title="Tournament Readiness Score">
-            <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
-            <p className="text-sm text-chalk-300">Status: {tournamentReadiness.status.toUpperCase()}</p>
+            <div className="flex items-end justify-between gap-3">
+              <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
+              <p className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-xs text-chalk-200">{tournamentReadiness.status.toUpperCase()}</p>
+            </div>
+            <p className="mt-2 text-sm text-chalk-300">Composite score from recent session quality, simulation pressure outcomes, and confidence trend.</p>
           </Card>
 
           <Card className="mb-4" title="Weekly Review Assistant">
             <p className="text-sm text-ivory-100">{weeklyAssistant.headline}</p>
-            <div className="mt-2 space-y-1 text-xs text-chalk-300">
+            <div className="mt-2 space-y-1 rounded-lg border border-felt-600 bg-felt-800/50 p-2 text-xs text-chalk-300">
               {weeklyAssistant.improved.length ? weeklyAssistant.improved.map((item) => <p key={item}>- Improved: {item}</p>) : <p>- Improved: No clear gains yet.</p>}
               {weeklyAssistant.slipped.length ? weeklyAssistant.slipped.map((item) => <p key={item}>- Slipped: {item}</p>) : <p>- Slipped: No major regression detected.</p>}
               {weeklyAssistant.nextFocus.map((item) => <p key={item}>- Next focus: {item}</p>)}
