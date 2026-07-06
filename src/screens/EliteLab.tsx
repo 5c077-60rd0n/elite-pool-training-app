@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button } from '../components/ui/Button';
+import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { trackerKpis } from '../data/trackerKpis';
 import type {
@@ -363,8 +364,8 @@ export default function EliteLab() {
           <option value="hill-hill">Hill-Hill</option><option value="shot-clock">Shot Clock</option><option value="bad-leave">Bad Leave</option><option value="crowd-noise">Crowd Noise</option>
         </select>
         <div className="grid grid-cols-2 gap-2">
-          <input type="number" value={pressureAttempts} onChange={(e) => setPressureAttempts(Math.max(1, Number(e.target.value) || 1))} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
-          <input type="number" value={pressureConversions} onChange={(e) => setPressureConversions(Math.max(0, Number(e.target.value) || 0))} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+          <NumberStepperField label="Attempts" value={pressureAttempts} min={1} onChange={(next) => setPressureAttempts(Math.max(1, next))} />
+          <NumberStepperField label="Conversions" value={pressureConversions} min={0} max={pressureAttempts} onChange={(next) => setPressureConversions(Math.max(0, next))} />
         </div>
         <textarea value={pressureNotes} onChange={(e) => setPressureNotes(e.target.value)} placeholder="Notes" className="mt-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100" />
         <Button className="mt-2" onClick={addPressureScenarioResult}>Log Pressure Set</Button>
@@ -389,7 +390,7 @@ export default function EliteLab() {
         <input value={breakSpeed} onChange={(e) => setBreakSpeed(e.target.value)} placeholder="Break speed" className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
         <input value={landingZone} onChange={(e) => setLandingZone(e.target.value)} placeholder="Cue-ball landing zone" className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
         <div className="grid grid-cols-2 gap-2">
-          <input type="number" value={ballsMade} onChange={(e) => setBallsMade(Math.max(0, Number(e.target.value) || 0))} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+          <NumberStepperField label="Balls made" value={ballsMade} min={0} onChange={(next) => setBallsMade(Math.max(0, next))} />
           <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800 px-3 text-sm text-ivory-100"><input type="checkbox" checked={shotOnNext} onChange={(e) => setShotOnNext(e.target.checked)} /> Shot on next</label>
         </div>
         <textarea value={breakNotes} onChange={(e) => setBreakNotes(e.target.value)} placeholder="Notes" className="mt-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100" />
@@ -412,7 +413,7 @@ export default function EliteLab() {
         <input value={rackLabel} onChange={(e) => setRackLabel(e.target.value)} placeholder="Layout label" className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
         <textarea value={plannedRoute} onChange={(e) => setPlannedRoute(e.target.value)} placeholder="Planned route" className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100" />
         <textarea value={cleanerRoute} onChange={(e) => setCleanerRoute(e.target.value)} placeholder="Cleaner alternative" className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100" />
-        <input type="number" min={0} max={100} value={routeScore} onChange={(e) => setRouteScore(clamp(Number(e.target.value) || 0, 0, 100))} className="mb-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+        <NumberStepperField label="Route score" value={routeScore} min={0} max={100} onChange={(next) => setRouteScore(clamp(next, 0, 100))} className="mb-2" />
         <textarea value={rackNotes} onChange={(e) => setRackNotes(e.target.value)} placeholder="Notes" className="mb-2 min-h-20 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100" />
         <Button onClick={addRackPatternReview}>Save Pattern Review</Button>
       </Card>
@@ -456,7 +457,7 @@ export default function EliteLab() {
 
       <Card title="10) Fatigue + Readiness Layer">
         <div className="grid grid-cols-2 gap-2">
-          <input type="number" min={0} max={12} value={sleepHours} onChange={(e) => setSleepHours(clamp(Number(e.target.value) || 0, 0, 12))} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+          <NumberStepperField label="Sleep hours" value={sleepHours} min={0} max={12} decimals={1} step={0.5} onChange={(next) => setSleepHours(clamp(next, 0, 12))} />
           <select value={stress} onChange={(e) => setStress(clamp(Number(e.target.value) || 2, 1, 5) as 1 | 2 | 3 | 4 | 5)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"><option value={1}>Stress 1</option><option value={2}>Stress 2</option><option value={3}>Stress 3</option><option value={4}>Stress 4</option><option value={5}>Stress 5</option></select>
           <select value={soreness} onChange={(e) => setSoreness(clamp(Number(e.target.value) || 2, 1, 5) as 1 | 2 | 3 | 4 | 5)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"><option value={1}>Soreness 1</option><option value={2}>Soreness 2</option><option value={3}>Soreness 3</option><option value={4}>Soreness 4</option><option value={5}>Soreness 5</option></select>
           <select value={focus} onChange={(e) => setFocus(clamp(Number(e.target.value) || 4, 1, 5) as 1 | 2 | 3 | 4 | 5)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"><option value={1}>Focus 1</option><option value={2}>Focus 2</option><option value={3}>Focus 3</option><option value={4}>Focus 4</option><option value={5}>Focus 5</option></select>

@@ -384,6 +384,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Current Fargo Rating</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={400}
           max={900}
           value={profile.currentFargoRating}
@@ -398,6 +400,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Target Fargo Rating</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={400}
           max={900}
           value={profile.targetFargoRating}
@@ -412,6 +416,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Last Official Fargo Rating</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={200}
           max={850}
           value={profile.lastOfficialFargoRating ?? ''}
@@ -433,6 +439,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Historical Peak Fargo Rating</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={200}
           max={850}
           value={profile.historicalPeakFargoRating ?? ''}
@@ -446,6 +454,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Years Away From Competition</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={0}
           max={40}
           value={profile.yearsAwayFromCompetition ?? ''}
@@ -469,6 +479,8 @@ export default function Settings() {
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Current Week</label>
         <input
           type="number"
+          inputMode="numeric"
+          step={1}
           min={1}
           max={52}
           value={profile.currentWeek}

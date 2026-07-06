@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useTrackerStore } from '../store/useTrackerStore';
 import type { MatchResult } from '../types/tracker';
@@ -97,14 +98,14 @@ export default function Progress() {
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
               <input type="date" value={date} onChange={(event) => setDate(event.target.value)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
               <input value={eventName} onChange={(event) => setEventName(event.target.value)} placeholder="Event / Tournament Name" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
-              <input value={opponent} onChange={(event) => setOpponent(event.target.value)} placeholder="Opponent Fargo Rating" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <input type="number" inputMode="numeric" value={opponent} onChange={(event) => setOpponent(event.target.value)} placeholder="Opponent Fargo Rating" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
               <select value={matchResult} onChange={(event) => setMatchResult(event.target.value as MatchResult)} className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100">
                 <option value="Win">Win</option>
                 <option value="Loss">Loss</option>
               </select>
-              <input type="number" value={gamesWon} onChange={(event) => setGamesWon(Number(event.target.value) || 0)} placeholder="Games Won" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
-              <input type="number" value={gamesLost} onChange={(event) => setGamesLost(Number(event.target.value) || 0)} placeholder="Games Lost" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
-              <input type="number" value={newRating} onChange={(event) => setNewRating(Number(event.target.value) || 0)} placeholder="New Fargo Rating" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
+              <NumberStepperField label="Games Won" value={gamesWon} min={0} onChange={(next) => setGamesWon(Math.max(0, next))} />
+              <NumberStepperField label="Games Lost" value={gamesLost} min={0} onChange={(next) => setGamesLost(Math.max(0, next))} />
+              <NumberStepperField label="New Fargo Rating" value={newRating} min={200} max={900} onChange={(next) => setNewRating(Math.max(0, next))} />
               <input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Notes" className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100" />
             </div>
             <Button className="mt-3 w-full" onClick={saveFargoLog} disabled={!eventName.trim()}>Save Fargo Log Entry</Button>

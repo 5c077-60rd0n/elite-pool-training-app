@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { weeklyScheduleTemplate } from '../data/trackerPlan';
 import { useProgramStore } from '../store/useProgramStore';
@@ -81,6 +82,10 @@ export default function TodaySession() {
   );
 
   const alreadyLogged = logs.some((item) => item.date === today);
+  const lastLoggedSession = useMemo(
+    () => logs.find((item) => item.date !== today) ?? logs[0],
+    [logs, today],
+  );
 
   const [focusArea, setFocusArea] = useState(template.focusArea);
   const [lengthMinutes, setLengthMinutes] = useState(75);
@@ -180,6 +185,37 @@ export default function TodaySession() {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
     const roundedMinutes = Math.max(1, Math.round(totalSeconds / 60));
     setLengthMinutes(roundedMinutes);
+  }
+
+  function applyAdaptiveTargets(): void {
+    if (!adaptiveDailyPlan) return;
+    setLengthTouched(true);
+    setLengthMinutes(Math.max(1, adaptiveDailyPlan.recommendedMinutes));
+    setDrillRoomShotmakingPct(clampPct(adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct));
+    setBullseyeProximity(Math.max(0, adaptiveDailyPlan.targetMetrics.bullseyeProximity));
+    setGhostGamesPlayed(10);
+    setGhostGamesWon(Math.round((adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct / 100) * 10));
+    setSafetyAttempts(10);
+    setSafetySuccesses(Math.round((adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct / 100) * 10));
+  }
+
+  function applyLastSession(): void {
+    if (!lastLoggedSession) return;
+    setFocusTouched(true);
+    setLengthTouched(true);
+    setFocusArea(lastLoggedSession.focusArea);
+    setLengthMinutes(Math.max(0, lastLoggedSession.lengthMinutes));
+    setDrillRoomShotmakingPct(clampPct(lastLoggedSession.drillRoomShotmakingPct));
+    setBullseyeProximity(Math.max(0, lastLoggedSession.bullseyeProximity));
+    setBullseyeCategory(lastLoggedSession.bullseyeCategory);
+    setWpbLesson(lastLoggedSession.wpbLesson);
+    setWpbModuleName(lastLoggedSession.wpbModuleName);
+    setGhostGamesPlayed(10);
+    setGhostGamesWon(Math.round((lastLoggedSession.ghostDrillWinRatePct / 100) * 10));
+    setLineUpShotCount(Math.max(0, lastLoggedSession.lineUpShotCount));
+    setSafetyAttempts(10);
+    setSafetySuccesses(Math.round((lastLoggedSession.safetyExchangeSuccessPct / 100) * 10));
+    setNotes(lastLoggedSession.notes);
   }
 
   function saveSessionLog(): void {
@@ -381,6 +417,25 @@ export default function TodaySession() {
       ) : null}
 
       <Card className="mb-4" title="Session Log">
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
+            Use Adaptive Targets
+          </Button>
+          <Button type="button" variant="secondary" onClick={applyLastSession} disabled={!lastLoggedSession}>
+            Copy Last Session
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={() => {
+              setGhostGamesPlayed(10);
+              setSafetyAttempts(10);
+            }}
+          >
+            Set Attempts to 10
+          </Button>
+        </div>
+
         <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
         <input
           value={focusArea}
@@ -391,45 +446,36 @@ export default function TodaySession() {
           className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
 
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            Length (min)
-            <input
-              type="number"
-              min={0}
-              value={lengthMinutes}
-              onChange={(event) => {
-                setLengthTouched(true);
-                setLengthMinutes(Math.max(0, Number(event.target.value) || 0));
-              }}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
-          <label className="text-sm text-chalk-300">
-            DrillRoom Shotmaking %
-            <input
-              type="number"
-              min={0}
-              max={100}
-              value={drillRoomShotmakingPct}
-              onChange={(event) => setDrillRoomShotmakingPct(clampPct(Number(event.target.value) || 0))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Length (min)"
+            value={lengthMinutes}
+            min={0}
+            step={5}
+            onChange={(next) => {
+              setLengthTouched(true);
+              setLengthMinutes(next);
+            }}
+          />
+          <NumberStepperField
+            label="DrillRoom Shotmaking %"
+            value={drillRoomShotmakingPct}
+            min={0}
+            max={100}
+            step={1}
+            onChange={(next) => setDrillRoomShotmakingPct(clampPct(next))}
+          />
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            Bullseye Proximity
-            <input
-              type="number"
-              step="0.1"
-              min={0}
-              value={bullseyeProximity}
-              onChange={(event) => setBullseyeProximity(Math.max(0, Number(event.target.value) || 0))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Bullseye Proximity"
+            value={bullseyeProximity}
+            min={0}
+            step={0.1}
+            decimals={1}
+            onChange={(next) => setBullseyeProximity(Math.max(0, next))}
+          />
           <label className="text-sm text-chalk-300">
             Bullseye Category
             <select
@@ -468,64 +514,51 @@ export default function TodaySession() {
       </Card>
 
       <Card className="mb-4" title="Ghost Drill (Race to 10)">
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            Games Won
-            <input
-              type="number"
-              min={0}
-              value={ghostGamesWon}
-              onChange={(event) => setGhostGamesWon(Math.max(0, Number(event.target.value) || 0))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
-          <label className="text-sm text-chalk-300">
-            Games Played
-            <input
-              type="number"
-              min={1}
-              value={ghostGamesPlayed}
-              onChange={(event) => setGhostGamesPlayed(Math.max(1, Number(event.target.value) || 1))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Games Won"
+            value={ghostGamesWon}
+            min={0}
+            step={1}
+            onChange={(next) => setGhostGamesWon(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Games Played"
+            value={ghostGamesPlayed}
+            min={1}
+            step={1}
+            onChange={(next) => setGhostGamesPlayed(Math.max(1, next))}
+          />
         </div>
         <p className="mt-2 text-sm text-ivory-100">Ghost Drill Win Rate %: {ghostDrillWinRatePct}</p>
       </Card>
 
       <Card className="mb-4" title="Line-Up & Safety">
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            Line-Up Shot Count
-            <input
-              type="number"
-              min={0}
-              value={lineUpShotCount}
-              onChange={(event) => setLineUpShotCount(Math.max(0, Number(event.target.value) || 0))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
-          <label className="text-sm text-chalk-300">
-            Safety Successes
-            <input
-              type="number"
-              min={0}
-              value={safetySuccesses}
-              onChange={(event) => setSafetySuccesses(Math.max(0, Number(event.target.value) || 0))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
-        </div>
-        <label className="mt-3 block text-sm text-chalk-300">
-          Safety Attempts
-          <input
-            type="number"
-            min={1}
-            value={safetyAttempts}
-            onChange={(event) => setSafetyAttempts(Math.max(1, Number(event.target.value) || 1))}
-            className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Line-Up Shot Count"
+            value={lineUpShotCount}
+            min={0}
+            step={1}
+            onChange={(next) => setLineUpShotCount(Math.max(0, next))}
           />
-        </label>
+          <NumberStepperField
+            label="Safety Successes"
+            value={safetySuccesses}
+            min={0}
+            step={1}
+            onChange={(next) => setSafetySuccesses(Math.max(0, next))}
+          />
+        </div>
+        <div className="mt-3">
+          <NumberStepperField
+            label="Safety Attempts"
+            value={safetyAttempts}
+            min={1}
+            step={1}
+            onChange={(next) => setSafetyAttempts(Math.max(1, next))}
+          />
+        </div>
         <p className="mt-2 text-sm text-ivory-100">Safety Exchange Success %: {safetyExchangeSuccessPct}</p>
       </Card>
 

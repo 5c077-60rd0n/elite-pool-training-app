@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useTrackerStore } from '../store/useTrackerStore';
 import type { MechanicsChecklistItem } from '../types/tracker';
@@ -148,16 +149,12 @@ export default function MechanicsAudit() {
 
       <Card className="mb-4" title="Weekly Audit Log Entry">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="text-sm text-chalk-300">
-            Week #
-            <input
-              type="number"
-              min={1}
-              value={weekNumber}
-              onChange={(event) => setWeekNumber(Math.max(1, Number(event.target.value) || 1))}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          </label>
+          <NumberStepperField
+            label="Week #"
+            value={weekNumber}
+            min={1}
+            onChange={(next) => setWeekNumber(Math.max(1, next))}
+          />
           <label className="text-sm text-chalk-300">
             Date Audited
             <input

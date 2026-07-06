@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { Button } from '../components/ui/Button';
+import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { calculateDrillReadinessScore, calculateMatchReadinessScore } from '../utils/matchSimulator';
 import type { MatchSimulatorPressureLevel } from '../types/tracker';
@@ -107,46 +108,36 @@ export default function MatchSimulator() {
               <option key={item} value={item}>{item}</option>
             ))}
           </select>
-          <input
-            type="number"
+          <NumberStepperField
+            label="Race to"
+            value={raceTo}
             min={3}
             max={15}
-            value={raceTo}
-            onChange={(event) => setRaceTo(Math.max(3, Number(event.target.value) || 3))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Race to"
+            onChange={(next) => setRaceTo(Math.max(3, next))}
           />
-          <input
-            type="number"
-            min={1}
+          <NumberStepperField
+            label="Innings"
             value={inningsPlayed}
-            onChange={(event) => setInningsPlayed(Math.max(1, Number(event.target.value) || 1))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Innings"
+            min={1}
+            onChange={(next) => setInningsPlayed(Math.max(1, next))}
           />
-          <input
-            type="number"
-            min={0}
+          <NumberStepperField
+            label="Breaks made"
             value={breaksMade}
-            onChange={(event) => setBreaksMade(Math.max(0, Number(event.target.value) || 0))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Breaks made"
-          />
-          <input
-            type="number"
             min={0}
+            onChange={(next) => setBreaksMade(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Break and runs"
             value={breakAndRuns}
-            onChange={(event) => setBreakAndRuns(Math.max(0, Number(event.target.value) || 0))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Break and runs"
-          />
-          <input
-            type="number"
             min={0}
+            onChange={(next) => setBreakAndRuns(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Safety exchanges won"
             value={safetyWins}
-            onChange={(event) => setSafetyWins(Math.max(0, Number(event.target.value) || 0))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Safety exchanges won"
+            min={0}
+            onChange={(next) => setSafetyWins(Math.max(0, next))}
           />
           <select
             value={pressureLevel}
@@ -157,21 +148,17 @@ export default function MatchSimulator() {
             <option value="medium">Medium pressure</option>
             <option value="high">High pressure</option>
           </select>
-          <input
-            type="number"
-            min={0}
+          <NumberStepperField
+            label="Pressure shots made"
             value={pressureShotsMade}
-            onChange={(event) => setPressureShotsMade(Math.max(0, Number(event.target.value) || 0))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Pressure shots made"
-          />
-          <input
-            type="number"
             min={0}
+            onChange={(next) => setPressureShotsMade(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Pressure shots attempted"
             value={pressureShotsAttempted}
-            onChange={(event) => setPressureShotsAttempted(Math.max(0, Number(event.target.value) || 0))}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            placeholder="Pressure shots attempted"
+            min={0}
+            onChange={(next) => setPressureShotsAttempted(Math.max(0, next))}
           />
           <select
             value={hillHillResult}
