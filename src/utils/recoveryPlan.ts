@@ -40,7 +40,7 @@ function defaultActionsForKpi(kpiId: string): string[] {
 
   if (kpiId === 'lineup-efficiency') {
     return [
-      'Run three timed line-up sets and record best shot count.',
+      'Run three timed line-up sets and record best run count.',
       'Reset after every miss and repeat from the same layout once.',
       'Finish with one pressure line-up set at tournament pace.',
     ];
@@ -74,7 +74,7 @@ function weakSessionSignal(log: DailySessionLog): boolean {
     log.drillRoomShotmakingPct < 60 ||
     log.ghostDrillWinRatePct < 40 ||
     log.safetyExchangeSuccessPct < 45 ||
-    log.lineUpShotCount > 22
+    log.lineUpShotCount < 16
   );
 }
 

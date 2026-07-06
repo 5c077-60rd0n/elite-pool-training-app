@@ -170,7 +170,7 @@ export function evaluateTrackerSessionReward(
   const ghost = clamp(log.ghostDrillWinRatePct, 0, 100);
   const safety = clamp(log.safetyExchangeSuccessPct, 0, 100);
   const bullseye = clamp((5 - log.bullseyeProximity) * 20, 0, 100);
-  const lineup = clamp(((30 - log.lineUpShotCount) / 30) * 100, 0, 100);
+  const lineup = clamp((log.lineUpShotCount / 30) * 100, 0, 100);
 
   const qualityScore = Math.round(
     drillRoom * 0.3 +

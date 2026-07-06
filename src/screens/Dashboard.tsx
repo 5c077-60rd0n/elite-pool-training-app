@@ -137,7 +137,7 @@ export default function Dashboard() {
       minutes: thisWeekLogs.reduce((sum, item) => sum + item.lengthMinutes, 0),
       drillRoomAvg: Math.round(thisWeekLogs.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / thisWeekLogs.length),
       ghostBest: Math.max(...thisWeekLogs.map((item) => item.ghostDrillWinRatePct)),
-      lineUpBest: Math.min(...thisWeekLogs.map((item) => item.lineUpShotCount).filter((value) => value > 0), 0),
+      lineUpBest: Math.max(...thisWeekLogs.map((item) => item.lineUpShotCount).filter((value) => value > 0), 0),
     };
   }, [currentWeekStats, logs, profile.currentWeek]);
 
@@ -209,7 +209,7 @@ export default function Dashboard() {
               <p className="text-right text-ivory-100">{weekIn60.drillRoomAvg}%</p>
               <p className="text-chalk-300">Ghost Best</p>
               <p className="text-right text-ivory-100">{weekIn60.ghostBest}%</p>
-              <p className="text-chalk-300">Line-Up Best</p>
+              <p className="text-chalk-300">Line-Up Best Run</p>
               <p className="text-right text-ivory-100">{weekIn60.lineUpBest}</p>
               <p className="text-chalk-300">Confidence</p>
               <p className="text-right text-ivory-100">{confidenceIndexHistory[0]?.score ?? 0}</p>

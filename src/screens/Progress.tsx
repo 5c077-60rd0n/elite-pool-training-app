@@ -70,7 +70,7 @@ export default function Progress() {
                   <th className="px-2 py-2">Bullseye Avg</th>
                   <th className="px-2 py-2">Ghost Best %</th>
                   <th className="px-2 py-2">WPB Lessons</th>
-                  <th className="px-2 py-2">Line-Up Best</th>
+                  <th className="px-2 py-2">Line-Up Best Run</th>
                 </tr>
               </thead>
               <tbody>

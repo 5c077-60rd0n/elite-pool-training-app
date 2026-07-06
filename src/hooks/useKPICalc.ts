@@ -71,7 +71,7 @@ function weeklyMetricsFromDailyLogs(
       drillRoomShotmakingPct: Math.round(average(weekLogs.map((item) => item.drillRoomShotmakingPct).filter((v) => v > 0))),
       bullseyeProximity: Number(average(weekLogs.map((item) => item.bullseyeProximity).filter((v) => v > 0)).toFixed(1)),
       ghostDrillWinRatePct: Math.round(Math.max(...weekLogs.map((item) => item.ghostDrillWinRatePct))),
-      lineUpShotCount: Math.round(Math.min(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0))),
+      lineUpShotCount: Math.round(Math.max(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0))),
       safetyExchangeSuccessPct: Math.round(average(weekLogs.map((item) => item.safetyExchangeSuccessPct).filter((v) => v > 0))),
       wpbLessonsCompleted: weekLogs.filter((item) => item.wpbLesson === 'Yes').length,
     }));

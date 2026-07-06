@@ -55,10 +55,10 @@ export const trackerKpis: TrackerKpiDefinition[] = [
   },
   {
     id: 'lineup-efficiency',
-    name: 'Line-Up Efficiency',
+    name: 'Line-Up Best Run',
     measurementUnit: 'shots',
-    direction: 'lower',
-    benchmarks: { fargo550: 24, fargo600: 22, fargo650: 16, fargo700: 14, fargo750: 12, fargo800: 10 },
+    direction: 'higher',
+    benchmarks: { fargo550: 10, fargo600: 12, fargo650: 16, fargo700: 20, fargo750: 24, fargo800: 28 },
     getValue: (metrics) => metrics.lineUpShotCount,
   },
   {

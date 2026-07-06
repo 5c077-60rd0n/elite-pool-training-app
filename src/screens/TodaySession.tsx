@@ -175,7 +175,7 @@ export default function TodaySession() {
     const nudges: string[] = [];
     if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom %');
     if (ghostGamesWon === 0) nudges.push('Ghost wins');
-    if (lineUpShotCount === 0) nudges.push('Line-up shots');
+    if (lineUpShotCount === 0) nudges.push('Line-up best run');
     if (safetySuccesses === 0) nudges.push('Safety successes');
     if (!notes.trim()) nudges.push('Session notes');
     return nudges;
@@ -388,7 +388,7 @@ export default function TodaySession() {
             <p>DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
             <p>Ghost Target: {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}%</p>
             <p>Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
-            <p>Line-Up Target: {'<= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
+            <p>Line-Up Best Run Target: {'>= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
             <p>Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
             <p>WPB Lessons: {adaptiveDailyPlan.targetMetrics.wpbLessonsThisWeek}/week</p>
           </div>
@@ -505,7 +505,7 @@ export default function TodaySession() {
 
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <NumberStepperField
-            label="Line-Up Shot Count"
+            label="Line-Up Best Run"
             value={lineUpShotCount}
             min={0}
             step={1}

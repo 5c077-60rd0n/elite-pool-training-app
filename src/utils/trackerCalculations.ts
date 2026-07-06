@@ -59,7 +59,7 @@ export function estimateFargo(
   const weeksPoints = weeks >= 20 ? 30 : weeks >= 12 ? 20 : weeks >= 6 ? 10 : weeks >= 2 ? 5 : 0;
 
   const bullseyeAdj = Math.round((3.5 - bullseye) * 4);
-  const lineupAdj = lineup <= 16 ? 8 : lineup <= 20 ? 4 : 0;
+  const lineupAdj = lineup >= 24 ? 8 : lineup >= 18 ? 4 : 0;
   const safetyAdj = safety >= 60 ? 8 : safety >= 40 ? 4 : 0;
   return clamp(baseline + ghostPoints + drillRoomPoints + weeksPoints + bullseyeAdj + lineupAdj + safetyAdj, 300, 850);
 }
@@ -77,7 +77,7 @@ export function calculateWeeklySummary(
   const avgBullseye = Math.round(average(weekLogs.map((item) => item.bullseyeProximity).filter((v) => v > 0)));
   const ghostBest = Math.max(...weekLogs.map((item) => item.ghostDrillWinRatePct));
   const lessons = weekLogs.filter((item) => item.wpbLesson === 'Yes').length;
-  const lineupBest = Math.min(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0));
+  const lineupBest = Math.max(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0));
 
   const prior = [...existingSummaries.filter((item) => item.weekNumber < weekNumber), {
     id: `w-${weekNumber}`,
