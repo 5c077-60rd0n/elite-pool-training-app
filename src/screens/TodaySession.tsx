@@ -469,6 +469,52 @@ export default function TodaySession() {
 
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <NumberStepperField
+            label="Ghost Games Won"
+            value={ghostGamesWon}
+            min={0}
+            step={1}
+            onChange={(next) => setGhostGamesWon(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Ghost Games Played"
+            value={ghostGamesPlayed}
+            min={1}
+            step={1}
+            onChange={(next) => setGhostGamesPlayed(Math.max(1, next))}
+          />
+        </div>
+        <p className="mt-2 text-sm text-ivory-100">Ghost Drill Win Rate %: {ghostDrillWinRatePct}</p>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Safety Successes"
+            value={safetySuccesses}
+            min={0}
+            step={1}
+            onChange={(next) => setSafetySuccesses(Math.max(0, next))}
+          />
+          <NumberStepperField
+            label="Safety Attempts"
+            value={safetyAttempts}
+            min={1}
+            step={1}
+            onChange={(next) => setSafetyAttempts(Math.max(1, next))}
+          />
+        </div>
+        <p className="mt-2 text-sm text-ivory-100">Safety Exchange Success %: {safetyExchangeSuccessPct}</p>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
+            label="Line-Up Shot Count"
+            value={lineUpShotCount}
+            min={0}
+            step={1}
+            onChange={(next) => setLineUpShotCount(Math.max(0, next))}
+          />
+        </div>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <NumberStepperField
             label="Bullseye Proximity"
             value={bullseyeProximity}
             min={0}
@@ -511,55 +557,6 @@ export default function TodaySession() {
             />
           </label>
         </div>
-      </Card>
-
-      <Card className="mb-4" title="Ghost Drill (Race to 10)">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Games Won"
-            value={ghostGamesWon}
-            min={0}
-            step={1}
-            onChange={(next) => setGhostGamesWon(Math.max(0, next))}
-          />
-          <NumberStepperField
-            label="Games Played"
-            value={ghostGamesPlayed}
-            min={1}
-            step={1}
-            onChange={(next) => setGhostGamesPlayed(Math.max(1, next))}
-          />
-        </div>
-        <p className="mt-2 text-sm text-ivory-100">Ghost Drill Win Rate %: {ghostDrillWinRatePct}</p>
-      </Card>
-
-      <Card className="mb-4" title="Line-Up & Safety">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Line-Up Shot Count"
-            value={lineUpShotCount}
-            min={0}
-            step={1}
-            onChange={(next) => setLineUpShotCount(Math.max(0, next))}
-          />
-          <NumberStepperField
-            label="Safety Successes"
-            value={safetySuccesses}
-            min={0}
-            step={1}
-            onChange={(next) => setSafetySuccesses(Math.max(0, next))}
-          />
-        </div>
-        <div className="mt-3">
-          <NumberStepperField
-            label="Safety Attempts"
-            value={safetyAttempts}
-            min={1}
-            step={1}
-            onChange={(next) => setSafetyAttempts(Math.max(1, next))}
-          />
-        </div>
-        <p className="mt-2 text-sm text-ivory-100">Safety Exchange Success %: {safetyExchangeSuccessPct}</p>
       </Card>
 
       <Card title="Session Notes & Save">
