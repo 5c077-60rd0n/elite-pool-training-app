@@ -10,6 +10,7 @@ const KPITracker = lazy(() => import('../screens/KPITracker'));
 const PhaseOverview = lazy(() => import('../screens/PhaseOverview'));
 const MilestoneLog = lazy(() => import('../screens/MilestoneLog'));
 const MentalGame = lazy(() => import('../screens/MentalGame'));
+const NavigateScreen = lazy(() => import('../screens/Navigate'));
 const TournamentPrep = lazy(() => import('../screens/TournamentPrep'));
 const MatchSimulator = lazy(() => import('../screens/MatchSimulator'));
 const EliteLab = lazy(() => import('../screens/EliteLab'));
@@ -52,6 +53,7 @@ function GuardedRoutes() {
         <Route path="/phases" element={<PhaseOverview />} />
         <Route path="/milestones" element={<MilestoneLog />} />
         <Route path="/mental" element={<MentalGame />} />
+        <Route path="/navigate" element={<NavigateScreen />} />
         <Route path="/tournament" element={<TournamentPrep />} />
         <Route path="/match-simulator" element={<MatchSimulator />} />
         <Route path="/elite-lab" element={<EliteLab />} />
