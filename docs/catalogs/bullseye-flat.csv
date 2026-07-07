@@ -1,0 +1,254 @@
+top_category,difficulty,series_name,shot_id,drill_name
+Bullseye,Easy,Fundamentals,1,1 - Fundamentals
+Bullseye,Easy,Fundamentals,2,2 - Fundamentals
+Bullseye,Easy,Fundamentals,3,3 - Fundamentals
+Bullseye,Easy,Fundamentals,4,4 - Fundamentals
+Bullseye,Easy,Fundamentals,5,5 - Fundamentals
+Bullseye,Easy,Fundamentals,6,6 - Fundamentals
+Bullseye,Easy,Fundamentals,7,7 - Fundamentals
+Bullseye,Easy,Fundamentals,8,8 - Fundamentals
+Bullseye,Easy,Fundamentals,9,9 - Fundamentals
+Bullseye,Easy,Fundamentals,12,12 - Fundamentals
+Bullseye,Easy,Fundamentals,16,16 - Fundamentals
+Bullseye,Easy,Follow,20,20 - Follow
+Bullseye,Easy,Follow,21,21 - Follow
+Bullseye,Easy,Follow,22,22 - Follow
+Bullseye,Easy,Follow,23,23 - Follow
+Bullseye,Easy,Follow,24,24 - Follow
+Bullseye,Easy,Follow,25,25 - Follow
+Bullseye,Easy,Follow,26,26 - Follow
+Bullseye,Easy,Follow,27,27 - Follow
+Bullseye,Easy,Follow,28,28 - Follow
+Bullseye,Easy,Follow,29,29 - Follow
+Bullseye,Easy,Follow,30,30 - Follow
+Bullseye,Easy,Stun,45,45 - Stun
+Bullseye,Easy,Draw,68,68 - Draw
+Bullseye,Easy,Hangers,114,114 - Hangers
+Bullseye,Easy,Hangers,115,115 - Hangers
+Bullseye,Easy,Hangers,116,116 - Hangers
+Bullseye,Easy,Hangers,123,123 - Hangers
+Bullseye,Easy,Rails,143,143 - Rails
+Bullseye,Easy,Rails,152,152 - Rails
+Bullseye,Easy,Rails,167,167 - Rails
+Bullseye,Easy,Rails,174,174 - Rails
+Bullseye,Easy,Scratches,178,178 - Scratches
+Bullseye,Easy,Scratches,180,180 - Scratches
+Bullseye,Easy,Near the Object Ball,P16,P16 - Near the Object Ball
+Bullseye,Easy,Near the Object Ball,P17,P17 - Near the Object Ball
+Bullseye,Easy,Combinations,P138,P138 - Combinations
+Bullseye,Moderate,Fundamentals,10,10 - Fundamentals
+Bullseye,Moderate,Fundamentals,11,11 - Fundamentals
+Bullseye,Moderate,Fundamentals,13,13 - Fundamentals
+Bullseye,Moderate,Fundamentals,14,14 - Fundamentals
+Bullseye,Moderate,Fundamentals,17,17 - Fundamentals
+Bullseye,Moderate,Fundamentals,18,18 - Fundamentals
+Bullseye,Moderate,Follow,31,31 - Follow
+Bullseye,Moderate,Follow,32,32 - Follow
+Bullseye,Moderate,Follow,33,33 - Follow
+Bullseye,Moderate,Follow,34,34 - Follow
+Bullseye,Moderate,Follow,35,35 - Follow
+Bullseye,Moderate,Follow,36,36 - Follow
+Bullseye,Moderate,Follow,37,37 - Follow
+Bullseye,Moderate,Follow,38,38 - Follow
+Bullseye,Moderate,Stun,46,46 - Stun
+Bullseye,Moderate,Stun,47,47 - Stun
+Bullseye,Moderate,Stun,48,48 - Stun
+Bullseye,Moderate,Stun,49,49 - Stun
+Bullseye,Moderate,Stun,50,50 - Stun
+Bullseye,Moderate,Stun,51,51 - Stun
+Bullseye,Moderate,Stun,52,52 - Stun
+Bullseye,Moderate,Stun,53,53 - Stun
+Bullseye,Moderate,Stun,54,54 - Stun
+Bullseye,Moderate,Stun,55,55 - Stun
+Bullseye,Moderate,Stun,56,56 - Stun
+Bullseye,Moderate,Stun,57,57 - Stun
+Bullseye,Moderate,Stun,58,58 - Stun
+Bullseye,Moderate,Stun,59,59 - Stun
+Bullseye,Moderate,Stun,60,60 - Stun
+Bullseye,Moderate,Draw,69,69 - Draw
+Bullseye,Moderate,Draw,70,70 - Draw
+Bullseye,Moderate,Draw,71,71 - Draw
+Bullseye,Moderate,Draw,72,72 - Draw
+Bullseye,Moderate,Draw,73,73 - Draw
+Bullseye,Expert,Fundamentals,19,19 - Fundamentals
+Bullseye,Expert,Draw,81,81 - Draw
+Bullseye,Expert,Draw,82,82 - Draw
+Bullseye,Expert,Draw,83,83 - Draw
+Bullseye,Expert,Draw,84,84 - Draw
+Bullseye,Expert,Sidespin,97,97 - Sidespin
+Bullseye,Expert,Sidespin,112,112 - Sidespin
+Bullseye,Expert,Sidespin,113,113 - Sidespin
+Bullseye,Expert,Scratches,187,187 - Scratches
+Bullseye,Expert,Advanced,188,188 - Advanced
+Bullseye,Expert,Advanced,189,189 - Advanced
+Bullseye,Expert,Advanced,190,190 - Advanced
+Bullseye,Expert,Advanced,191,191 - Advanced
+Bullseye,Expert,Advanced,193,193 - Advanced
+Bullseye,Expert,Advanced,194,194 - Advanced
+Bullseye,Expert,Advanced,195,195 - Advanced
+Bullseye,Expert,Advanced,196,196 - Advanced
+Bullseye,Expert,Advanced,197,197 - Advanced
+Bullseye,Expert,Advanced,199,199 - Advanced
+Bullseye,Expert,Advanced,200,200 - Advanced
+Bullseye,Expert,Thin Cuts,P1,P1 - Thin Cuts
+Bullseye,Expert,Thin Cuts,P3,P3 - Thin Cuts
+Bullseye,Expert,Thin Cuts,P6,P6 - Thin Cuts
+Bullseye,Expert,Thin Cuts,P10,P10 - Thin Cuts
+Bullseye,Expert,Near the Object Ball,P22,P22 - Near the Object Ball
+Bullseye,Expert,Near the Object Ball,P23,P23 - Near the Object Ball
+Bullseye,Expert,Near the Object Ball,P26,P26 - Near the Object Ball
+Bullseye,Expert,Near the Object Ball,P28,P28 - Near the Object Ball
+Bullseye,Expert,From the Pocket,P30,P30 - From the Pocket
+Bullseye,Expert,From the Pocket,P31,P31 - From the Pocket
+Bullseye,Expert,From the Pocket,P32,P32 - From the Pocket
+Bullseye,Expert,From the Pocket,P34,P34 - From the Pocket
+Bullseye,Expert,From the Pocket,P35,P35 - From the Pocket
+Bullseye,Expert,From the Pocket,P38,P38 - From the Pocket
+Bullseye,Expert,High Spin,P41,P41 - High Spin
+Bullseye,Expert,High Spin,P42,P42 - High Spin
+Bullseye,Expert,High Spin,P43,P43 - High Spin
+Bullseye,Expert,High Spin,P44,P44 - High Spin
+Bullseye,Expert,High Spin,P47,P47 - High Spin
+Bullseye,Expert,High Spin,P52,P52 - High Spin
+Bullseye,Expert,Stun Run-Through,P60,P60 - Stun Run-Through
+Bullseye,Expert,Stun Run-Through,P61,P61 - Stun Run-Through
+Bullseye,Expert,Stun Run-Through,P62,P62 - Stun Run-Through
+Bullseye,Expert,Stun Run-Through,P63,P63 - Stun Run-Through
+Bullseye,Expert,Stun Run-Through,P64,P64 - Stun Run-Through
+Bullseye,Expert,Cheating the Pocket,P66,P66 - Cheating the Pocket
+Bullseye,Expert,Cheating the Pocket,P67,P67 - Cheating the Pocket
+Bullseye,Expert,Cheating the Pocket,P76,P76 - Cheating the Pocket
+Bullseye,Expert,Cheating the Pocket,P78,P78 - Cheating the Pocket
+Bullseye,Expert,Cheating the Pocket,P83,P83 - Cheating the Pocket
+Bullseye,Expert,Rail-First,P85,P85 - Rail-First
+Bullseye,Expert,Rail-First,P86,P86 - Rail-First
+Bullseye,Expert,Rail-First,P87,P87 - Rail-First
+Bullseye,Expert,Rail-First,P88,P88 - Rail-First
+Bullseye,Expert,Rail-First,P91,P91 - Rail-First
+Bullseye,Expert,Sidespin from the Rail,P101,P101 - Sidespin from the Rail
+Bullseye,Expert,Sidespin from the Rail,P102,P102 - Sidespin from the Rail
+Bullseye,Expert,Sidespin from the Rail,P104,P104 - Sidespin from the Rail
+Bullseye,Expert,Sidespin from the Rail,P105,P105 - Sidespin from the Rail
+Bullseye,Expert,Tight in the Side,P108,P108 - Tight in the Side
+Bullseye,Expert,Tight in the Side,P109,P109 - Tight in the Side
+Bullseye,Expert,Tight in the Side,P110,P110 - Tight in the Side
+Bullseye,Expert,Tight in the Side,P111,P111 - Tight in the Side
+Bullseye,Expert,Tight in the Side,P113,P113 - Tight in the Side
+Bullseye,Expert,Tight in the Side,P114,P114 - Tight in the Side
+Bullseye,Expert,Rolling Banks,P131,P131 - Rolling Banks
+Bullseye,Expert,Caroms,P152,P152 - Caroms
+Bullseye,Expert,Caroms,P153,P153 - Caroms
+Bullseye,Expert,Caroms,P155,P155 - Caroms
+Bullseye,Expert,Elevated Cue,P169,P169 - Elevated Cue
+Bullseye,Expert,Elevated Cue,P177,P177 - Elevated Cue
+Bullseye,Expert,Finesse,P194,P194 - Finesse
+Bullseye,Expert,Finesse,P196,P196 - Finesse
+Bullseye,Expert,Finesse,P197,P197 - Finesse
+Bullseye,Expert,Finesse,P199,P199 - Finesse
+Bullseye,Elite,Thin Cuts,P7,P7 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P8,P8 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P9,P9 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P11,P11 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P12,P12 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P13,P13 - Thin Cuts
+Bullseye,Elite,Thin Cuts,P14,P14 - Thin Cuts
+Bullseye,Elite,Near the Object Ball,P21,P21 - Near the Object Ball
+Bullseye,Elite,Near the Object Ball,P25,P25 - Near the Object Ball
+Bullseye,Elite,Near the Object Ball,P27,P27 - Near the Object Ball
+Bullseye,Elite,From the Pocket,P33,P33 - From the Pocket
+Bullseye,Elite,From the Pocket,P36,P36 - From the Pocket
+Bullseye,Elite,From the Pocket,P37,P37 - From the Pocket
+Bullseye,Elite,From the Pocket,P39,P39 - From the Pocket
+Bullseye,Elite,High Spin,P45,P45 - High Spin
+Bullseye,Elite,High Spin,P46,P46 - High Spin
+Bullseye,Elite,High Spin,P48,P48 - High Spin
+Bullseye,Elite,High Spin,P49,P49 - High Spin
+Bullseye,Elite,High Spin,P50,P50 - High Spin
+Bullseye,Elite,High Spin,P51,P51 - High Spin
+Bullseye,Elite,High Spin,P53,P53 - High Spin
+Bullseye,Elite,High Spin,P54,P54 - High Spin
+Bullseye,Elite,Cheating the Pocket,P65,P65 - Cheating the Pocket
+Bullseye,Elite,Rail-First,P89,P89 - Rail-First
+Bullseye,Elite,Rail-First,P90,P90 - Rail-First
+Bullseye,Elite,Rail-First,P92,P92 - Rail-First
+Bullseye,Elite,Rail-First,P93,P93 - Rail-First
+Bullseye,Elite,Rail-First,P100,P100 - Rail-First
+Bullseye,Elite,Sidespin from the Rail,P103,P103 - Sidespin from the Rail
+Bullseye,Elite,Sidespin from the Rail,P106,P106 - Sidespin from the Rail
+Bullseye,Elite,Tight in the Side,P112,P112 - Tight in the Side
+Bullseye,Elite,Tight in the Side,P115,P115 - Tight in the Side
+Bullseye,Elite,Tight in the Side,P116,P116 - Tight in the Side
+Bullseye,Elite,Tight in the Side,P117,P117 - Tight in the Side
+Bullseye,Elite,Tight in the Side,P118,P118 - Tight in the Side
+Bullseye,Elite,Sliding Banks,P120,P120 - Sliding Banks
+Bullseye,Elite,Sliding Banks,P121,P121 - Sliding Banks
+Bullseye,Elite,Sliding Banks,P123,P123 - Sliding Banks
+Bullseye,Elite,Sliding Banks,P128,P128 - Sliding Banks
+Bullseye,Elite,Rolling Banks,P132,P132 - Rolling Banks
+Bullseye,Elite,Rolling Banks,P133,P133 - Rolling Banks
+Bullseye,Elite,Rolling Banks,P134,P134 - Rolling Banks
+Bullseye,Elite,Combinations,P141,P141 - Combinations
+Bullseye,Elite,Combinations,P143,P143 - Combinations
+Bullseye,Elite,Caroms,P156,P156 - Caroms
+Bullseye,Elite,Follow-On,P161,P161 - Follow-On
+Bullseye,Elite,Follow-On,P162,P162 - Follow-On
+Bullseye,Elite,Follow-On,P164,P164 - Follow-On
+Bullseye,Elite,Follow-On,P166,P166 - Follow-On
+Bullseye,Elite,Follow-On,P167,P167 - Follow-On
+Bullseye,Elite,Follow-On,P168,P168 - Follow-On
+Bullseye,Elite,Elevated Cue,P170,P170 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P171,P171 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P174,P174 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P175,P175 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P178,P178 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P179,P179 - Elevated Cue
+Bullseye,Elite,Elevated Cue,P181,P181 - Elevated Cue
+Bullseye,Elite,Over a Ball,P182,P182 - Over a Ball
+Bullseye,Elite,Over a Ball,P183,P183 - Over a Ball
+Bullseye,Elite,Over a Ball,P185,P185 - Over a Ball
+Bullseye,Elite,Over a Ball,P188,P188 - Over a Ball
+Bullseye,Elite,Finesse,P191,P191 - Finesse
+Bullseye,Elite,Finesse,P192,P192 - Finesse
+Bullseye,Elite,Finesse,P195,P195 - Finesse
+Bullseye,Elite,Finesse,P200,P200 - Finesse
+Bullseye,Extreme,Thin Cuts,P2,P2 - Thin Cuts
+Bullseye,Extreme,Thin Cuts,P4,P4 - Thin Cuts
+Bullseye,Extreme,Thin Cuts,P5,P5 - Thin Cuts
+Bullseye,Extreme,Thin Cuts,P15,P15 - Thin Cuts
+Bullseye,Extreme,From the Pocket,P40,P40 - From the Pocket
+Bullseye,Extreme,Rail-First,P94,P94 - Rail-First
+Bullseye,Extreme,Rail-First,P95,P95 - Rail-First
+Bullseye,Extreme,Rail-First,P96,P96 - Rail-First
+Bullseye,Extreme,Rail-First,P97,P97 - Rail-First
+Bullseye,Extreme,Rail-First,P98,P98 - Rail-First
+Bullseye,Extreme,Rail-First,P99,P99 - Rail-First
+Bullseye,Extreme,Sidespin from the Rail,P107,P107 - Sidespin from the Rail
+Bullseye,Extreme,Sliding Banks,P124,P124 - Sliding Banks
+Bullseye,Extreme,Sliding Banks,P126,P126 - Sliding Banks
+Bullseye,Extreme,Sliding Banks,P127,P127 - Sliding Banks
+Bullseye,Extreme,Sliding Banks,P129,P129 - Sliding Banks
+Bullseye,Extreme,Sliding Banks,P130,P130 - Sliding Banks
+Bullseye,Extreme,Rolling Banks,P135,P135 - Rolling Banks
+Bullseye,Extreme,Rolling Banks,P136,P136 - Rolling Banks
+Bullseye,Extreme,Rolling Banks,P137,P137 - Rolling Banks
+Bullseye,Extreme,Combinations,P142,P142 - Combinations
+Bullseye,Extreme,Combinations,P144,P144 - Combinations
+Bullseye,Extreme,Combinations,P145,P145 - Combinations
+Bullseye,Extreme,Combinations,P146,P146 - Combinations
+Bullseye,Extreme,Combinations,P147,P147 - Combinations
+Bullseye,Extreme,Caroms,P157,P157 - Caroms
+Bullseye,Extreme,Caroms,P158,P158 - Caroms
+Bullseye,Extreme,Caroms,P159,P159 - Caroms
+Bullseye,Extreme,Caroms,P160,P160 - Caroms
+Bullseye,Extreme,Follow-On,P163,P163 - Follow-On
+Bullseye,Extreme,Follow-On,P165,P165 - Follow-On
+Bullseye,Extreme,Elevated Cue,P172,P172 - Elevated Cue
+Bullseye,Extreme,Elevated Cue,P173,P173 - Elevated Cue
+Bullseye,Extreme,Elevated Cue,P176,P176 - Elevated Cue
+Bullseye,Extreme,Elevated Cue,P180,P180 - Elevated Cue
+Bullseye,Extreme,Over a Ball,P184,P184 - Over a Ball
+Bullseye,Extreme,Over a Ball,P186,P186 - Over a Ball
+Bullseye,Extreme,Over a Ball,P187,P187 - Over a Ball
+Bullseye,Extreme,Over a Ball,P189,P189 - Over a Ball
+Bullseye,Extreme,Finesse,P193,P193 - Finesse
+Bullseye,Extreme,Finesse,P198,P198 - Finesse

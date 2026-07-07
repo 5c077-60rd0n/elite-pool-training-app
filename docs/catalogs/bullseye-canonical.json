@@ -1,0 +1,302 @@
+{
+  "generatedAt": "2026-07-07",
+  "source": "User-provided Bullseye screenshots",
+  "topCategory": "Bullseye",
+  "entries": [
+    {
+      "difficulty": "Easy",
+      "seriesName": "Fundamentals",
+      "shotIds": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "12", "16"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Follow",
+      "shotIds": ["20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Stun",
+      "shotIds": ["45"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Draw",
+      "shotIds": ["68"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Hangers",
+      "shotIds": ["114", "115", "116", "123"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Rails",
+      "shotIds": ["143", "152", "167", "174"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Scratches",
+      "shotIds": ["178", "180"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Near the Object Ball",
+      "shotIds": ["P16", "P17"]
+    },
+    {
+      "difficulty": "Easy",
+      "seriesName": "Combinations",
+      "shotIds": ["P138"]
+    },
+    {
+      "difficulty": "Moderate",
+      "seriesName": "Fundamentals",
+      "shotIds": ["10", "11", "13", "14", "17", "18"]
+    },
+    {
+      "difficulty": "Moderate",
+      "seriesName": "Follow",
+      "shotIds": ["31", "32", "33", "34", "35", "36", "37", "38"]
+    },
+    {
+      "difficulty": "Moderate",
+      "seriesName": "Stun",
+      "shotIds": ["46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"]
+    },
+    {
+      "difficulty": "Moderate",
+      "seriesName": "Draw",
+      "shotIds": ["69", "70", "71", "72", "73"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Fundamentals",
+      "shotIds": ["19"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Draw",
+      "shotIds": ["81", "82", "83", "84"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Sidespin",
+      "shotIds": ["97", "112", "113"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Scratches",
+      "shotIds": ["187"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Advanced",
+      "shotIds": ["188", "189", "190", "191", "193", "194", "195", "196", "197", "199", "200"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Thin Cuts",
+      "shotIds": ["P1", "P3", "P6", "P10"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Near the Object Ball",
+      "shotIds": ["P22", "P23", "P26", "P28"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "From the Pocket",
+      "shotIds": ["P30", "P31", "P32", "P34", "P35", "P38"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "High Spin",
+      "shotIds": ["P41", "P42", "P43", "P44", "P47", "P52"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Stun Run-Through",
+      "shotIds": ["P60", "P61", "P62", "P63", "P64"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Cheating the Pocket",
+      "shotIds": ["P66", "P67", "P76", "P78", "P83"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Rail-First",
+      "shotIds": ["P85", "P86", "P87", "P88", "P91"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Sidespin from the Rail",
+      "shotIds": ["P101", "P102", "P104", "P105"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Tight in the Side",
+      "shotIds": ["P108", "P109", "P110", "P111", "P113", "P114"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Rolling Banks",
+      "shotIds": ["P131"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Caroms",
+      "shotIds": ["P152", "P153", "P155"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Elevated Cue",
+      "shotIds": ["P169", "P177"]
+    },
+    {
+      "difficulty": "Expert",
+      "seriesName": "Finesse",
+      "shotIds": ["P194", "P196", "P197", "P199"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Thin Cuts",
+      "shotIds": ["P7", "P8", "P9", "P11", "P12", "P13", "P14"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Near the Object Ball",
+      "shotIds": ["P21", "P25", "P27"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "From the Pocket",
+      "shotIds": ["P33", "P36", "P37", "P39"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "High Spin",
+      "shotIds": ["P45", "P46", "P48", "P49", "P50", "P51", "P53", "P54"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Cheating the Pocket",
+      "shotIds": ["P65"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Rail-First",
+      "shotIds": ["P89", "P90", "P92", "P93", "P100"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Sidespin from the Rail",
+      "shotIds": ["P103", "P106"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Tight in the Side",
+      "shotIds": ["P112", "P115", "P116", "P117", "P118"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Sliding Banks",
+      "shotIds": ["P120", "P121", "P123", "P128"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Rolling Banks",
+      "shotIds": ["P132", "P133", "P134"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Combinations",
+      "shotIds": ["P141", "P143"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Caroms",
+      "shotIds": ["P156"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Follow-On",
+      "shotIds": ["P161", "P162", "P164", "P166", "P167", "P168"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Elevated Cue",
+      "shotIds": ["P170", "P171", "P174", "P175", "P178", "P179", "P181"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Over a Ball",
+      "shotIds": ["P182", "P183", "P185", "P188"]
+    },
+    {
+      "difficulty": "Elite",
+      "seriesName": "Finesse",
+      "shotIds": ["P191", "P192", "P195", "P200"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Thin Cuts",
+      "shotIds": ["P2", "P4", "P5", "P15"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "From the Pocket",
+      "shotIds": ["P40"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Rail-First",
+      "shotIds": ["P94", "P95", "P96", "P97", "P98", "P99"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Sidespin from the Rail",
+      "shotIds": ["P107"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Sliding Banks",
+      "shotIds": ["P124", "P126", "P127", "P129", "P130"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Rolling Banks",
+      "shotIds": ["P135", "P136", "P137"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Combinations",
+      "shotIds": ["P142", "P144", "P145", "P146", "P147"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Caroms",
+      "shotIds": ["P157", "P158", "P159", "P160"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Follow-On",
+      "shotIds": ["P163", "P165"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Elevated Cue",
+      "shotIds": ["P172", "P173", "P176", "P180"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Over a Ball",
+      "shotIds": ["P184", "P186", "P187", "P189"]
+    },
+    {
+      "difficulty": "Extreme",
+      "seriesName": "Finesse",
+      "shotIds": ["P193", "P198"]
+    }
+  ]
+}
