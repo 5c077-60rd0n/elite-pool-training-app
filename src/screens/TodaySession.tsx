@@ -10,7 +10,6 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { useGamificationStore } from '../store/useGamificationStore';
-import { calculateRate } from '../utils/trackerCalculations';
 import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
@@ -84,11 +83,6 @@ export default function TodaySession() {
   const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
   const [wpbModuleName, setWpbModuleName] = useState('');
-  const [ghostGamesWon, setGhostGamesWon] = useState(0);
-  const [ghostGamesPlayed, setGhostGamesPlayed] = useState(10);
-  const [lineUpShotCount, setLineUpShotCount] = useState(0);
-  const [safetySuccesses, setSafetySuccesses] = useState(0);
-  const [safetyAttempts, setSafetyAttempts] = useState(10);
   const [notes, setNotes] = useState('');
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
@@ -97,6 +91,7 @@ export default function TodaySession() {
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [focusTouched, setFocusTouched] = useState(false);
   const [lengthTouched, setLengthTouched] = useState(false);
+  const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
 
   const smartAutofill = useMemo(
     () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
@@ -115,9 +110,6 @@ export default function TodaySession() {
       }),
     [adaptiveDailyPlan, competitionLog, logs],
   );
-
-  const ghostDrillWinRatePct = Math.round(calculateRate(ghostGamesWon, ghostGamesPlayed));
-  const safetyExchangeSuccessPct = Math.round(calculateRate(safetySuccesses, safetyAttempts));
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -184,12 +176,9 @@ export default function TodaySession() {
   const dataConfidenceNudges = useMemo(() => {
     const nudges: string[] = [];
     if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom %');
-    if (ghostGamesWon === 0) nudges.push('Ghost wins');
-    if (lineUpShotCount === 0) nudges.push('Line-up best run');
-    if (safetySuccesses === 0) nudges.push('Safety successes');
     if (!notes.trim()) nudges.push('Session notes');
     return nudges;
-  }, [drillRoomShotmakingPct, ghostGamesWon, lineUpShotCount, notes, safetySuccesses]);
+  }, [drillRoomShotmakingPct, notes]);
 
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
@@ -203,10 +192,6 @@ export default function TodaySession() {
     setLengthMinutes(Math.max(1, adaptiveDailyPlan.recommendedMinutes));
     setDrillRoomShotmakingPct(clampPct(adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct));
     setBullseyeProximity(Math.max(0, adaptiveDailyPlan.targetMetrics.bullseyeProximity));
-    setGhostGamesPlayed(10);
-    setGhostGamesWon(Math.round((adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct / 100) * 10));
-    setSafetyAttempts(10);
-    setSafetySuccesses(Math.round((adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct / 100) * 10));
   }
 
   function applySmartAutofill(): void {
@@ -215,11 +200,6 @@ export default function TodaySession() {
     setFocusArea(smartAutofill.focusArea);
     setLengthMinutes(Math.max(1, smartAutofill.lengthMinutes));
     setDrillRoomShotmakingPct(clampPct(smartAutofill.drillRoomShotmakingPct));
-    setGhostGamesPlayed(10);
-    setGhostGamesWon(Math.round((smartAutofill.ghostDrillWinRatePct / 100) * 10));
-    setSafetyAttempts(10);
-    setSafetySuccesses(Math.round((smartAutofill.safetyExchangeSuccessPct / 100) * 10));
-    setLineUpShotCount(Math.max(0, smartAutofill.lineUpShotCount));
     setBullseyeProximity(Math.max(0, smartAutofill.bullseyeProximity));
   }
 
@@ -327,11 +307,6 @@ export default function TodaySession() {
     setBullseyeCategory(lastLoggedSession.bullseyeCategory);
     setWpbLesson(lastLoggedSession.wpbLesson);
     setWpbModuleName(lastLoggedSession.wpbModuleName);
-    setGhostGamesPlayed(10);
-    setGhostGamesWon(Math.round((lastLoggedSession.ghostDrillWinRatePct / 100) * 10));
-    setLineUpShotCount(Math.max(0, lastLoggedSession.lineUpShotCount));
-    setSafetyAttempts(10);
-    setSafetySuccesses(Math.round((lastLoggedSession.safetyExchangeSuccessPct / 100) * 10));
     setNotes(lastLoggedSession.notes);
     setCoachTagsInput((lastLoggedSession.coachTags ?? []).join(', '));
     setVideoClipRefsInput((lastLoggedSession.videoClipRefs ?? []).join(', '));
@@ -350,6 +325,27 @@ export default function TodaySession() {
     }
 
     let effectiveLengthMinutes = Math.max(0, lengthMinutes);
+    const derivedGhostDrillWinRatePct = Math.round(
+      adaptiveDailyPlan?.targetMetrics.ghostDrillWinRatePct
+      ?? smartAutofill.ghostDrillWinRatePct
+      ?? lastLoggedSession?.ghostDrillWinRatePct
+      ?? 50,
+    );
+    const derivedLineUpShotCount = Math.max(
+      0,
+      Math.round(
+        adaptiveDailyPlan?.targetMetrics.lineUpShotCount
+        ?? smartAutofill.lineUpShotCount
+        ?? lastLoggedSession?.lineUpShotCount
+        ?? 20,
+      ),
+    );
+    const derivedSafetyExchangeSuccessPct = Math.round(
+      adaptiveDailyPlan?.targetMetrics.safetyExchangeSuccessPct
+      ?? smartAutofill.safetyExchangeSuccessPct
+      ?? lastLoggedSession?.safetyExchangeSuccessPct
+      ?? 55,
+    );
 
     if (timerRunning && liveElapsedSeconds > 0) {
       const suggestedMinutes = Math.max(1, Math.round(liveElapsedSeconds / 60));
@@ -376,9 +372,9 @@ export default function TodaySession() {
       bullseyeCategory,
       wpbLesson,
       wpbModuleName,
-      ghostDrillWinRatePct,
-      lineUpShotCount: Math.max(0, lineUpShotCount),
-      safetyExchangeSuccessPct,
+      ghostDrillWinRatePct: derivedGhostDrillWinRatePct,
+      lineUpShotCount: derivedLineUpShotCount,
+      safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
       notes,
       coachTags: coachTagsInput
         .split(',')
@@ -485,6 +481,31 @@ export default function TodaySession() {
         <p className="mt-2 text-xs text-chalk-300">Key Drills: {template.keyDrills.join(' · ')}</p>
       </Card>
 
+      <Card className="mb-4" title="Focus Mode (ADHD-Friendly)">
+        <p className="text-xs text-chalk-300">Default keeps only high-impact actions visible. Open advanced panels only when needed.</p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button type="button" variant={showAdvancedPanels ? 'secondary' : 'primary'} onClick={() => setShowAdvancedPanels(false)}>
+            Minimal (Recommended)
+          </Button>
+          <Button type="button" variant={showAdvancedPanels ? 'primary' : 'secondary'} onClick={() => setShowAdvancedPanels(true)}>
+            Show Advanced Panels
+          </Button>
+        </div>
+      </Card>
+
+      <Card className="mb-4" title="Daily Focus Path">
+        <p className="text-sm text-ivory-100">One path only: run your 3-app block, then log and close.</p>
+        <div className="mt-2 space-y-1 text-xs text-chalk-300">
+          <p>- Step 1: Apply full 3-app day</p>
+          <p>- Step 2: Run timer during practice</p>
+          <p>- Step 3: Save session log with notes</p>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button type="button" onClick={applyFullTriadFlow}>Apply Full 3-App Day</Button>
+          <Button type="button" variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0}>End Timer & Apply Minutes</Button>
+        </div>
+      </Card>
+
       <Card className="mb-4" title="Session Timer">
         <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
         <p className="mt-1 text-xs text-chalk-300">Use Start/Pause during practice. End & Apply auto-fills session length (you can still edit manually).</p>
@@ -503,7 +524,7 @@ export default function TodaySession() {
         </div>
       </Card>
 
-      {adaptiveDailyPlan ? (
+      {showAdvancedPanels && adaptiveDailyPlan ? (
         <Card className="mb-4" title="Adaptive Daily Plan">
           {adaptiveDailyPlan.eliteOverride?.lockedForDate === today && !alreadyLogged ? (
             <p className="mb-2 text-xs text-cue-300">Elite override active for today. Promoted priorities are locked until you save today's session.</p>
@@ -537,6 +558,7 @@ export default function TodaySession() {
         </Card>
       ) : null}
 
+      {showAdvancedPanels ? (
       <Card className="mb-4" title="Smart Session Autofill">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-ivory-100">Fatigue: {smartAutofill.fatigueLevel.toUpperCase()}</span>
@@ -550,6 +572,7 @@ export default function TodaySession() {
           Apply Smart Autofill
         </Button>
       </Card>
+      ) : null}
 
       <Card className="mb-4" title="Daily 3-App Pro Flow">
         <p className="text-sm text-ivory-100">Mandatory daily cycle using DrillRoom, Bullseye, and WPB.</p>
@@ -571,6 +594,7 @@ export default function TodaySession() {
         </Button>
       </Card>
 
+      {showAdvancedPanels ? (
       <Card className="mb-4" title="Auto Prescribe Today (ROI Engine)">
         <p className="text-sm text-ivory-100">Weakest KPI bucket: {roiPlanner.focusBucket}</p>
         <p className="mt-1 text-xs text-chalk-300">Three-drill prescription to remove guesswork and force transfer.</p>
@@ -590,7 +614,9 @@ export default function TodaySession() {
           Apply ROI Prescription
         </Button>
       </Card>
+      ) : null}
 
+      {showAdvancedPanels ? (
       <Card className="mb-4" title="Performance Command Center">
         <p className="text-sm text-ivory-100">Weakest two categories: {roiPlanner.weeklyAutoFocus.weakestTwo.join(' · ')}</p>
         <p className="mt-1 text-xs text-chalk-300">Tournament phase: {roiPlanner.tournamentMode.phaseLabel}</p>
@@ -625,6 +651,7 @@ export default function TodaySession() {
           <Button type="button" variant="secondary" onClick={injectCoachBriefToNotes}>Add Coach Brief To Notes</Button>
         </div>
       </Card>
+      ) : null}
 
       {recoveryRecommendationPlan ? (
         <Card className="mb-4" title="Recovery Plan (3-Day)">
@@ -648,22 +675,15 @@ export default function TodaySession() {
       ) : null}
 
       <Card className="mb-4" title="Session Log">
-        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
-            Use Adaptive Targets
-          </Button>
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button type="button" variant="secondary" onClick={applyLastSession} disabled={!lastLoggedSession}>
             Copy Last Session
           </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => {
-              setGhostGamesPlayed(10);
-              setSafetyAttempts(10);
-            }}
-          >
-            Set Attempts to 10
+        </div>
+
+        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
+            Use Adaptive Targets
           </Button>
         </div>
 
@@ -713,51 +733,9 @@ export default function TodaySession() {
           </datalist>
         </label>
 
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Ghost Games Won"
-            value={ghostGamesWon}
-            min={0}
-            step={1}
-            onChange={(next) => setGhostGamesWon(Math.max(0, next))}
-          />
-          <NumberStepperField
-            label="Ghost Games Played"
-            value={ghostGamesPlayed}
-            min={1}
-            step={1}
-            onChange={(next) => setGhostGamesPlayed(Math.max(1, next))}
-          />
-        </div>
-        <p className="mt-2 text-sm text-ivory-100">Ghost Drill Win Rate %: {ghostDrillWinRatePct}</p>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Safety Successes"
-            value={safetySuccesses}
-            min={0}
-            step={1}
-            onChange={(next) => setSafetySuccesses(Math.max(0, next))}
-          />
-          <NumberStepperField
-            label="Safety Attempts"
-            value={safetyAttempts}
-            min={1}
-            step={1}
-            onChange={(next) => setSafetyAttempts(Math.max(1, next))}
-          />
-        </div>
-        <p className="mt-2 text-sm text-ivory-100">Safety Exchange Success %: {safetyExchangeSuccessPct}</p>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Line-Up Best Run"
-            value={lineUpShotCount}
-            min={0}
-            step={1}
-            onChange={(next) => setLineUpShotCount(Math.max(0, next))}
-          />
-        </div>
+        <p className="mt-3 text-xs text-chalk-300">
+          Ghost, safety, and line-up values are auto-derived from your daily flow targets and drill prescriptions.
+        </p>
 
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <NumberStepperField
