@@ -249,6 +249,40 @@ export default function TodaySession() {
     });
   }
 
+  function applyFullTriadFlow(): void {
+    setFocusTouched(true);
+    setLengthTouched(true);
+    setFocusArea(`3-App Daily Flow: ${roiPlanner.focusBucket}`);
+    setLengthMinutes(Math.max(1, roiPlanner.dailyTriadFlow.totalMinutes));
+
+    const drillRoomBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'DrillRoom');
+    if (drillRoomBlock) {
+      const parts = drillRoomBlock.label.split('>').map((item) => item.trim());
+      setDrillRoomDrillName(parts[parts.length - 1] ?? drillRoomBlock.label);
+    }
+
+    const bullseyeBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'Bullseye');
+    if (bullseyeBlock) {
+      const parts = bullseyeBlock.label.split('>').map((item) => item.trim());
+      const suggestedCategory = parts[0] as BullseyeCategory;
+      if (bullseyeCategoryOptions.includes(suggestedCategory)) {
+        setBullseyeCategory(suggestedCategory);
+      }
+      setBullseyeProximity((prev) => (prev > 0 ? prev : Math.max(0, adaptiveDailyPlan?.targetMetrics.bullseyeProximity ?? 3)));
+    }
+
+    const wpbBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'WPB');
+    if (wpbBlock) {
+      setWpbLesson('Yes');
+      setWpbModuleName(wpbBlock.label);
+    }
+
+    setNotes((prev) => {
+      const prefix = prev ? `${prev}\n` : '';
+      return `${prefix}3-App Flow: ${roiPlanner.dailyTriadFlow.executionOrder.join(' | ')}`;
+    });
+  }
+
   function applyRoadMode(minutes: number): void {
     setLengthTouched(true);
     setLengthMinutes(minutes);
@@ -517,6 +551,26 @@ export default function TodaySession() {
         </Button>
       </Card>
 
+      <Card className="mb-4" title="Daily 3-App Pro Flow">
+        <p className="text-sm text-ivory-100">Mandatory daily cycle using DrillRoom, Bullseye, and WPB.</p>
+        <p className="mt-1 text-xs text-chalk-300">Expected outcome: {roiPlanner.dailyTriadFlow.expectedOutcome}</p>
+        <div className="mt-2 space-y-1 text-xs text-ivory-200">
+          {roiPlanner.dailyTriadFlow.blocks.map((block) => (
+            <p key={block.app}>
+              {block.app} · {block.minutes}m · {block.label} ({block.objective})
+            </p>
+          ))}
+        </div>
+        <div className="mt-2 space-y-1 text-xs text-chalk-300">
+          {roiPlanner.dailyTriadFlow.executionOrder.map((item) => (
+            <p key={item}>- {item}</p>
+          ))}
+        </div>
+        <Button className="mt-3 w-full" type="button" onClick={applyFullTriadFlow}>
+          Apply Full 3-App Day
+        </Button>
+      </Card>
+
       <Card className="mb-4" title="Auto Prescribe Today (ROI Engine)">
         <p className="text-sm text-ivory-100">Weakest KPI bucket: {roiPlanner.focusBucket}</p>
         <p className="mt-1 text-xs text-chalk-300">Three-drill prescription to remove guesswork and force transfer.</p>
@@ -537,69 +591,39 @@ export default function TodaySession() {
         </Button>
       </Card>
 
-      <Card className="mb-4" title="Road Mode Templates">
-        <p className="text-xs text-chalk-300">Choose a time-boxed template when travel constraints are tight.</p>
+      <Card className="mb-4" title="Performance Command Center">
+        <p className="text-sm text-ivory-100">Weakest two categories: {roiPlanner.weeklyAutoFocus.weakestTwo.join(' · ')}</p>
+        <p className="mt-1 text-xs text-chalk-300">Tournament phase: {roiPlanner.tournamentMode.phaseLabel}</p>
+        {roiPlanner.tournamentMode.active ? (
+          <p className="mt-1 text-xs text-cue-300">{roiPlanner.tournamentMode.eventName} in {roiPlanner.tournamentMode.daysOut} days.</p>
+        ) : null}
+        <p className="mt-1 text-xs text-ivory-200">{roiPlanner.tournamentMode.emphasis}</p>
+
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           {roiPlanner.travelTemplates.map((templateOption) => (
-            <Button
-              key={templateOption.id}
-              type="button"
-              variant="secondary"
-              onClick={() => applyRoadMode(templateOption.minutes)}
-            >
+            <Button key={templateOption.id} type="button" variant="secondary" onClick={() => applyRoadMode(templateOption.minutes)}>
               {templateOption.label} ({templateOption.minutes}m)
             </Button>
           ))}
         </div>
-        <div className="mt-2 space-y-1 text-xs text-ivory-200">
-          {roiPlanner.travelTemplates.map((templateOption) => (
-            <p key={`${templateOption.id}-emphasis`}>
-              {templateOption.label}: {templateOption.emphasis}
-            </p>
-          ))}
-        </div>
-      </Card>
 
-      <Card className="mb-4" title="Weekly Auto-Focus">
-        <p className="text-sm text-ivory-100">Weakest two categories: {roiPlanner.weeklyAutoFocus.weakestTwo.join(' · ')}</p>
-        <div className="mt-2 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.weeklyAutoFocus.nextWeekRotation.map((item) => (
-            <p key={item}>- {item}</p>
-          ))}
-        </div>
-        <Button className="mt-3 w-full" type="button" variant="secondary" onClick={applyWeeklyAutoFocus}>
-          Apply Next-Week Focus
-        </Button>
-      </Card>
-
-      <Card className="mb-4" title="Tournament Countdown Mode">
-        <p className="text-sm text-ivory-100">{roiPlanner.tournamentMode.phaseLabel}</p>
-        {roiPlanner.tournamentMode.active ? (
-          <p className="mt-1 text-xs text-chalk-300">
-            {roiPlanner.tournamentMode.eventName} in {roiPlanner.tournamentMode.daysOut} days.
-          </p>
-        ) : null}
-        <p className="mt-2 text-xs text-ivory-200">{roiPlanner.tournamentMode.emphasis}</p>
-      </Card>
-
-      <Card className="mb-4" title="Conversion Metrics (Not Volume)">
-        <div className="grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
+        <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
           <p>Prescription Adherence: {roiPlanner.conversion.prescriptionAdherencePct}%</p>
           <p>Target Hit Rate: {roiPlanner.conversion.targetHitRatePct}%</p>
           <p>Improvement Rate: {roiPlanner.conversion.improvementRatePct}%</p>
           <p>Match Transfer Score: {roiPlanner.conversion.matchTransferScore}/100</p>
         </div>
-      </Card>
 
-      <Card className="mb-4" title="Weekly Coach Brief">
-        <div className="space-y-1 text-xs text-chalk-300">
+        <div className="mt-3 space-y-1 text-xs text-chalk-300">
           {roiPlanner.coachBrief.map((item) => (
             <p key={item}>- {item}</p>
           ))}
         </div>
-        <Button className="mt-3 w-full" type="button" variant="secondary" onClick={injectCoachBriefToNotes}>
-          Add Coach Brief To Notes
-        </Button>
+
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button type="button" variant="secondary" onClick={applyWeeklyAutoFocus}>Apply Next-Week Focus</Button>
+          <Button type="button" variant="secondary" onClick={injectCoachBriefToNotes}>Add Coach Brief To Notes</Button>
+        </div>
       </Card>
 
       {recoveryRecommendationPlan ? (

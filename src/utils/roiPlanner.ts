@@ -43,6 +43,17 @@ export interface RoiTournamentMode {
 export interface RoiPlannerSnapshot {
   focusBucket: string;
   recommendedMinutes: number;
+  dailyTriadFlow: {
+    totalMinutes: number;
+    blocks: Array<{
+      app: 'DrillRoom' | 'Bullseye' | 'WPB';
+      minutes: number;
+      label: string;
+      objective: string;
+    }>;
+    executionOrder: string[];
+    expectedOutcome: string;
+  };
   prescription: RoiPrescriptionDrill[];
   checklist: string[];
   travelTemplates: RoiTravelTemplate[];
@@ -137,6 +148,14 @@ function selectTournamentDrill(daysOut: number | undefined, wpb: DrillOption[], 
     ?? drillroom.find((option) => option.category.toLowerCase().includes('positional'))
     ?? { app: 'WPB', category: 'Position Play & Runouts / Progressive Rotation Runs', name: 'Progressive Rotation Runouts' }
   );
+}
+
+function allocateTriadMinutes(total: number): { drillroom: number; bullseye: number; wpb: number } {
+  const clamped = clamp(total, 30, 120);
+  const drillroom = Math.max(12, Math.round(clamped * 0.45));
+  const bullseye = Math.max(10, Math.round(clamped * 0.3));
+  const wpb = Math.max(8, clamped - drillroom - bullseye);
+  return { drillroom, bullseye, wpb };
 }
 
 function getUpcomingEvent(competitionLog: CompetitionLogEntry[], nowMs: number): { name: string; daysOut: number } | undefined {
@@ -256,7 +275,13 @@ function computeConversionMetrics(logs: DailySessionLog[], competitionLog: Compe
     };
   }
 
-  const adherence = recent.filter((item) => Boolean(item.drillRoomDrillName) || Boolean(item.wpbModuleName)).length / recent.length;
+  const adherence = recent.filter(
+    (item) =>
+      Boolean(item.drillRoomDrillName)
+      && item.wpbLesson === 'Yes'
+      && Boolean(item.wpbModuleName)
+      && item.bullseyeProximity > 0,
+  ).length / recent.length;
   const targetHits = recent.filter((item) => item.drillRoomShotmakingPct >= 75 || item.ghostDrillWinRatePct >= 55 || item.safetyExchangeSuccessPct >= 60).length / recent.length;
 
   const split = Math.max(1, Math.floor(recent.length / 2));
@@ -306,6 +331,16 @@ export function buildRoiPlannerSnapshot(args: {
   const tournament = selectTournamentDrill(upcoming?.daysOut, wpb, drillroom);
 
   const recommendedMinutes = clamp(args.adaptiveDailyPlan?.recommendedMinutes ?? 75, 30, 95);
+  const triadMinutes = allocateTriadMinutes(recommendedMinutes);
+  const bullseyeCategory = args.bullseyeCategories.find((item) => item !== 'Mixed') ?? 'Follow';
+  const drillroomAnchor = weakness.app === 'DrillRoom'
+    ? weakness
+    : (drillroom.find((option) => option.category.toLowerCase().includes('shotmaking'))
+      ?? { app: 'DrillRoom', category: 'Shotmaking', name: 'Straight Shot Level II' });
+  const wpbAnchor = weakness.app === 'WPB'
+    ? weakness
+    : (wpb.find((option) => option.category.toLowerCase().includes('aiming') || option.category.toLowerCase().includes('position'))
+      ?? { app: 'WPB', category: 'Aiming & Shot Making / Aim Training', name: 'Aim Training - Level II' });
   const weeklyWeakest = computeWeakestTwo(args.logs, args.adaptiveDailyPlan);
   const weeklyRotation = [
     `${weeklyWeakest[0]} precision day`,
@@ -322,6 +357,36 @@ export function buildRoiPlannerSnapshot(args: {
   return {
     focusBucket,
     recommendedMinutes,
+    dailyTriadFlow: {
+      totalMinutes: recommendedMinutes,
+      blocks: [
+        {
+          app: 'DrillRoom',
+          minutes: triadMinutes.drillroom,
+          label: `${drillroomAnchor.category} > ${drillroomAnchor.name}`,
+          objective: 'Technical consistency and table-speed calibration.',
+        },
+        {
+          app: 'Bullseye',
+          minutes: triadMinutes.bullseye,
+          label: `${bullseyeCategory} > ${bullseyeCategory} Hard Set`,
+          objective: 'Cue-ball precision and pattern landing-zone control.',
+        },
+        {
+          app: 'WPB',
+          minutes: triadMinutes.wpb,
+          label: `${wpbAnchor.category} > ${wpbAnchor.name}`,
+          objective: 'Decision transfer and competitive pattern clarity.',
+        },
+      ],
+      executionOrder: [
+        'Block 1: DrillRoom anchor work',
+        'Block 2: Bullseye precision block',
+        'Block 3: WPB transfer block',
+        '2-minute closeout: log key lesson and next cue.',
+      ],
+      expectedOutcome: 'One complete technical + precision + transfer cycle each day, with no app left unused.',
+    },
     prescription: [
       {
         slot: 'weakness',
