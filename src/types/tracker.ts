@@ -20,6 +20,14 @@ export type MatchResult = 'Win' | 'Loss';
 
 export type YesNo = 'Yes' | 'No';
 
+export type WpbRatingTier =
+  | 'Beginner'
+  | 'Novice'
+  | 'Intermediate'
+  | 'Advanced'
+  | 'Shortstop'
+  | 'Pro';
+
 export interface DailySessionLog {
   id: string;
   date: string;
@@ -33,6 +41,8 @@ export interface DailySessionLog {
   drillRoomDrillName?: string;
   wpbLesson: YesNo;
   wpbModuleName: string;
+  wpbTierAchieved?: WpbRatingTier;
+  wpbKeyTakeaway?: string;
   ghostDrillWinRatePct: number;
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;

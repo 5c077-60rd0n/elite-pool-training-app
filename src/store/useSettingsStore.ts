@@ -26,6 +26,7 @@ const defaultProfile: UserProfile = {
   preferredBreakGame: '9-ball',
   tableSize: '9ft',
   dominantHand: 'right',
+  adhdModeEnabled: false,
   onboardingComplete: false,
 };
 

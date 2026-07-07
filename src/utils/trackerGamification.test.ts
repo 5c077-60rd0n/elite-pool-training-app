@@ -15,6 +15,7 @@ function session(id: string, date: string, focusArea: string, qualitySeed = 0): 
     bullseyeCategory: 'Mixed',
     wpbLesson: 'Yes',
     wpbModuleName: 'Module',
+    wpbTierAchieved: 'Intermediate',
     ghostDrillWinRatePct: 60 + qualitySeed,
     lineUpShotCount: 16,
     safetyExchangeSuccessPct: 68,
@@ -58,5 +59,18 @@ describe('getTrackerGamificationSnapshot seasonal data', () => {
 
     expect(qualityCadence?.completed).toBe(true);
     expect(variety?.progress).toBeGreaterThanOrEqual(4);
+  });
+
+  it('awards more progression for higher WPB tier achievements', () => {
+    const beginnerLog = session('a', '2026-07-01', 'Pattern Play', 3);
+    beginnerLog.wpbTierAchieved = 'Beginner';
+
+    const proLog = session('b', '2026-07-02', 'Pattern Play', 3);
+    proLog.wpbTierAchieved = 'Pro';
+
+    const beginnerSnapshot = getTrackerGamificationSnapshot([beginnerLog], new Date('2026-07-03T00:00:00.000Z'));
+    const proSnapshot = getTrackerGamificationSnapshot([proLog], new Date('2026-07-03T00:00:00.000Z'));
+
+    expect((proSnapshot.latestSession?.xpEarned ?? 0)).toBeGreaterThan(beginnerSnapshot.latestSession?.xpEarned ?? 0);
   });
 });

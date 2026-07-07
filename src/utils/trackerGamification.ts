@@ -1,5 +1,6 @@
 import type { DailySessionLog, SeasonChallengeProgress, SeasonMeta } from '../types/tracker';
 import { getTrainingStreak } from './streak';
+import { getWpbLessonTierPoints } from './wpbTier';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -51,6 +52,22 @@ function levelFromXp(totalXp: number): { level: number; floorXp: number; nextXp:
 function toEpochDay(value: string): number {
   const parsed = Date.parse(`${value}T00:00:00Z`);
   return Number.isNaN(parsed) ? 0 : Math.floor(parsed / DAY_MS);
+}
+
+function countRecentComebackBonuses(historicalLogs: DailySessionLog[], currentLogDate: string): number {
+  const currentDay = toEpochDay(currentLogDate);
+  const cutoffDay = currentDay - 14;
+  const sorted = [...historicalLogs].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
+  let bonuses = 0;
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    const previousDay = toEpochDay(sorted[i - 1].date);
+    const thisDay = toEpochDay(sorted[i].date);
+    if (thisDay < cutoffDay) continue;
+    if (thisDay - previousDay >= 2) bonuses += 1;
+  }
+
+  return bonuses;
 }
 
 function weekStartIso(now: Date): string {
@@ -171,16 +188,20 @@ export function evaluateTrackerSessionReward(
   const safety = clamp(log.safetyExchangeSuccessPct, 0, 100);
   const bullseye = clamp((5 - log.bullseyeProximity) * 20, 0, 100);
   const lineup = clamp((log.lineUpShotCount / 30) * 100, 0, 100);
+  const wpbTierPoints = getWpbLessonTierPoints(log);
+  const wpbTierSignal = clamp((wpbTierPoints / 6) * 100, 0, 100);
 
   const qualityScore = Math.round(
-    drillRoom * 0.3 +
-      ghost * 0.25 +
-      safety * 0.2 +
-      bullseye * 0.15 +
-      lineup * 0.1,
+    drillRoom * 0.28 +
+      ghost * 0.24 +
+      safety * 0.18 +
+      bullseye * 0.14 +
+      lineup * 0.1 +
+      wpbTierSignal * 0.06,
   );
 
-  let xpEarned = Math.round(40 + qualityScore * 1.8 + (log.wpbLesson === 'Yes' ? 18 : 0));
+  const wpbXpBonus = wpbTierPoints > 0 ? 10 + wpbTierPoints * 3 : 0;
+  let xpEarned = Math.round(40 + qualityScore * 1.8 + wpbXpBonus);
   const bonusTags: string[] = [];
 
   if (qualityScore >= 85) {
@@ -201,6 +222,21 @@ export function evaluateTrackerSessionReward(
     bonusTags.push('Variety reminder');
   }
 
+  const priorLog = [...historicalLogs].sort((a, b) => Date.parse(a.date) - Date.parse(b.date)).at(-1);
+  const gapDays = priorLog ? toEpochDay(log.date) - toEpochDay(priorLog.date) : 0;
+  const recentComebackBonuses = countRecentComebackBonuses(historicalLogs, log.date);
+  if (gapDays >= 2 && recentComebackBonuses < 2) {
+    const comebackBonus = Math.min(35, Math.round(xpEarned * 0.12));
+    xpEarned += comebackBonus;
+    bonusTags.push('Comeback bonus');
+  }
+
+  const completedThisWeekBefore = historicalLogs.filter((item) => item.weekNumber === log.weekNumber).length;
+  if (completedThisWeekBefore >= 3) {
+    xpEarned = Math.round(xpEarned * 1.08);
+    bonusTags.push('Consistency multiplier');
+  }
+
   return {
     qualityScore: clamp(qualityScore, 0, 100),
     xpEarned: Math.max(0, xpEarned),
@@ -213,7 +249,7 @@ function computeWeeklyQuests(
   rewards: Map<string, TrackerSessionReward>,
 ): TrackerQuestProgress[] {
   const qualitySessions = thisWeekLogs.filter((log) => (rewards.get(log.id)?.qualityScore ?? 0) >= 70).length;
-  const wpbLessons = thisWeekLogs.filter((log) => log.wpbLesson === 'Yes').length;
+  const wpbTierPoints = thisWeekLogs.reduce((sum, log) => sum + getWpbLessonTierPoints(log), 0);
 
   return [
     {
@@ -232,10 +268,10 @@ function computeWeeklyQuests(
     },
     {
       id: 'weekly-wpb-2',
-      name: 'WPB Builder',
-      progress: wpbLessons,
-      target: 2,
-      completed: wpbLessons >= 2,
+      name: 'WPB Skill Ladder',
+      progress: wpbTierPoints,
+      target: 6,
+      completed: wpbTierPoints >= 6,
     },
   ];
 }

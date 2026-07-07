@@ -38,6 +38,7 @@ export interface UserProfile {
   preferredBreakGame: '9-ball' | '10-ball' | '8-ball';
   tableSize: '7ft' | '8ft' | '9ft';
   dominantHand: 'right' | 'left';
+  adhdModeEnabled?: boolean;
   onboardingComplete: boolean;
 }
 

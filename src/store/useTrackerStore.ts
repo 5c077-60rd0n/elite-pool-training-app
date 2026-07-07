@@ -76,6 +76,8 @@ function mergeSessionLogs(existing: DailySessionLog, incoming: DailySessionLog):
   mergeField('drillRoomDrillName');
   mergeField('wpbLesson');
   mergeField('wpbModuleName');
+  mergeField('wpbTierAchieved');
+  mergeField('wpbKeyTakeaway');
   mergeField('ghostDrillWinRatePct');
   mergeField('lineUpShotCount');
   mergeField('safetyExchangeSuccessPct');

@@ -39,6 +39,15 @@ export function getNotificationInsights(
     });
   }
 
+  if (daysIdle >= 3) {
+    insights.push({
+      id: 'restart-small',
+      title: 'Restart Small',
+      message: 'Run a 15-minute recovery session today to rebuild momentum with low pressure.',
+      severity: 'medium',
+    });
+  }
+
   const nearQuest = gamification.weeklyQuests.find(
     (quest) => !quest.completed && quest.target - quest.progress <= 1,
   );

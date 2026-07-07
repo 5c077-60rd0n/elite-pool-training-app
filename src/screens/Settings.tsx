@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useSettingsStore } from '../store/useSettingsStore';
@@ -14,6 +14,7 @@ import { eliteLabSeed } from '../data/eliteLab';
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import { buildCoachReviewExport } from '../utils/coachExport';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
+import type { TelemetryEventPayload } from '../utils/telemetry';
 
 type BackupPayload = {
   version?: string;
@@ -24,6 +25,8 @@ type BackupPayload = {
     enabled?: boolean;
     reminderTime?: string;
     lastSmartAlertAt?: ReturnType<typeof useNotificationStore.getState>['lastSmartAlertAt'];
+    smartAlertHistory?: ReturnType<typeof useNotificationStore.getState>['smartAlertHistory'];
+    smartAlertsPausedUntil?: ReturnType<typeof useNotificationStore.getState>['smartAlertsPausedUntil'];
   };
   gamification?: { soundEnabled?: boolean; hapticsEnabled?: boolean };
   tracker?: {
@@ -93,6 +96,20 @@ export default function Settings() {
   const setHapticsEnabled = useGamificationStore((s) => s.setHapticsEnabled);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState('');
+  const [devTelemetryEvents, setDevTelemetryEvents] = useState<TelemetryEventPayload[]>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !import.meta.env.DEV) return;
+
+    const onTelemetry = (event: Event) => {
+      const customEvent = event as CustomEvent<TelemetryEventPayload>;
+      if (!customEvent.detail?.event) return;
+      setDevTelemetryEvents((prev) => [customEvent.detail, ...prev].slice(0, 20));
+    };
+
+    window.addEventListener('elite-telemetry', onTelemetry);
+    return () => window.removeEventListener('elite-telemetry', onTelemetry);
+  }, []);
 
   const trackerSummary = useMemo(
     () => ({
@@ -122,6 +139,8 @@ export default function Settings() {
         enabled: useNotificationStore.getState().enabled,
         reminderTime: useNotificationStore.getState().reminderTime,
         lastSmartAlertAt: useNotificationStore.getState().lastSmartAlertAt,
+        smartAlertHistory: useNotificationStore.getState().smartAlertHistory,
+        smartAlertsPausedUntil: useNotificationStore.getState().smartAlertsPausedUntil,
       },
       gamification: {
         soundEnabled: useGamificationStore.getState().soundEnabled,
@@ -209,6 +228,8 @@ export default function Settings() {
           enabled: parsed.notifications?.enabled ?? state.enabled,
           reminderTime: parsed.notifications?.reminderTime ?? state.reminderTime,
           lastSmartAlertAt: parsed.notifications?.lastSmartAlertAt ?? state.lastSmartAlertAt,
+          smartAlertHistory: parsed.notifications?.smartAlertHistory ?? state.smartAlertHistory,
+          smartAlertsPausedUntil: parsed.notifications?.smartAlertsPausedUntil ?? state.smartAlertsPausedUntil,
         }));
       }
       if (parsed.gamification) {
@@ -283,6 +304,20 @@ export default function Settings() {
     setStatus('Sync attempted. Pending logs clear automatically when online.');
   }
 
+  async function copyTelemetryEvent(item: TelemetryEventPayload): Promise<void> {
+    const payload = JSON.stringify(item, null, 2);
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        setStatus(`Telemetry event copied: ${item.event}`);
+        return;
+      }
+    } catch {
+      // Fall back to prompt copy.
+    }
+    window.prompt('Copy telemetry JSON', payload);
+  }
+
   function exportCoachReview(): void {
     const payload = buildCoachReviewExport({
       athlete: {
@@ -322,7 +357,14 @@ export default function Settings() {
     if (!confirmed) return;
 
     useSettingsStore.setState((state) => ({ profile: { ...state.profile, onboardingComplete: false, currentWeek: 1, currentPhase: 1 } }));
-    useNotificationStore.setState((state) => ({ ...state, enabled: false, reminderTime: '19:00', lastSmartAlertAt: {} }));
+    useNotificationStore.setState((state) => ({
+      ...state,
+      enabled: false,
+      reminderTime: '19:00',
+      lastSmartAlertAt: {},
+      smartAlertHistory: [],
+      smartAlertsPausedUntil: undefined,
+    }));
     useGamificationStore.setState((state) => ({ ...state, soundEnabled: true, hapticsEnabled: true }));
     useProgressStore.setState((state) => ({
       ...state,
@@ -526,6 +568,16 @@ export default function Settings() {
           <option value="right">Right</option>
           <option value="left">Left</option>
         </select>
+
+        <label className="mt-3 flex min-h-11 items-center gap-2 text-sm text-ivory-200">
+          <input
+            type="checkbox"
+            checked={Boolean(profile.adhdModeEnabled)}
+            onChange={(event) => setProfile({ adhdModeEnabled: event.target.checked })}
+            className="h-4 w-4"
+          />
+          ADHD focus mode (simplified daily flow and auto recovery)
+        </label>
       </Card>
 
       <Card title="Notifications & Reminders">
@@ -606,6 +658,48 @@ export default function Settings() {
         <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={(event) => void importData(event)} />
         {status ? <p className="mt-3 text-sm text-chalk-300">{status}</p> : null}
       </Card>
+
+      {import.meta.env.DEV ? (
+        <Card className="mt-4" title="Developer Telemetry Inspector">
+          <div className="mb-3 flex items-start justify-between gap-2">
+            <p className="text-xs text-chalk-300">Listening for elite-telemetry custom events (latest 20).</p>
+            <button
+              type="button"
+              onClick={() => {
+                setDevTelemetryEvents([]);
+                setStatus('Telemetry events cleared.');
+              }}
+              className="rounded border border-felt-600 px-2 py-1 text-[11px] text-chalk-300 hover:bg-felt-800"
+            >
+              Clear Events
+            </button>
+          </div>
+          {devTelemetryEvents.length ? (
+            <div className="space-y-2 rounded-lg border border-felt-600 bg-felt-800/60 p-2">
+              {devTelemetryEvents.map((item, index) => (
+                <div key={`${item.at}-${item.event}-${index}`} className="rounded border border-felt-700 bg-felt-900/40 p-2 text-xs text-ivory-100">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-cue-300">{item.event}</p>
+                    <button
+                      type="button"
+                      onClick={() => void copyTelemetryEvent(item)}
+                      className="rounded border border-felt-600 px-2 py-1 text-[11px] text-chalk-300 hover:bg-felt-800"
+                    >
+                      Copy JSON
+                    </button>
+                  </div>
+                  <p className="text-chalk-300">{new Date(item.at).toLocaleString()}</p>
+                  {item.context ? (
+                    <pre className="mt-1 overflow-x-auto whitespace-pre-wrap text-[11px] text-ivory-200">{JSON.stringify(item.context, null, 2)}</pre>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-chalk-300">No telemetry events captured yet in this session.</p>
+          )}
+        </Card>
+      ) : null}
     </PageWrapper>
   );
 }

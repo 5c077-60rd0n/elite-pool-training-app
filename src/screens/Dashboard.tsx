@@ -19,9 +19,11 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { getNotificationInsights } from '../utils/notificationIntelligence';
+import { buildPauseUntilIso, isPaused, shouldPauseSmartAlerts } from '../utils/notificationThrottle';
 import { calculateTournamentReadinessScore } from '../utils/progressIntelligence';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
+import { getWpbLessonTierPoints } from '../utils/wpbTier';
 
 export default function Dashboard() {
   const profile = useSettingsStore((s) => s.profile);
@@ -38,7 +40,11 @@ export default function Dashboard() {
   const flushSyncQueue = useTrackerStore((s) => s.flushSyncQueue);
   const notificationsEnabled = useNotificationStore((s) => s.enabled);
   const lastSmartAlertAt = useNotificationStore((s) => s.lastSmartAlertAt);
+  const smartAlertHistory = useNotificationStore((s) => s.smartAlertHistory);
+  const smartAlertsPausedUntil = useNotificationStore((s) => s.smartAlertsPausedUntil);
   const markSmartAlertTriggered = useNotificationStore((s) => s.markSmartAlertTriggered);
+  const recordSmartAlertSent = useNotificationStore((s) => s.recordSmartAlertSent);
+  const setSmartAlertsPausedUntil = useNotificationStore((s) => s.setSmartAlertsPausedUntil);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -59,6 +65,10 @@ export default function Dashboard() {
   const weeksLogged = new Set(logs.map((item) => item.weekNumber)).size;
 
   const currentWeekStats = weeklySummaries.at(-1);
+  const currentWeekWpbSkillPoints = useMemo(
+    () => logs.filter((item) => item.weekNumber === profile.currentWeek).reduce((sum, item) => sum + getWpbLessonTierPoints(item), 0),
+    [logs, profile.currentWeek],
+  );
 
   const fargoLineData = useMemo(
     () =>
@@ -154,6 +164,8 @@ export default function Dashboard() {
     const nextAlert = notificationInsights[0];
     if (!nextAlert) return;
 
+    if (isPaused(smartAlertsPausedUntil)) return;
+
     const today = new Date().toISOString().slice(0, 10);
     if (lastSmartAlertAt[nextAlert.id] === today) return;
 
@@ -164,7 +176,22 @@ export default function Dashboard() {
     notification.onclick = () => window.focus();
 
     markSmartAlertTriggered(nextAlert.id, today);
-  }, [lastSmartAlertAt, markSmartAlertTriggered, notificationInsights, notificationsEnabled]);
+    const sentAt = new Date().toISOString();
+    recordSmartAlertSent(sentAt);
+
+    if (shouldPauseSmartAlerts([...smartAlertHistory, sentAt])) {
+      setSmartAlertsPausedUntil(buildPauseUntilIso());
+    }
+  }, [
+    lastSmartAlertAt,
+    markSmartAlertTriggered,
+    notificationInsights,
+    notificationsEnabled,
+    recordSmartAlertSent,
+    setSmartAlertsPausedUntil,
+    smartAlertHistory,
+    smartAlertsPausedUntil,
+  ]);
 
   return (
     <PageWrapper title="Dashboard">
@@ -193,8 +220,8 @@ export default function Dashboard() {
           <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
           <p className="text-chalk-300">Ghost Drill Win Rate % (Best)</p>
           <p className="text-right text-ivory-100">{currentWeekStats?.ghostDrillBestWinRatePct ?? 0}</p>
-          <p className="text-chalk-300">WPB Lessons This Week</p>
-          <p className="text-right text-ivory-100">{currentWeekStats?.wpbLessonsCompleted ?? 0}</p>
+          <p className="text-chalk-300">WPB Skill Progression (points)</p>
+          <p className="text-right text-ivory-100">{currentWeekWpbSkillPoints}</p>
           <p className="text-chalk-300">Weeks Logged</p>
           <p className="text-right text-ivory-100">{weeksLogged}</p>
           <p className="text-chalk-300">Milestones Met</p>

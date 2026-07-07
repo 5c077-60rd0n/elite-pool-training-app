@@ -1,10 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { weeklyScheduleTemplate } from '../data/trackerPlan';
-import { bullseyeCategoryOptions, drillRoomDrillSuggestions, wpbModuleSuggestions } from '../data/catalogs';
+import {
+  bullseyeCategoryOptions,
+  drillRoomDrillSuggestions,
+  getWpbTierOptionsForModule,
+  wpbModuleSuggestions,
+} from '../data/catalogs';
 import { useProgramStore } from '../store/useProgramStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
@@ -14,7 +19,14 @@ import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
-import type { BullseyeCategory, DailySessionLog, YesNo } from '../types/tracker';
+import {
+  getAdhdModeRecommendedMinutes,
+  getAdhdRecommendationLimit,
+  getAdhdSessionMode,
+  type AdhdSessionMode,
+} from '../utils/adhdMode';
+import { emitTelemetryEvent } from '../utils/telemetry';
+import type { BullseyeCategory, DailySessionLog, WpbRatingTier, YesNo } from '../types/tracker';
 
 const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
 
@@ -63,6 +75,7 @@ export default function TodaySession() {
 
   const today = isoDate();
   const day = dayName();
+  const adhdModeEnabled = Boolean(profile.adhdModeEnabled);
 
   const template = useMemo(
     () => weeklyScheduleTemplate.find((item) => item.day === day) ?? weeklyScheduleTemplate[0],
@@ -83,6 +96,8 @@ export default function TodaySession() {
   const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
   const [wpbModuleName, setWpbModuleName] = useState('');
+  const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
+  const [wpbKeyTakeaway, setWpbKeyTakeaway] = useState('');
   const [notes, setNotes] = useState('');
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
@@ -92,6 +107,8 @@ export default function TodaySession() {
   const [focusTouched, setFocusTouched] = useState(false);
   const [lengthTouched, setLengthTouched] = useState(false);
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
+  const [adhdSessionModeOverride, setAdhdSessionModeOverride] = useState<AdhdSessionMode | null>(null);
+  const capEventSentRef = useRef(false);
 
   const smartAutofill = useMemo(
     () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
@@ -110,6 +127,20 @@ export default function TodaySession() {
       }),
     [adaptiveDailyPlan, competitionLog, logs],
   );
+
+  const wpbTierOptions = useMemo(
+    () => getWpbTierOptionsForModule(wpbModuleName),
+    [wpbModuleName],
+  );
+
+  const adhdSessionMode = useMemo(
+    () => getAdhdSessionMode(logs, today),
+    [logs, today],
+  );
+  const effectiveAdhdSessionMode = adhdSessionModeOverride ?? adhdSessionMode;
+
+  const recommendationLimit = getAdhdRecommendationLimit(adhdModeEnabled);
+  const showExtraLogFields = !adhdModeEnabled || showAdvancedPanels;
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -156,6 +187,20 @@ export default function TodaySession() {
     lengthTouched,
     template.focusArea,
   ]);
+
+  useEffect(() => {
+    if (!adhdModeEnabled || alreadyLogged || lengthTouched) return;
+    setLengthMinutes(getAdhdModeRecommendedMinutes(effectiveAdhdSessionMode));
+  }, [adhdModeEnabled, effectiveAdhdSessionMode, alreadyLogged, lengthTouched]);
+
+  useEffect(() => {
+    if (!adhdModeEnabled || capEventSentRef.current) return;
+    capEventSentRef.current = true;
+    emitTelemetryEvent('recommendation_cap_applied', {
+      cap: recommendationLimit,
+      mode: effectiveAdhdSessionMode,
+    });
+  }, [adhdModeEnabled, effectiveAdhdSessionMode, recommendationLimit]);
 
   useEffect(() => {
     if (timerDate === today) return;
@@ -225,6 +270,8 @@ export default function TodaySession() {
     if (wpbPick) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbPick.label);
+      const nextTiers = getWpbTierOptionsForModule(wpbPick.label);
+      setWpbTierAchieved(nextTiers[0] ?? '');
     }
 
     setNotes((prev) => {
@@ -261,6 +308,8 @@ export default function TodaySession() {
     if (wpbBlock) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbBlock.label);
+      const nextTiers = getWpbTierOptionsForModule(wpbBlock.label);
+      setWpbTierAchieved(nextTiers[0] ?? '');
     }
 
     setNotes((prev) => {
@@ -313,6 +362,8 @@ export default function TodaySession() {
     setBullseyeCategory(lastLoggedSession.bullseyeCategory);
     setWpbLesson(lastLoggedSession.wpbLesson);
     setWpbModuleName(lastLoggedSession.wpbModuleName);
+    setWpbTierAchieved(lastLoggedSession.wpbTierAchieved ?? '');
+    setWpbKeyTakeaway(lastLoggedSession.wpbKeyTakeaway ?? '');
     setNotes(lastLoggedSession.notes);
     setCoachTagsInput((lastLoggedSession.coachTags ?? []).join(', '));
     setVideoClipRefsInput((lastLoggedSession.videoClipRefs ?? []).join(', '));
@@ -378,6 +429,8 @@ export default function TodaySession() {
       bullseyeCategory,
       wpbLesson,
       wpbModuleName,
+      wpbTierAchieved: wpbLesson === 'Yes' ? (wpbTierAchieved || undefined) : undefined,
+      wpbKeyTakeaway,
       ghostDrillWinRatePct: derivedGhostDrillWinRatePct,
       lineUpShotCount: derivedLineUpShotCount,
       safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
@@ -424,6 +477,14 @@ export default function TodaySession() {
 
     const latestXp = after.latestSession?.xpEarned ?? 0;
     const latestQuality = after.latestSession?.qualityScore ?? 0;
+    const comebackBonusAwarded = Boolean(after.latestSession?.bonusTags.includes('Comeback bonus'));
+    if (comebackBonusAwarded) {
+      emitTelemetryEvent('comeback_bonus_awarded', {
+        mode: adhdModeEnabled ? effectiveAdhdSessionMode : 'standard',
+        week: currentWeek,
+        date: today,
+      });
+    }
     setSaveMessage(
       `Session logged. +${latestXp} XP · Quality ${latestQuality} · Level ${after.level}${
         leveledUp ? ' (Level Up!)' : ''
@@ -482,6 +543,32 @@ export default function TodaySession() {
 
       <Card className="mb-4" title="Today's Game Plan">
         <p className="text-sm text-chalk-300">{today} · Week {currentWeek} · {day}</p>
+        {adhdModeEnabled ? (
+          <p className="mt-1 text-xs text-cue-300">ADHD mode active · {effectiveAdhdSessionMode.toUpperCase()} session</p>
+        ) : null}
+        {adhdModeEnabled ? (
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            {(['quick', 'standard', 'recovery'] as AdhdSessionMode[]).map((mode) => {
+              const isActive = effectiveAdhdSessionMode === mode;
+              return (
+                <Button
+                  key={mode}
+                  type="button"
+                  variant={isActive ? 'primary' : 'secondary'}
+                  onClick={() => {
+                    setAdhdSessionModeOverride(mode);
+                    emitTelemetryEvent('session_mode_selected', {
+                      mode,
+                      source: 'manual_override',
+                    });
+                  }}
+                >
+                  {mode[0].toUpperCase() + mode.slice(1)}
+                </Button>
+              );
+            })}
+          </div>
+        ) : null}
         <p className="mt-1 text-lg text-ivory-100">{focusArea || template.focusArea}</p>
         <p className="mt-1 text-sm text-ivory-200">{template.sessionLengthLabel} · Start with one full DrillRoom + Bullseye + WPB cycle.</p>
         <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
@@ -502,7 +589,7 @@ export default function TodaySession() {
             ))}
           </div>
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
-            {roiPlanner.dailyTriadFlow.executionOrder.map((item) => (
+            {roiPlanner.dailyTriadFlow.executionOrder.slice(0, recommendationLimit).map((item) => (
               <p key={item}>- {item}</p>
             ))}
           </div>
@@ -546,7 +633,7 @@ export default function TodaySession() {
           </div>
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
-            {adaptiveDailyPlan.actionChecklist.map((item) => (
+            {adaptiveDailyPlan.actionChecklist.slice(0, recommendationLimit).map((item) => (
               <p key={item}>- {item}</p>
             ))}
           </div>
@@ -589,7 +676,7 @@ export default function TodaySession() {
           ))}
         </div>
         <div className="mt-3 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.checklist.map((item) => (
+          {roiPlanner.checklist.slice(0, recommendationLimit).map((item) => (
             <p key={item}>- {item}</p>
           ))}
         </div>
@@ -624,7 +711,7 @@ export default function TodaySession() {
         </div>
 
         <div className="mt-3 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.coachBrief.map((item) => (
+          {roiPlanner.coachBrief.slice(0, recommendationLimit).map((item) => (
             <p key={item}>- {item}</p>
           ))}
         </div>
@@ -647,7 +734,7 @@ export default function TodaySession() {
           <p className="mt-1 text-xs text-ivory-200">Recommended Focus Area: {recoveryRecommendationPlan.recommendedFocusArea}</p>
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
-            {recoveryRecommendationPlan.actions.map((item) => (
+            {recoveryRecommendationPlan.actions.slice(0, recommendationLimit).map((item) => (
               <p key={item}>- {item}</p>
             ))}
           </div>
@@ -701,18 +788,24 @@ export default function TodaySession() {
         </div>
         <label className="mt-3 block text-sm text-chalk-300">
           DrillRoom Drill Name
-          <input
-            value={drillRoomDrillName}
-            onChange={(event) => setDrillRoomDrillName(event.target.value)}
-            list="drillroom-drill-suggestions"
-            placeholder="Shotmaking > Straight Shot Level II"
-            className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-          />
-          <datalist id="drillroom-drill-suggestions">
-            {drillRoomDrillSuggestions.map((option) => (
-              <option key={option} value={option} />
-            ))}
-          </datalist>
+          {showExtraLogFields ? (
+            <>
+              <input
+                value={drillRoomDrillName}
+                onChange={(event) => setDrillRoomDrillName(event.target.value)}
+                list="drillroom-drill-suggestions"
+                placeholder="Shotmaking > Straight Shot Level II"
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              />
+              <datalist id="drillroom-drill-suggestions">
+                {drillRoomDrillSuggestions.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-chalk-300">Hidden in ADHD mode. Use Show Advanced Tools to edit.</p>
+          )}
         </label>
 
         <p className="mt-3 text-xs text-chalk-300">
@@ -758,7 +851,12 @@ export default function TodaySession() {
             WPB Module Name
             <input
               value={wpbModuleName}
-              onChange={(event) => setWpbModuleName(event.target.value)}
+              onChange={(event) => {
+                const nextModule = event.target.value;
+                setWpbModuleName(nextModule);
+                const nextTiers = getWpbTierOptionsForModule(nextModule);
+                setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
+              }}
               list="wpb-module-suggestions"
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
@@ -769,29 +867,63 @@ export default function TodaySession() {
             </datalist>
           </label>
         </div>
+        <label className="mt-3 block text-sm text-chalk-300">
+          WPB Tier Achieved
+          <select
+            value={wpbTierAchieved}
+            onChange={(event) => setWpbTierAchieved(event.target.value as WpbRatingTier | '')}
+            disabled={wpbLesson !== 'Yes'}
+            className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100 disabled:opacity-60"
+          >
+            <option value="">Select Tier</option>
+            {wpbTierOptions.map((tier) => (
+              <option key={tier} value={tier}>{tier}</option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-chalk-300">Tier options are based on the selected WPB drill's available range.</p>
+        </label>
+        <label className="mt-3 block text-sm text-chalk-300">
+          WPB Key Takeaway
+          {showExtraLogFields ? (
+            <input
+              value={wpbKeyTakeaway}
+              onChange={(event) => setWpbKeyTakeaway(event.target.value)}
+              placeholder="One usable idea from today's WPB work"
+              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+          ) : (
+            <p className="mt-1 text-xs text-chalk-300">Hidden in ADHD mode. Use Show Advanced Tools to edit.</p>
+          )}
+        </label>
       </Card>
 
       <Card title="Session Notes & Save">
-        <label className="mb-2 block text-sm text-chalk-300">Notes</label>
-        <textarea
-          value={notes}
-          onChange={(event) => setNotes(event.target.value)}
-          className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
-        />
-        <label className="mb-2 block text-sm text-chalk-300">Coach Tags (comma separated)</label>
-        <input
-          value={coachTagsInput}
-          onChange={(event) => setCoachTagsInput(event.target.value)}
-          placeholder="break, pressure, safety, rhythm"
-          className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
-        <label className="mb-2 block text-sm text-chalk-300">Video Clip Refs (comma separated links or labels)</label>
-        <input
-          value={videoClipRefsInput}
-          onChange={(event) => setVideoClipRefsInput(event.target.value)}
-          placeholder="Clip 12 @ 00:42, https://..."
-          className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
+        {showExtraLogFields ? (
+          <>
+            <label className="mb-2 block text-sm text-chalk-300">Notes</label>
+            <textarea
+              value={notes}
+              onChange={(event) => setNotes(event.target.value)}
+              className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+            />
+            <label className="mb-2 block text-sm text-chalk-300">Coach Tags (comma separated)</label>
+            <input
+              value={coachTagsInput}
+              onChange={(event) => setCoachTagsInput(event.target.value)}
+              placeholder="break, pressure, safety, rhythm"
+              className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+            <label className="mb-2 block text-sm text-chalk-300">Video Clip Refs (comma separated links or labels)</label>
+            <input
+              value={videoClipRefsInput}
+              onChange={(event) => setVideoClipRefsInput(event.target.value)}
+              placeholder="Clip 12 @ 00:42, https://..."
+              className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+          </>
+        ) : (
+          <p className="mb-3 text-xs text-chalk-300">Notes, coach tags, and video refs are hidden in ADHD mode until advanced tools are enabled.</p>
+        )}
         {dataConfidenceNudges.length ? (
           <p className="mb-3 text-xs text-chalk-300">
             Data confidence nudge: still zero or blank: {dataConfidenceNudges.join(' · ')}

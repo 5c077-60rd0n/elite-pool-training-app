@@ -6,9 +6,13 @@ interface NotificationState {
   enabled: boolean;
   reminderTime: string;
   lastSmartAlertAt: Record<string, string>;
+  smartAlertHistory: string[];
+  smartAlertsPausedUntil?: string;
   setEnabled: (enabled: boolean) => void;
   setReminderTime: (time: string) => void;
   markSmartAlertTriggered: (alertId: string, dateIso: string) => void;
+  recordSmartAlertSent: (sentAtIso: string) => void;
+  setSmartAlertsPausedUntil: (dateIso?: string) => void;
   resetSmartAlertHistory: () => void;
 }
 
@@ -18,6 +22,8 @@ export const useNotificationStore = create<NotificationState>()(
       enabled: false,
       reminderTime: '19:00',
       lastSmartAlertAt: {},
+      smartAlertHistory: [],
+      smartAlertsPausedUntil: undefined,
       setEnabled: (enabled) => set({ enabled }),
       setReminderTime: (reminderTime) => set({ reminderTime }),
       markSmartAlertTriggered: (alertId, dateIso) =>
@@ -27,7 +33,13 @@ export const useNotificationStore = create<NotificationState>()(
             [alertId]: dateIso,
           },
         })),
-      resetSmartAlertHistory: () => set({ lastSmartAlertAt: {} }),
+      recordSmartAlertSent: (sentAtIso) =>
+        set((state) => ({
+          smartAlertHistory: [...state.smartAlertHistory, sentAtIso].slice(-30),
+        })),
+      setSmartAlertsPausedUntil: (dateIso) => set({ smartAlertsPausedUntil: dateIso }),
+      resetSmartAlertHistory: () =>
+        set({ lastSmartAlertAt: {}, smartAlertHistory: [], smartAlertsPausedUntil: undefined }),
     }),
     {
       name: 'fargo-climb-notifications',
