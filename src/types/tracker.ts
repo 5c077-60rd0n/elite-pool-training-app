@@ -30,6 +30,7 @@ export interface DailySessionLog {
   drillRoomShotmakingPct: number;
   bullseyeProximity: number;
   bullseyeCategory: BullseyeCategory;
+  drillRoomDrillName?: string;
   wpbLesson: YesNo;
   wpbModuleName: string;
   ghostDrillWinRatePct: number;

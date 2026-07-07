@@ -6,128 +6,376 @@
       "topCategory": "Speed Control",
       "drillCount": 16,
       "drills": [
-        { "name": "1 TABLE", "status": "confirmed" },
-        { "name": "LAG SHOT", "status": "confirmed" },
-        { "name": "3 TABLES", "status": "confirmed" },
-        { "name": "4 TABLES", "status": "confirmed" },
-        { "name": "Follow Speed Level I", "status": "confirmed" },
-        { "name": "Stun Speed Level I", "status": "confirmed" },
-        { "name": "Draw Speed Level I", "status": "confirmed" },
-        { "name": "Follow Speed 20° Level I", "status": "confirmed" },
-        { "name": "Follow Speed Level II", "status": "confirmed" },
-        { "name": "Draw Speed Level II", "status": "confirmed" },
-        { "name": "Follow Speed 20° Level II", "status": "confirmed" },
-        { "name": "Stun Speed 45° Level II", "status": "confirmed" },
-        { "name": "Follow Speed Level III", "status": "confirmed" },
-        { "name": "Draw Speed Level III", "status": "confirmed" },
-        { "name": "2 DIAMONDS", "status": "confirmed" },
-        { "name": "4 DIAMONDS", "status": "confirmed" }
+        {
+          "name": "1 TABLE",
+          "status": "confirmed"
+        },
+        {
+          "name": "2 DIAMONDS",
+          "status": "confirmed"
+        },
+        {
+          "name": "3 TABLES",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 DIAMONDS",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 TABLES",
+          "status": "confirmed"
+        },
+        {
+          "name": "Draw Speed Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Draw Speed Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Draw Speed Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "Follow Speed 20° Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Follow Speed 20° Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Follow Speed Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Follow Speed Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Follow Speed Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "LAG SHOT",
+          "status": "confirmed"
+        },
+        {
+          "name": "Stun Speed 45° Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Stun Speed Level I",
+          "status": "confirmed"
+        }
       ]
     },
     {
       "topCategory": "Shotmaking",
-      "drillCount": 33,
+      "drillCount": 26,
       "drills": [
-        { "name": "Short range, deep angle", "status": "confirmed" },
-        { "name": "Straight Shot Level I", "status": "confirmed" },
-        { "name": "20° Shot Level I", "status": "confirmed" },
-        { "name": "30° Shot Level I", "status": "confirmed" },
-        { "name": "40° Shot Level I", "status": "confirmed" },
-        { "name": "50° Shot Level I", "status": "confirmed" },
-        { "name": "60° Shot Level I", "status": "confirmed" },
-        { "name": "Straight Shot Level II", "status": "confirmed" },
-        { "name": "10° Shot Level II", "status": "confirmed" },
-        { "name": "20° Shot Level II", "status": "confirmed" },
-        { "name": "30° Shot Level II", "status": "confirmed" },
-        { "name": "40° Shot Level II", "status": "confirmed" },
-        { "name": "50° Shot Level III", "status": "confirmed" },
-        { "name": "60° Shot Level III", "status": "confirmed" },
-        { "name": "70° Shot Level III", "status": "confirmed" },
-        { "name": "Long Back Cut Progression", "status": "confirmed" },
-        { "name": "Short Back Cut Progression", "status": "confirmed" },
-        { "name": "SHORT RANGE", "status": "confirmed" },
-        { "name": "MID RANGE", "status": "confirmed" },
-        { "name": "LONG RANGE", "status": "confirmed" },
-        { "name": "SHORT RANGE 2", "status": "inferred" },
-        { "name": "MID RANGE 2", "status": "confirmed" },
-        { "name": "LONG RANGE 2", "status": "confirmed" },
-        { "name": "THE MIGHTY X", "status": "confirmed" },
-        { "name": "10° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "20° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "30° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "40° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "50° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "60° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "70° SHOT LEVEL I", "status": "confirmed" },
-        { "name": "STRAIGHT SHOT", "status": "inferred" },
-        { "name": "LONG BACK CUT", "status": "inferred" }
+        {
+          "name": "10° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "10° Shot Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "20° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "20° Shot Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "30° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "30° Shot Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "40° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "40° Shot Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "50° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "50° Shot Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "60° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "60° Shot Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "70° Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "70° Shot Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "Long Back Cut Progression",
+          "status": "confirmed"
+        },
+        {
+          "name": "LONG RANGE",
+          "status": "confirmed"
+        },
+        {
+          "name": "LONG RANGE 2",
+          "status": "confirmed"
+        },
+        {
+          "name": "MID RANGE",
+          "status": "confirmed"
+        },
+        {
+          "name": "MID RANGE 2",
+          "status": "confirmed"
+        },
+        {
+          "name": "Short Back Cut Progression",
+          "status": "confirmed"
+        },
+        {
+          "name": "SHORT RANGE",
+          "status": "confirmed"
+        },
+        {
+          "name": "Short range, deep angle",
+          "status": "confirmed"
+        },
+        {
+          "name": "Straight Shot Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Straight Shot Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Straight Shot Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "THE MIGHTY X",
+          "status": "confirmed"
+        }
       ]
     },
     {
       "topCategory": "Cue Direction",
       "drillCount": 6,
       "drills": [
-        { "name": "Direction All Level I", "status": "confirmed" },
-        { "name": "Direction Banking Level I", "status": "confirmed" },
-        { "name": "Direction Follow Level II", "status": "confirmed" },
-        { "name": "Direction Draw Level II", "status": "confirmed" },
-        { "name": "Direction Follow Level III", "status": "confirmed" },
-        { "name": "Direction Tangent Level", "status": "partial" }
+        {
+          "name": "Direction All Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Direction Banking Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Direction Draw Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Direction Follow Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Direction Follow Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "Direction Tangent Level II",
+          "status": "confirmed"
+        }
       ]
     },
     {
       "topCategory": "Positional",
       "drillCount": 27,
       "drills": [
-        { "name": "1 ball Centerfield Level I", "status": "confirmed" },
-        { "name": "1 ball Centerfield 2 Level I", "status": "confirmed" },
-        { "name": "2 ball convo", "status": "confirmed" },
-        { "name": "2 ball opposite rails", "status": "confirmed" },
-        { "name": "2 Balls Side Pocket", "status": "confirmed" },
-        { "name": "3 ball 2 rails", "status": "confirmed" },
-        { "name": "Natural Position Play Level I", "status": "confirmed" },
-        { "name": "4 ball cross formation", "status": "confirmed" },
-        { "name": "3 balls Side Pocket", "status": "confirmed" },
-        { "name": "4 Corners Level I", "status": "confirmed" },
-        { "name": "Line Drill Level I", "status": "confirmed" },
-        { "name": "3 ball center field", "status": "confirmed" },
-        { "name": "4 ball center field", "status": "confirmed" },
-        { "name": "4 ball large area Level II", "status": "confirmed" },
-        { "name": "5 ball medium area Level II", "status": "confirmed" },
-        { "name": "5 Balls Delta Formation", "status": "confirmed" },
-        { "name": "5 ball large area Level III", "status": "confirmed" },
-        { "name": "5 Balls Side Pocket", "status": "confirmed" },
-        { "name": "6 ball large area Level III", "status": "confirmed" },
-        { "name": "6 ball center field", "status": "confirmed" },
-        { "name": "7 Ball S Formation", "status": "confirmed" },
-        { "name": "4 Corners Level II", "status": "confirmed" },
-        { "name": "Line Drill Level II", "status": "confirmed" },
-        { "name": "8 BALL MIND'S EYE", "status": "confirmed" },
-        { "name": "9 BALL CENTER FIELD", "status": "confirmed" },
-        { "name": "9 BALL LEVEL II", "status": "confirmed" },
-        { "name": "Line Drill Level III", "status": "confirmed" }
+        {
+          "name": "1 ball Centerfield 2 Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "1 ball Centerfield Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "2 ball convo",
+          "status": "confirmed"
+        },
+        {
+          "name": "2 ball opposite rails",
+          "status": "confirmed"
+        },
+        {
+          "name": "2 Balls Side Pocket",
+          "status": "confirmed"
+        },
+        {
+          "name": "3 ball 2 rails",
+          "status": "confirmed"
+        },
+        {
+          "name": "3 ball center field",
+          "status": "confirmed"
+        },
+        {
+          "name": "3 balls Side Pocket",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 ball center field",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 ball cross formation",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 ball large area Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 Corners Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "4 Corners Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "5 ball large area Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "5 ball medium area Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "5 Balls Delta Formation",
+          "status": "confirmed"
+        },
+        {
+          "name": "5 Balls Side Pocket",
+          "status": "confirmed"
+        },
+        {
+          "name": "6 ball center field",
+          "status": "confirmed"
+        },
+        {
+          "name": "6 ball large area Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "7 Ball S Formation",
+          "status": "confirmed"
+        },
+        {
+          "name": "8 BALL MIND'S EYE",
+          "status": "confirmed"
+        },
+        {
+          "name": "9 BALL CENTER FIELD",
+          "status": "confirmed"
+        },
+        {
+          "name": "9 BALL LEVEL II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Line Drill Level I",
+          "status": "confirmed"
+        },
+        {
+          "name": "Line Drill Level II",
+          "status": "confirmed"
+        },
+        {
+          "name": "Line Drill Level III",
+          "status": "confirmed"
+        },
+        {
+          "name": "Natural Position Play Level I",
+          "status": "confirmed"
+        }
       ]
     },
     {
       "topCategory": "Safety",
       "drillCount": 6,
       "drills": [
-        { "name": "SHOT STOP SAFETY", "status": "confirmed" },
-        { "name": "FOLLOW SHOT SAFETY. LEVEL I", "status": "confirmed" },
-        { "name": "DRAW SHOT SAFETY", "status": "confirmed" },
-        { "name": "SHORT SPLIT & BANK SAFETY", "status": "confirmed" },
-        { "name": "SHORT SPLIT & HIDE SAFETY", "status": "confirmed" },
-        { "name": "LONG SPLIT & BANK SAFETY", "status": "confirmed" }
+        {
+          "name": "DRAW SHOT SAFETY",
+          "status": "confirmed"
+        },
+        {
+          "name": "FOLLOW SHOT SAFETY. LEVEL I",
+          "status": "confirmed"
+        },
+        {
+          "name": "LONG SPLIT & BANK SAFETY",
+          "status": "confirmed"
+        },
+        {
+          "name": "SHORT SPLIT & BANK SAFETY",
+          "status": "confirmed"
+        },
+        {
+          "name": "SHORT SPLIT & HIDE SAFETY",
+          "status": "confirmed"
+        },
+        {
+          "name": "SHOT STOP SAFETY",
+          "status": "confirmed"
+        }
       ]
     },
     {
       "topCategory": "Challenge",
       "drillCount": 4,
       "drills": [
-        { "name": "2 BALLS INFINITE", "status": "confirmed" },
-        { "name": "BILLIARD UNIVERSITY EXAM I", "status": "confirmed" },
-        { "name": "CENTERFIELD INFINITE", "status": "confirmed" },
-        { "name": "GOLF POOL", "status": "confirmed" }
+        {
+          "name": "2 BALLS INFINITE",
+          "status": "confirmed"
+        },
+        {
+          "name": "BILLIARD UNIVERSITY EXAM I",
+          "status": "confirmed"
+        },
+        {
+          "name": "CENTERFIELD INFINITE",
+          "status": "confirmed"
+        },
+        {
+          "name": "GOLF POOL",
+          "status": "confirmed"
+        }
       ]
     }
   ]

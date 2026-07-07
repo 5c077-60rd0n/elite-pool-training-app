@@ -1,92 +1,85 @@
 top_category,series_name,drill_name,status
 Speed Control,Speed Control,1 TABLE,confirmed
-Speed Control,Speed Control,LAG SHOT,confirmed
-Speed Control,Speed Control,3 TABLES,confirmed
-Speed Control,Speed Control,4 TABLES,confirmed
-Speed Control,Speed Control,Follow Speed Level I,confirmed
-Speed Control,Speed Control,Stun Speed Level I,confirmed
-Speed Control,Speed Control,Draw Speed Level I,confirmed
-Speed Control,Speed Control,Follow Speed 20° Level I,confirmed
-Speed Control,Speed Control,Follow Speed Level II,confirmed
-Speed Control,Speed Control,Draw Speed Level II,confirmed
-Speed Control,Speed Control,Follow Speed 20° Level II,confirmed
-Speed Control,Speed Control,Stun Speed 45° Level II,confirmed
-Speed Control,Speed Control,Follow Speed Level III,confirmed
-Speed Control,Speed Control,Draw Speed Level III,confirmed
 Speed Control,Speed Control,2 DIAMONDS,confirmed
+Speed Control,Speed Control,3 TABLES,confirmed
 Speed Control,Speed Control,4 DIAMONDS,confirmed
-Shotmaking,Shotmaking,"Short range, deep angle",confirmed
-Shotmaking,Shotmaking,Straight Shot Level I,confirmed
-Shotmaking,Shotmaking,20° Shot Level I,confirmed
-Shotmaking,Shotmaking,30° Shot Level I,confirmed
-Shotmaking,Shotmaking,40° Shot Level I,confirmed
-Shotmaking,Shotmaking,50° Shot Level I,confirmed
-Shotmaking,Shotmaking,60° Shot Level I,confirmed
-Shotmaking,Shotmaking,Straight Shot Level II,confirmed
+Speed Control,Speed Control,4 TABLES,confirmed
+Speed Control,Speed Control,Draw Speed Level I,confirmed
+Speed Control,Speed Control,Draw Speed Level II,confirmed
+Speed Control,Speed Control,Draw Speed Level III,confirmed
+Speed Control,Speed Control,Follow Speed 20° Level I,confirmed
+Speed Control,Speed Control,Follow Speed 20° Level II,confirmed
+Speed Control,Speed Control,Follow Speed Level I,confirmed
+Speed Control,Speed Control,Follow Speed Level II,confirmed
+Speed Control,Speed Control,Follow Speed Level III,confirmed
+Speed Control,Speed Control,LAG SHOT,confirmed
+Speed Control,Speed Control,Stun Speed 45° Level II,confirmed
+Speed Control,Speed Control,Stun Speed Level I,confirmed
+Shotmaking,Shotmaking,10° Shot Level I,confirmed
 Shotmaking,Shotmaking,10° Shot Level II,confirmed
+Shotmaking,Shotmaking,20° Shot Level I,confirmed
 Shotmaking,Shotmaking,20° Shot Level II,confirmed
+Shotmaking,Shotmaking,30° Shot Level I,confirmed
 Shotmaking,Shotmaking,30° Shot Level II,confirmed
+Shotmaking,Shotmaking,40° Shot Level I,confirmed
 Shotmaking,Shotmaking,40° Shot Level II,confirmed
+Shotmaking,Shotmaking,50° Shot Level I,confirmed
 Shotmaking,Shotmaking,50° Shot Level III,confirmed
+Shotmaking,Shotmaking,60° Shot Level I,confirmed
 Shotmaking,Shotmaking,60° Shot Level III,confirmed
+Shotmaking,Shotmaking,70° Shot Level I,confirmed
 Shotmaking,Shotmaking,70° Shot Level III,confirmed
 Shotmaking,Shotmaking,Long Back Cut Progression,confirmed
+Shotmaking,Shotmaking,LONG RANGE,confirmed
+Shotmaking,Shotmaking,LONG RANGE 2,confirmed
+Shotmaking,Shotmaking,MID RANGE,confirmed
+Shotmaking,Shotmaking,MID RANGE 2,confirmed
 Shotmaking,Shotmaking,Short Back Cut Progression,confirmed
 Shotmaking,Shotmaking,SHORT RANGE,confirmed
-Shotmaking,Shotmaking,MID RANGE,confirmed
-Shotmaking,Shotmaking,LONG RANGE,confirmed
-Shotmaking,Shotmaking,SHORT RANGE 2,inferred
-Shotmaking,Shotmaking,MID RANGE 2,confirmed
-Shotmaking,Shotmaking,LONG RANGE 2,confirmed
+Shotmaking,Shotmaking,"Short range, deep angle",confirmed
+Shotmaking,Shotmaking,Straight Shot Level I,confirmed
+Shotmaking,Shotmaking,Straight Shot Level II,confirmed
+Shotmaking,Shotmaking,Straight Shot Level III,confirmed
 Shotmaking,Shotmaking,THE MIGHTY X,confirmed
-Shotmaking,Shotmaking,10° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,20° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,30° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,40° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,50° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,60° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,70° SHOT LEVEL I,confirmed
-Shotmaking,Shotmaking,STRAIGHT SHOT,inferred
-Shotmaking,Shotmaking,LONG BACK CUT,inferred
 Cue Direction,Cue Direction,Direction All Level I,confirmed
 Cue Direction,Cue Direction,Direction Banking Level I,confirmed
-Cue Direction,Cue Direction,Direction Follow Level II,confirmed
 Cue Direction,Cue Direction,Direction Draw Level II,confirmed
+Cue Direction,Cue Direction,Direction Follow Level II,confirmed
 Cue Direction,Cue Direction,Direction Follow Level III,confirmed
-Cue Direction,Cue Direction,Direction Tangent Level,partial
-Positional,Positional,1 ball Centerfield Level I,confirmed
+Cue Direction,Cue Direction,Direction Tangent Level II,confirmed
 Positional,Positional,1 ball Centerfield 2 Level I,confirmed
+Positional,Positional,1 ball Centerfield Level I,confirmed
 Positional,Positional,2 ball convo,confirmed
 Positional,Positional,2 ball opposite rails,confirmed
 Positional,Positional,2 Balls Side Pocket,confirmed
 Positional,Positional,3 ball 2 rails,confirmed
-Positional,Positional,Natural Position Play Level I,confirmed
-Positional,Positional,4 ball cross formation,confirmed
-Positional,Positional,3 balls Side Pocket,confirmed
-Positional,Positional,4 Corners Level I,confirmed
-Positional,Positional,Line Drill Level I,confirmed
 Positional,Positional,3 ball center field,confirmed
+Positional,Positional,3 balls Side Pocket,confirmed
 Positional,Positional,4 ball center field,confirmed
+Positional,Positional,4 ball cross formation,confirmed
 Positional,Positional,4 ball large area Level II,confirmed
+Positional,Positional,4 Corners Level I,confirmed
+Positional,Positional,4 Corners Level II,confirmed
+Positional,Positional,5 ball large area Level III,confirmed
 Positional,Positional,5 ball medium area Level II,confirmed
 Positional,Positional,5 Balls Delta Formation,confirmed
-Positional,Positional,5 ball large area Level III,confirmed
 Positional,Positional,5 Balls Side Pocket,confirmed
-Positional,Positional,6 ball large area Level III,confirmed
 Positional,Positional,6 ball center field,confirmed
+Positional,Positional,6 ball large area Level III,confirmed
 Positional,Positional,7 Ball S Formation,confirmed
-Positional,Positional,4 Corners Level II,confirmed
-Positional,Positional,Line Drill Level II,confirmed
 Positional,Positional,8 BALL MIND'S EYE,confirmed
 Positional,Positional,9 BALL CENTER FIELD,confirmed
 Positional,Positional,9 BALL LEVEL II,confirmed
+Positional,Positional,Line Drill Level I,confirmed
+Positional,Positional,Line Drill Level II,confirmed
 Positional,Positional,Line Drill Level III,confirmed
-Safety,Safety,SHOT STOP SAFETY,confirmed
-Safety,Safety,FOLLOW SHOT SAFETY. LEVEL I,confirmed
+Positional,Positional,Natural Position Play Level I,confirmed
 Safety,Safety,DRAW SHOT SAFETY,confirmed
+Safety,Safety,FOLLOW SHOT SAFETY. LEVEL I,confirmed
+Safety,Safety,LONG SPLIT & BANK SAFETY,confirmed
 Safety,Safety,SHORT SPLIT & BANK SAFETY,confirmed
 Safety,Safety,SHORT SPLIT & HIDE SAFETY,confirmed
-Safety,Safety,LONG SPLIT & BANK SAFETY,confirmed
+Safety,Safety,SHOT STOP SAFETY,confirmed
 Challenge,Challenge,2 BALLS INFINITE,confirmed
 Challenge,Challenge,BILLIARD UNIVERSITY EXAM I,confirmed
 Challenge,Challenge,CENTERFIELD INFINITE,confirmed

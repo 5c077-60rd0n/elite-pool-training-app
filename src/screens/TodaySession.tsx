@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { weeklyScheduleTemplate } from '../data/trackerPlan';
+import { bullseyeCategoryOptions, drillRoomDrillSuggestions, wpbModuleSuggestions } from '../data/catalogs';
 import { useProgramStore } from '../store/useProgramStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
@@ -36,21 +37,6 @@ function formatElapsed(seconds: number): string {
   const secs = clamped % 60;
   return [hours, minutes, secs].map((part) => part.toString().padStart(2, '0')).join(':');
 }
-
-const bullseyeOptions: BullseyeCategory[] = [
-  'Follow',
-  'Stun',
-  'Draw',
-  'Sidespin',
-  'Thin Cuts',
-  'Cheating the Pocket',
-  'Rail-First',
-  'High Spin',
-  'Finesse',
-  'Safety',
-  'Mixed',
-  'Shot Clock Challenge',
-];
 
 export default function TodaySession() {
   const currentWeek = useProgramStore((s) => s.currentWeek);
@@ -92,6 +78,7 @@ export default function TodaySession() {
   const [focusArea, setFocusArea] = useState(template.focusArea);
   const [lengthMinutes, setLengthMinutes] = useState(75);
   const [drillRoomShotmakingPct, setDrillRoomShotmakingPct] = useState(0);
+  const [drillRoomDrillName, setDrillRoomDrillName] = useState('');
   const [bullseyeProximity, setBullseyeProximity] = useState(0);
   const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
@@ -238,6 +225,7 @@ export default function TodaySession() {
     setFocusArea(lastLoggedSession.focusArea);
     setLengthMinutes(Math.max(0, lastLoggedSession.lengthMinutes));
     setDrillRoomShotmakingPct(clampPct(lastLoggedSession.drillRoomShotmakingPct));
+    setDrillRoomDrillName(lastLoggedSession.drillRoomDrillName ?? '');
     setBullseyeProximity(Math.max(0, lastLoggedSession.bullseyeProximity));
     setBullseyeCategory(lastLoggedSession.bullseyeCategory);
     setWpbLesson(lastLoggedSession.wpbLesson);
@@ -286,6 +274,7 @@ export default function TodaySession() {
       focusArea,
       lengthMinutes: effectiveLengthMinutes,
       drillRoomShotmakingPct: clampPct(drillRoomShotmakingPct),
+      drillRoomDrillName,
       bullseyeProximity: Math.max(0, bullseyeProximity),
       bullseyeCategory,
       wpbLesson,
@@ -536,6 +525,21 @@ export default function TodaySession() {
             onChange={(next) => setDrillRoomShotmakingPct(clampPct(next))}
           />
         </div>
+        <label className="mt-3 block text-sm text-chalk-300">
+          DrillRoom Drill Name
+          <input
+            value={drillRoomDrillName}
+            onChange={(event) => setDrillRoomDrillName(event.target.value)}
+            list="drillroom-drill-suggestions"
+            placeholder="Shotmaking > Straight Shot Level II"
+            className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+          />
+          <datalist id="drillroom-drill-suggestions">
+            {drillRoomDrillSuggestions.map((option) => (
+              <option key={option} value={option} />
+            ))}
+          </datalist>
+        </label>
 
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <NumberStepperField
@@ -599,7 +603,7 @@ export default function TodaySession() {
               onChange={(event) => setBullseyeCategory(event.target.value as BullseyeCategory)}
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             >
-              {bullseyeOptions.map((option) => (
+              {bullseyeCategoryOptions.map((option) => (
                 <option key={option} value={option}>{option}</option>
               ))}
             </select>
@@ -623,8 +627,14 @@ export default function TodaySession() {
             <input
               value={wpbModuleName}
               onChange={(event) => setWpbModuleName(event.target.value)}
+              list="wpb-module-suggestions"
               className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
+            <datalist id="wpb-module-suggestions">
+              {wpbModuleSuggestions.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
           </label>
         </div>
       </Card>
