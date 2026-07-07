@@ -41,6 +41,7 @@ export interface DailySessionLog {
   drillRoomDrillName?: string;
   wpbLesson: YesNo;
   wpbModuleName: string;
+  wpbProgressiveRotationRunsLevel?: number;
   wpbTierAchieved?: WpbRatingTier;
   wpbKeyTakeaway?: string;
   ghostDrillWinRatePct: number;

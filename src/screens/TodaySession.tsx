@@ -7,6 +7,8 @@ import { weeklyScheduleTemplate } from '../data/trackerPlan';
 import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
+  getGhostTargetFromProgressiveRotationRuns,
+  isWpbProgressiveRotationRunsModule,
   getWpbTierOptionsForModule,
   wpbModuleSuggestions,
 } from '../data/catalogs';
@@ -96,6 +98,7 @@ export default function TodaySession() {
   const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
   const [wpbModuleName, setWpbModuleName] = useState('');
+  const [wpbProgressiveRotationRunsLevel, setWpbProgressiveRotationRunsLevel] = useState(3);
   const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
   const [wpbKeyTakeaway, setWpbKeyTakeaway] = useState('');
   const [notes, setNotes] = useState('');
@@ -130,6 +133,10 @@ export default function TodaySession() {
 
   const wpbTierOptions = useMemo(
     () => getWpbTierOptionsForModule(wpbModuleName),
+    [wpbModuleName],
+  );
+  const isProgressiveRotationRunsModule = useMemo(
+    () => isWpbProgressiveRotationRunsModule(wpbModuleName),
     [wpbModuleName],
   );
 
@@ -270,6 +277,7 @@ export default function TodaySession() {
     if (wpbPick) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbPick.label);
+      if (isWpbProgressiveRotationRunsModule(wpbPick.label)) setWpbProgressiveRotationRunsLevel(3);
       const nextTiers = getWpbTierOptionsForModule(wpbPick.label);
       setWpbTierAchieved(nextTiers[0] ?? '');
     }
@@ -308,6 +316,7 @@ export default function TodaySession() {
     if (wpbBlock) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbBlock.label);
+      if (isWpbProgressiveRotationRunsModule(wpbBlock.label)) setWpbProgressiveRotationRunsLevel(3);
       const nextTiers = getWpbTierOptionsForModule(wpbBlock.label);
       setWpbTierAchieved(nextTiers[0] ?? '');
     }
@@ -362,6 +371,7 @@ export default function TodaySession() {
     setBullseyeCategory(lastLoggedSession.bullseyeCategory);
     setWpbLesson(lastLoggedSession.wpbLesson);
     setWpbModuleName(lastLoggedSession.wpbModuleName);
+    setWpbProgressiveRotationRunsLevel(lastLoggedSession.wpbProgressiveRotationRunsLevel ?? 3);
     setWpbTierAchieved(lastLoggedSession.wpbTierAchieved ?? '');
     setWpbKeyTakeaway(lastLoggedSession.wpbKeyTakeaway ?? '');
     setNotes(lastLoggedSession.notes);
@@ -382,7 +392,13 @@ export default function TodaySession() {
     }
 
     let effectiveLengthMinutes = Math.max(0, lengthMinutes);
+    const wpbDerivedGhostTarget =
+      wpbLesson === 'Yes' && isProgressiveRotationRunsModule
+        ? getGhostTargetFromProgressiveRotationRuns(wpbProgressiveRotationRunsLevel)
+        : undefined;
     const derivedGhostDrillWinRatePct = Math.round(
+      wpbDerivedGhostTarget
+      ??
       adaptiveDailyPlan?.targetMetrics.ghostDrillWinRatePct
       ?? smartAutofill.ghostDrillWinRatePct
       ?? lastLoggedSession?.ghostDrillWinRatePct
@@ -429,6 +445,9 @@ export default function TodaySession() {
       bullseyeCategory,
       wpbLesson,
       wpbModuleName,
+      wpbProgressiveRotationRunsLevel: wpbLesson === 'Yes' && isProgressiveRotationRunsModule
+        ? Math.max(3, Math.min(15, Math.round(wpbProgressiveRotationRunsLevel)))
+        : undefined,
       wpbTierAchieved: wpbLesson === 'Yes' ? (wpbTierAchieved || undefined) : undefined,
       wpbKeyTakeaway,
       ghostDrillWinRatePct: derivedGhostDrillWinRatePct,
@@ -854,6 +873,9 @@ export default function TodaySession() {
               onChange={(event) => {
                 const nextModule = event.target.value;
                 setWpbModuleName(nextModule);
+                if (isWpbProgressiveRotationRunsModule(nextModule)) {
+                  setWpbProgressiveRotationRunsLevel((prev) => Math.max(3, Math.min(15, Math.round(prev || 3))));
+                }
                 const nextTiers = getWpbTierOptionsForModule(nextModule);
                 setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
               }}
@@ -882,6 +904,19 @@ export default function TodaySession() {
           </select>
           <p className="mt-1 text-xs text-chalk-300">Tier options are based on the selected WPB drill's available range.</p>
         </label>
+        {wpbLesson === 'Yes' && isProgressiveRotationRunsModule ? (
+          <div className="mt-3">
+            <NumberStepperField
+              label="Progressive Rotation Runs Level (3-15)"
+              value={wpbProgressiveRotationRunsLevel}
+              min={3}
+              max={15}
+              step={1}
+              onChange={(next) => setWpbProgressiveRotationRunsLevel(Math.max(3, Math.min(15, Math.round(next))))}
+            />
+            <p className="mt-1 text-xs text-chalk-300">Enter the highest full run level reached: 3 balls up to 15 balls.</p>
+          </div>
+        ) : null}
         <label className="mt-3 block text-sm text-chalk-300">
           WPB Key Takeaway
           {showExtraLogFields ? (

@@ -156,6 +156,28 @@ export function getWpbTierOptionsForModule(moduleName: string): WpbRatingTier[] 
   return uniqueTiers(inferWpbTiersFromDrillName(drillName));
 }
 
+const progressiveRotationTopCategoryKey = normalizeDrillKey('Position Play & Runouts');
+const progressiveRotationSeriesKey = normalizeDrillKey('Progressive Rotation Runs');
+const progressiveRotationAliasKeys = new Set<string>([
+  progressiveRotationSeriesKey,
+  normalizeDrillKey('Progressive Rotation Runouts'),
+]);
+
+export function isWpbProgressiveRotationRunsModule(moduleName: string): boolean {
+  const parts = moduleName.split('>').map((item) => normalizeDrillKey(item)).filter(Boolean);
+  if (!parts.length) return false;
+
+  const hasTopCategory = parts.some((part) => part === progressiveRotationTopCategoryKey);
+  const hasSeriesOrDrill = parts.some((part) => progressiveRotationAliasKeys.has(part));
+  return hasTopCategory && hasSeriesOrDrill;
+}
+
+export function getGhostTargetFromProgressiveRotationRuns(levelReached: number): number {
+  const clampedLevel = Math.max(3, Math.min(15, Math.round(levelReached)));
+  const normalized = (clampedLevel - 3) / 12;
+  return Math.round(35 + normalized * 50);
+}
+
 const drillRoomSuggestionSet = new Set<string>();
 for (const entry of drillroomCatalog?.entries ?? []) {
   const topCategory = (entry.topCategory ?? '').trim();
