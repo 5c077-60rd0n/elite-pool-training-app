@@ -180,6 +180,12 @@ export default function TodaySession() {
     return nudges;
   }, [drillRoomShotmakingPct, notes]);
 
+  const primaryTimerActionLabel = timerRunning
+    ? 'Pause Timer'
+    : liveElapsedSeconds > 0
+      ? 'Resume Timer'
+      : 'Start Timer';
+
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
     const roundedMinutes = Math.max(1, Math.round(totalSeconds / 60));
@@ -474,50 +480,47 @@ export default function TodaySession() {
         </div>
       ) : null}
 
-      <Card className="mb-4" title="Today's Template">
+      <Card className="mb-4" title="Today's Game Plan">
         <p className="text-sm text-chalk-300">{today} · Week {currentWeek} · {day}</p>
-        <p className="text-lg text-ivory-100">{template.focusArea}</p>
-        <p className="text-sm text-ivory-200">Primary App: {template.primaryApp} · {template.sessionLengthLabel}</p>
-        <p className="mt-2 text-xs text-chalk-300">Key Drills: {template.keyDrills.join(' · ')}</p>
-      </Card>
-
-      <Card className="mb-4" title="Focus Mode (ADHD-Friendly)">
-        <p className="text-xs text-chalk-300">Default keeps only high-impact actions visible. Open advanced panels only when needed.</p>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button type="button" variant={showAdvancedPanels ? 'secondary' : 'primary'} onClick={() => setShowAdvancedPanels(false)}>
-            Minimal (Recommended)
-          </Button>
-          <Button type="button" variant={showAdvancedPanels ? 'primary' : 'secondary'} onClick={() => setShowAdvancedPanels(true)}>
-            Show Advanced Panels
-          </Button>
+        <p className="mt-1 text-lg text-ivory-100">{focusArea || template.focusArea}</p>
+        <p className="mt-1 text-sm text-ivory-200">{template.sessionLengthLabel} · Start with one full DrillRoom + Bullseye + WPB cycle.</p>
+        <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">1. Set the day</p>
+          <p className="mt-1 text-xs text-chalk-300">Apply the default 3-app plan. Only open advanced tools if you actually need them.</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button type="button" onClick={applyFullTriadFlow}>Apply Full 3-App Day</Button>
+            <Button type="button" variant="secondary" onClick={() => setShowAdvancedPanels((prev) => !prev)}>
+              {showAdvancedPanels ? 'Hide Advanced Tools' : 'Show Advanced Tools'}
+            </Button>
+          </div>
+        </div>
+        <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Today's 3-App Sequence</p>
+          <div className="mt-2 space-y-1 text-xs text-ivory-200">
+            {roiPlanner.dailyTriadFlow.blocks.map((block) => (
+              <p key={block.app}>{block.app} · {block.minutes}m · {block.label}</p>
+            ))}
+          </div>
+          <div className="mt-2 space-y-1 text-xs text-chalk-300">
+            {roiPlanner.dailyTriadFlow.executionOrder.map((item) => (
+              <p key={item}>- {item}</p>
+            ))}
+          </div>
         </div>
       </Card>
 
-      <Card className="mb-4" title="Daily Focus Path">
-        <p className="text-sm text-ivory-100">One path only: run your 3-app block, then log and close.</p>
-        <div className="mt-2 space-y-1 text-xs text-chalk-300">
-          <p>- Step 1: Apply full 3-app day</p>
-          <p>- Step 2: Run timer during practice</p>
-          <p>- Step 3: Save session log with notes</p>
-        </div>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button type="button" onClick={applyFullTriadFlow}>Apply Full 3-App Day</Button>
-          <Button type="button" variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0}>End Timer & Apply Minutes</Button>
-        </div>
-      </Card>
-
-      <Card className="mb-4" title="Session Timer">
+      <Card className="mb-4" title="2. Practice Timer">
         <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
-        <p className="mt-1 text-xs text-chalk-300">Use Start/Pause during practice. End & Apply auto-fills session length (you can still edit manually).</p>
+        <p className="mt-1 text-xs text-chalk-300">Start practice, run the timer, then apply the minutes to your log.</p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {!timerRunning && liveElapsedSeconds === 0 ? (
-            <Button onClick={startTimer}>Start</Button>
+            <Button onClick={startTimer}>{primaryTimerActionLabel}</Button>
           ) : null}
           {timerRunning ? (
-            <Button variant="secondary" onClick={pauseTimer}>Pause</Button>
+            <Button variant="secondary" onClick={pauseTimer}>{primaryTimerActionLabel}</Button>
           ) : null}
           {!timerRunning && liveElapsedSeconds > 0 ? (
-            <Button variant="secondary" onClick={resumeTimer}>Resume</Button>
+            <Button variant="secondary" onClick={resumeTimer}>{primaryTimerActionLabel}</Button>
           ) : null}
           <Button variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0}>End & Apply</Button>
           <Button variant="secondary" onClick={resetTimer} disabled={timerRunning || liveElapsedSeconds === 0}>Reset</Button>
@@ -574,26 +577,6 @@ export default function TodaySession() {
       </Card>
       ) : null}
 
-      <Card className="mb-4" title="Daily 3-App Pro Flow">
-        <p className="text-sm text-ivory-100">Mandatory daily cycle using DrillRoom, Bullseye, and WPB.</p>
-        <p className="mt-1 text-xs text-chalk-300">Expected outcome: {roiPlanner.dailyTriadFlow.expectedOutcome}</p>
-        <div className="mt-2 space-y-1 text-xs text-ivory-200">
-          {roiPlanner.dailyTriadFlow.blocks.map((block) => (
-            <p key={block.app}>
-              {block.app} · {block.minutes}m · {block.label} ({block.objective})
-            </p>
-          ))}
-        </div>
-        <div className="mt-2 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.dailyTriadFlow.executionOrder.map((item) => (
-            <p key={item}>- {item}</p>
-          ))}
-        </div>
-        <Button className="mt-3 w-full" type="button" onClick={applyFullTriadFlow}>
-          Apply Full 3-App Day
-        </Button>
-      </Card>
-
       {showAdvancedPanels ? (
       <Card className="mb-4" title="Auto Prescribe Today (ROI Engine)">
         <p className="text-sm text-ivory-100">Weakest KPI bucket: {roiPlanner.focusBucket}</p>
@@ -617,7 +600,7 @@ export default function TodaySession() {
       ) : null}
 
       {showAdvancedPanels ? (
-      <Card className="mb-4" title="Performance Command Center">
+      <Card className="mb-4" title="Advanced Coaching Tools">
         <p className="text-sm text-ivory-100">Weakest two categories: {roiPlanner.weeklyAutoFocus.weakestTwo.join(' · ')}</p>
         <p className="mt-1 text-xs text-chalk-300">Tournament phase: {roiPlanner.tournamentMode.phaseLabel}</p>
         {roiPlanner.tournamentMode.active ? (
@@ -674,17 +657,16 @@ export default function TodaySession() {
         </Card>
       ) : null}
 
-      <Card className="mb-4" title="Session Log">
+      <Card className="mb-4" title="3. Quick Log">
         <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button type="button" variant="secondary" onClick={applyLastSession} disabled={!lastLoggedSession}>
             Copy Last Session
           </Button>
-        </div>
-
-        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
-            Use Adaptive Targets
-          </Button>
+          {showAdvancedPanels ? (
+            <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
+              Use Adaptive Targets
+            </Button>
+          ) : null}
         </div>
 
         <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
