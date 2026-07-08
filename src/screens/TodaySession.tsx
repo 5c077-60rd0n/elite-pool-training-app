@@ -719,8 +719,13 @@ export default function TodaySession() {
         </div>
       ) : null}
 
-      <Card className="mb-4" title="Today's Game Plan">
-        <p className="text-sm text-chalk-300">{today} · Week {currentWeek} · {day}</p>
+      <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/20 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Today's Game Plan">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full border border-flash-500/30 bg-flash-950/20 px-2 py-1 text-flash-200">Session Command</span>
+          <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">{today}</span>
+          <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Week {currentWeek}</span>
+          <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">{day}</span>
+        </div>
         {adhdModeEnabled ? (
           <p className="mt-1 text-xs text-cue-300">ADHD mode active · {effectiveAdhdSessionMode.toUpperCase()} session</p>
         ) : null}
@@ -741,15 +746,18 @@ export default function TodaySession() {
             })}
           </div>
         ) : null}
-        <p className="mt-1 text-lg text-ivory-100">{focusArea || template.focusArea}</p>
-        <p className="mt-1 text-sm text-ivory-200">{template.sessionLengthLabel} · Start with one full DrillRoom + Bullseye + WPB cycle.</p>
+        <div className="mt-3 rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Primary focus</p>
+          <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{focusArea || template.focusArea}</p>
+          <p className="mt-2 text-sm text-ivory-200">{template.sessionLengthLabel} · Start with one full DrillRoom + Bullseye + WPB cycle.</p>
+        </div>
         {adhdModeEnabled ? (
           <p className="mt-2 rounded-xl border border-cue-700/50 bg-cue-950/20 px-3 py-2 text-xs text-cue-200">
             ADHD protocol: {activeAdhdPreset.workBlockMinutes}m focus + {activeAdhdPreset.breakMinutes}m reset
             {activeAdhdPreset.optionalSecondBlockMinutes > 0 ? ` + optional ${activeAdhdPreset.optionalSecondBlockMinutes}m second block` : ''}. {activeAdhdPreset.stopRule}
           </p>
         ) : null}
-        <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">1. Set the day</p>
           <p className="mt-1 text-xs text-chalk-300">Apply the default 3-app plan. Only open advanced tools if you actually need them.</p>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -759,7 +767,7 @@ export default function TodaySession() {
             </Button>
           </div>
         </div>
-        <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Today's 3-App Sequence</p>
           <div className="mt-2 space-y-1 text-xs text-ivory-200">
             {roiPlanner.dailyTriadFlow.blocks.map((block) => (
