@@ -31,6 +31,12 @@ body {
     radial-gradient(circle at 50% 120%, rgba(0, 191, 255, 0.12), transparent 45%),
     linear-gradient(140deg, #080f18 0%, #0a1628 52%, #0d1b2a 100%);
   background-attachment: fixed;
+  line-height: 1.45;
+}
+
+:focus-visible {
+  outline: 2px solid rgba(0, 191, 255, 0.85);
+  outline-offset: 2px;
 }
 
 a {
@@ -123,5 +129,19 @@ a {
   100% {
     opacity: 0;
     transform: translateY(110px) scale(0.2);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .celebration-burst,
+  .celebration-overlay {
+    display: none !important;
   }
 }

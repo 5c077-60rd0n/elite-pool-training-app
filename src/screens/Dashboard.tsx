@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -44,6 +44,7 @@ export default function Dashboard() {
   const markSmartAlertTriggered = useNotificationStore((s) => s.markSmartAlertTriggered);
   const recordSmartAlertSent = useNotificationStore((s) => s.recordSmartAlertSent);
   const setSmartAlertsPausedUntil = useNotificationStore((s) => s.setSmartAlertsPausedUntil);
+  const [showDeepInsights, setShowDeepInsights] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -155,6 +156,17 @@ export default function Dashboard() {
     };
   }, [currentWeekStats, logs, profile.currentWeek]);
 
+  const compactFocusView = Boolean(profile.adhdModeEnabled) && !showDeepInsights;
+  const nextAction = useMemo(() => {
+    if (recoveryRecommendationPlan?.actions?.length) {
+      return recoveryRecommendationPlan.actions[0];
+    }
+    if (adaptiveDailyPlan?.actionChecklist?.length) {
+      return adaptiveDailyPlan.actionChecklist[0];
+    }
+    return 'Run one focused session and save the log before opening analytics.';
+  }, [adaptiveDailyPlan, recoveryRecommendationPlan]);
+
   useEffect(() => {
     if (!notificationsEnabled) return;
     if (typeof window === 'undefined' || !('Notification' in window)) return;
@@ -194,6 +206,29 @@ export default function Dashboard() {
 
   return (
     <PageWrapper title="Dashboard">
+      {profile.adhdModeEnabled ? (
+        <Card className="mb-4" title="Focus View">
+          <p className="text-sm text-chalk-300">Keep this view light. Open deep insights only when you need analysis.</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link to="/session/today">
+              <Button className="w-full">Start Today&apos;s Session</Button>
+            </Link>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowDeepInsights((prev) => !prev)}
+            >
+              {showDeepInsights ? 'Hide Deep Insights' : 'Show Deep Insights'}
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
+      <Card className="mb-4" title="Today&apos;s Next Step">
+        <p className="text-sm text-ivory-100">{nextAction}</p>
+        <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+      </Card>
+
       <Card className="mb-4" title="Rating Progress">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">Current Fargo Rating</p>
@@ -271,6 +306,9 @@ export default function Dashboard() {
           <p className="text-sm text-chalk-300">No sessions logged for this week yet. Complete one session to unlock your 60-second review.</p>
         )}
       </Card>
+
+      {!compactFocusView ? (
+        <>
 
       {notificationInsights.length ? (
         <Card className="mb-4" title="Notification Intelligence">
@@ -494,6 +532,9 @@ export default function Dashboard() {
           </Link>
         </div>
       </Card>
+
+        </>
+      ) : null}
 
       <Link to="/session/today">
         <Button className="w-full">Open Today's Session</Button>

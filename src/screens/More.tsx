@@ -1,6 +1,9 @@
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { PageWrapper } from '../components/layout/PageWrapper';
+import { useSettingsStore } from '../store/useSettingsStore';
 
 const sections = [
   {
@@ -32,11 +35,29 @@ const sections = [
 ];
 
 export default function More() {
+  const adhdModeEnabled = Boolean(useSettingsStore((s) => s.profile.adhdModeEnabled));
+  const [showAllModules, setShowAllModules] = useState(false);
+  const visibleSections = useMemo(() => {
+    if (!adhdModeEnabled || showAllModules) return sections;
+    return sections.map((section) => ({
+      ...section,
+      links: section.links.slice(0, section.title === 'Training Core' ? 2 : 1),
+    }));
+  }, [adhdModeEnabled, showAllModules]);
+
   return (
     <PageWrapper title="More">
       <p className="mb-3 text-sm text-chalk-300">Browse all modules grouped by purpose.</p>
+      {adhdModeEnabled ? (
+        <div className="mb-3 flex items-center gap-2">
+          <Button type="button" variant="secondary" onClick={() => setShowAllModules((prev) => !prev)}>
+            {showAllModules ? 'Show Essential Modules' : 'Show Full Module List'}
+          </Button>
+          <p className="text-xs text-chalk-300">Use essential mode for low-cognitive-load days.</p>
+        </div>
+      ) : null}
       <div className="space-y-4">
-        {sections.map((section) => (
+        {visibleSections.map((section) => (
           <div key={section.title} className="space-y-2">
             <p className="text-xs uppercase tracking-[0.18em] text-chalk-400">{section.title}</p>
             {section.links.map((entry) => (
