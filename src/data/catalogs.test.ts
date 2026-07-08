@@ -1,25 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import {
-  getGhostTargetFromProgressiveRotationRuns,
-  isWpbProgressiveRotationRunsModule,
+  getWpbTierOptionsForCategory,
+  wpbCategoryOptions,
 } from './catalogs';
 
-describe('WPB ghost target mapping', () => {
-  it('matches only the Progressive Rotation Runs module path', () => {
-    expect(
-      isWpbProgressiveRotationRunsModule('Position Play & Runouts > Progressive Rotation Runs > Progressive Rotation Runs'),
-    ).toBe(true);
-    expect(
-      isWpbProgressiveRotationRunsModule('Aiming & Shot Making > Aim Training > Aim Training - Level II'),
-    ).toBe(false);
+describe('WPB category tier mapping', () => {
+  it('includes requested WPB top-level categories', () => {
+    expect(wpbCategoryOptions).toEqual([
+      'Fundamentals',
+      'Aiming & Shotmaking',
+      'Cue Ball Control',
+      'Position Play & Runouts',
+      'Defense',
+      'Jump Shots',
+    ]);
   });
 
-  it('maps progressive rotation level from 3-15 to ascending ghost targets', () => {
-    const low = getGhostTargetFromProgressiveRotationRuns(3);
-    const mid = getGhostTargetFromProgressiveRotationRuns(9);
-    const high = getGhostTargetFromProgressiveRotationRuns(15);
-
-    expect(low).toBeLessThan(mid);
-    expect(mid).toBeLessThan(high);
+  it('returns stable tier options independent from drill name', () => {
+    const options = getWpbTierOptionsForCategory('Position Play & Runouts');
+    expect(options).toEqual(['Beginner', 'Novice', 'Intermediate', 'Advanced', 'Shortstop', 'Pro']);
   });
 });

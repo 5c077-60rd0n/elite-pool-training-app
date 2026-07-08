@@ -189,18 +189,16 @@ export function evaluateTrackerSessionReward(
   const bullseye = clamp((5 - log.bullseyeProximity) * 20, 0, 100);
   const lineup = clamp((log.lineUpShotCount / 30) * 100, 0, 100);
   const wpbTierPoints = getWpbLessonTierPoints(log);
-  const wpbTierSignal = clamp((wpbTierPoints / 6) * 100, 0, 100);
 
   const qualityScore = Math.round(
-    drillRoom * 0.28 +
-      ghost * 0.24 +
-      safety * 0.18 +
-      bullseye * 0.14 +
-      lineup * 0.1 +
-      wpbTierSignal * 0.06,
+    drillRoom * 0.3 +
+      ghost * 0.25 +
+      safety * 0.2 +
+      bullseye * 0.15 +
+      lineup * 0.1,
   );
 
-  const wpbXpBonus = wpbTierPoints > 0 ? 10 + wpbTierPoints * 3 : 0;
+  const wpbXpBonus = wpbTierPoints > 0 ? 8 + wpbTierPoints : 0;
   let xpEarned = Math.round(40 + qualityScore * 1.8 + wpbXpBonus);
   const bonusTags: string[] = [];
 
@@ -249,7 +247,7 @@ function computeWeeklyQuests(
   rewards: Map<string, TrackerSessionReward>,
 ): TrackerQuestProgress[] {
   const qualitySessions = thisWeekLogs.filter((log) => (rewards.get(log.id)?.qualityScore ?? 0) >= 70).length;
-  const wpbTierPoints = thisWeekLogs.reduce((sum, log) => sum + getWpbLessonTierPoints(log), 0);
+  const wpbLessons = thisWeekLogs.filter((log) => log.wpbLesson === 'Yes').length;
 
   return [
     {
@@ -268,10 +266,10 @@ function computeWeeklyQuests(
     },
     {
       id: 'weekly-wpb-2',
-      name: 'WPB Skill Ladder',
-      progress: wpbTierPoints,
-      target: 6,
-      completed: wpbTierPoints >= 6,
+      name: 'WPB Builder',
+      progress: wpbLessons,
+      target: 2,
+      completed: wpbLessons >= 2,
     },
   ];
 }

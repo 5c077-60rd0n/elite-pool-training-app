@@ -15,7 +15,6 @@ export type WeeklyMetrics = {
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
   wpbLessonsCompleted: number;
-  wpbSkillProgressionScore: number;
 };
 
 export type TrackerKpiDirection = 'higher' | 'lower';
@@ -72,10 +71,10 @@ export const trackerKpis: TrackerKpiDefinition[] = [
   },
   {
     id: 'wpb-lessons-weekly',
-    name: 'WPB Skill Progression / Week',
-    measurementUnit: 'points',
+    name: 'WPB Lessons / Week',
+    measurementUnit: 'count',
     direction: 'higher',
-    benchmarks: { fargo550: 3, fargo600: 4, fargo650: 5, fargo700: 6, fargo750: 7, fargo800: 8 },
-    getValue: (metrics) => metrics.wpbSkillProgressionScore,
+    benchmarks: { fargo550: 1, fargo600: 1, fargo650: 1, fargo700: 2, fargo750: 2, fargo800: 3 },
+    getValue: (metrics) => metrics.wpbLessonsCompleted,
   },
 ];

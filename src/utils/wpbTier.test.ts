@@ -13,4 +13,9 @@ describe('wpbTier helpers', () => {
     expect(getWpbLessonTierPoints({ wpbLesson: 'Yes', wpbTierAchieved: 'Advanced' })).toBe(4);
     expect(getWpbLessonTierPoints({ wpbLesson: 'Yes', wpbTierAchieved: undefined })).toBe(1);
   });
+
+  it('applies category-based weighting independent of drill name', () => {
+    expect(getWpbLessonTierPoints({ wpbLesson: 'Yes', wpbCategory: 'Fundamentals', wpbTierAchieved: 'Advanced' })).toBe(4);
+    expect(getWpbLessonTierPoints({ wpbLesson: 'Yes', wpbCategory: 'Defense', wpbTierAchieved: 'Advanced' })).toBe(5);
+  });
 });

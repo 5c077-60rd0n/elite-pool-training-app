@@ -75,10 +75,11 @@ function mergeSessionLogs(existing: DailySessionLog, incoming: DailySessionLog):
   mergeField('bullseyeCategory');
   mergeField('drillRoomDrillName');
   mergeField('wpbLesson');
+  mergeField('wpbCategory');
   mergeField('wpbModuleName');
-  mergeField('wpbProgressiveRotationRunsLevel');
   mergeField('wpbTierAchieved');
   mergeField('wpbKeyTakeaway');
+  mergeField('ghostDrillPlayed');
   mergeField('ghostDrillWinRatePct');
   mergeField('lineUpShotCount');
   mergeField('safetyExchangeSuccessPct');

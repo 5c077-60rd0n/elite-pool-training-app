@@ -1,4 +1,4 @@
-import type { BullseyeCategory, WpbRatingTier } from '../types/tracker';
+import type { BullseyeCategory, WpbCategory, WpbRatingTier } from '../types/tracker';
 
 import bullseyeCanonicalRaw from '../../docs/catalogs/bullseye-canonical.json?raw';
 import drillroomCanonicalRaw from '../../docs/catalogs/drillroom-canonical.json?raw';
@@ -99,83 +99,21 @@ export const wpbRatingTiers: WpbRatingTier[] = [
   'Pro',
 ];
 
+export const wpbCategoryOptions: WpbCategory[] = [
+  'Fundamentals',
+  'Aiming & Shotmaking',
+  'Cue Ball Control',
+  'Position Play & Runouts',
+  'Defense',
+  'Jump Shots',
+];
+
 function uniqueTiers(tiers: WpbRatingTier[]): WpbRatingTier[] {
   return wpbRatingTiers.filter((tier) => tiers.includes(tier));
 }
 
-function normalizeDrillKey(value: string): string {
-  return value.trim().toLowerCase();
-}
-
-const wpbTierOverrides: Record<string, WpbRatingTier[]> = {
-  [normalizeDrillKey('Aim Training - Level I')]: ['Beginner', 'Novice', 'Intermediate'],
-  [normalizeDrillKey('Aim Training - Level II')]: ['Novice', 'Intermediate', 'Advanced'],
-  [normalizeDrillKey('Aim Training - Level III')]: ['Intermediate', 'Advanced', 'Shortstop', 'Pro'],
-  [normalizeDrillKey('Straight Pool High Run')]: ['Intermediate', 'Advanced', 'Shortstop', 'Pro'],
-  [normalizeDrillKey('Around The World')]: ['Intermediate', 'Advanced', 'Shortstop', 'Pro'],
-  [normalizeDrillKey('Consecutive Long Jump Shots')]: ['Intermediate', 'Advanced', 'Shortstop', 'Pro'],
-};
-
-function inferWpbTiersFromDrillName(drillName: string): WpbRatingTier[] {
-  const normalized = normalizeDrillKey(drillName);
-
-  if (normalized.includes('level i') || normalized.includes('basic') || normalized.includes('short')) {
-    return ['Beginner', 'Novice', 'Intermediate'];
-  }
-
-  if (normalized.includes('level ii') || normalized.includes('distance varied') || normalized.includes('micro')) {
-    return ['Novice', 'Intermediate', 'Advanced'];
-  }
-
-  if (
-    normalized.includes('level iii')
-    || normalized.includes('high run')
-    || normalized.includes('around the world')
-    || normalized.includes('very long')
-    || normalized.includes('long jump')
-  ) {
-    return ['Intermediate', 'Advanced', 'Shortstop', 'Pro'];
-  }
-
-  return [...wpbRatingTiers];
-}
-
-function getDrillNameFromModule(moduleName: string): string {
-  const parts = moduleName.split('>').map((item) => item.trim()).filter(Boolean);
-  return parts[parts.length - 1] ?? moduleName.trim();
-}
-
-export function getWpbTierOptionsForModule(moduleName: string): WpbRatingTier[] {
-  const drillName = getDrillNameFromModule(moduleName);
-  if (!drillName) return [...wpbRatingTiers];
-
-  const key = normalizeDrillKey(drillName);
-  const explicit = wpbTierOverrides[key];
-  if (explicit) return uniqueTiers(explicit);
-
-  return uniqueTiers(inferWpbTiersFromDrillName(drillName));
-}
-
-const progressiveRotationTopCategoryKey = normalizeDrillKey('Position Play & Runouts');
-const progressiveRotationSeriesKey = normalizeDrillKey('Progressive Rotation Runs');
-const progressiveRotationAliasKeys = new Set<string>([
-  progressiveRotationSeriesKey,
-  normalizeDrillKey('Progressive Rotation Runouts'),
-]);
-
-export function isWpbProgressiveRotationRunsModule(moduleName: string): boolean {
-  const parts = moduleName.split('>').map((item) => normalizeDrillKey(item)).filter(Boolean);
-  if (!parts.length) return false;
-
-  const hasTopCategory = parts.some((part) => part === progressiveRotationTopCategoryKey);
-  const hasSeriesOrDrill = parts.some((part) => progressiveRotationAliasKeys.has(part));
-  return hasTopCategory && hasSeriesOrDrill;
-}
-
-export function getGhostTargetFromProgressiveRotationRuns(levelReached: number): number {
-  const clampedLevel = Math.max(3, Math.min(15, Math.round(levelReached)));
-  const normalized = (clampedLevel - 3) / 12;
-  return Math.round(35 + normalized * 50);
+export function getWpbTierOptionsForCategory(_category?: WpbCategory): WpbRatingTier[] {
+  return uniqueTiers([...wpbRatingTiers]);
 }
 
 const drillRoomSuggestionSet = new Set<string>();

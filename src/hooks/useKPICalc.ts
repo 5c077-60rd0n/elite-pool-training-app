@@ -8,7 +8,6 @@ import {
 import type { DailySessionLog, WeeklySummary } from '../types/tracker';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
-import { getWpbLessonTierPoints } from '../utils/wpbTier';
 
 type TrackerWeeklyKpi = {
   kpiId: string;
@@ -75,7 +74,6 @@ function weeklyMetricsFromDailyLogs(
       lineUpShotCount: Math.round(Math.max(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0))),
       safetyExchangeSuccessPct: Math.round(average(weekLogs.map((item) => item.safetyExchangeSuccessPct).filter((v) => v > 0))),
       wpbLessonsCompleted: weekLogs.filter((item) => item.wpbLesson === 'Yes').length,
-      wpbSkillProgressionScore: weekLogs.reduce((sum, item) => sum + getWpbLessonTierPoints(item), 0),
     }));
 }
 
@@ -99,7 +97,6 @@ function mergeWeeklyMetrics(
       lineUpShotCount: summary.lineUpBestScore,
       safetyExchangeSuccessPct: fromLogs?.safetyExchangeSuccessPct ?? 0,
       wpbLessonsCompleted: summary.wpbLessonsCompleted,
-      wpbSkillProgressionScore: fromLogs?.wpbSkillProgressionScore ?? summary.wpbLessonsCompleted,
     });
   });
 

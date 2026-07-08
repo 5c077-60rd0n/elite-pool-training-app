@@ -7,9 +7,8 @@ import { weeklyScheduleTemplate } from '../data/trackerPlan';
 import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
-  getGhostTargetFromProgressiveRotationRuns,
-  isWpbProgressiveRotationRunsModule,
-  getWpbTierOptionsForModule,
+  getWpbTierOptionsForCategory,
+  wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
 import { useProgramStore } from '../store/useProgramStore';
@@ -28,7 +27,7 @@ import {
   type AdhdSessionMode,
 } from '../utils/adhdMode';
 import { emitTelemetryEvent } from '../utils/telemetry';
-import type { BullseyeCategory, DailySessionLog, WpbRatingTier, YesNo } from '../types/tracker';
+import type { BullseyeCategory, DailySessionLog, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
 
 const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
 
@@ -97,10 +96,12 @@ export default function TodaySession() {
   const [bullseyeProximity, setBullseyeProximity] = useState(0);
   const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
+  const [wpbCategory, setWpbCategory] = useState<WpbCategory>('Fundamentals');
   const [wpbModuleName, setWpbModuleName] = useState('');
-  const [wpbProgressiveRotationRunsLevel, setWpbProgressiveRotationRunsLevel] = useState(3);
   const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
   const [wpbKeyTakeaway, setWpbKeyTakeaway] = useState('');
+  const [ghostDrillPlayed, setGhostDrillPlayed] = useState<YesNo>('Yes');
+  const [ghostDrillWinRatePct, setGhostDrillWinRatePct] = useState(50);
   const [notes, setNotes] = useState('');
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
@@ -132,12 +133,8 @@ export default function TodaySession() {
   );
 
   const wpbTierOptions = useMemo(
-    () => getWpbTierOptionsForModule(wpbModuleName),
-    [wpbModuleName],
-  );
-  const isProgressiveRotationRunsModule = useMemo(
-    () => isWpbProgressiveRotationRunsModule(wpbModuleName),
-    [wpbModuleName],
+    () => getWpbTierOptionsForCategory(wpbCategory),
+    [wpbCategory],
   );
 
   const adhdSessionMode = useMemo(
@@ -277,8 +274,7 @@ export default function TodaySession() {
     if (wpbPick) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbPick.label);
-      if (isWpbProgressiveRotationRunsModule(wpbPick.label)) setWpbProgressiveRotationRunsLevel(3);
-      const nextTiers = getWpbTierOptionsForModule(wpbPick.label);
+      const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
       setWpbTierAchieved(nextTiers[0] ?? '');
     }
 
@@ -316,8 +312,7 @@ export default function TodaySession() {
     if (wpbBlock) {
       setWpbLesson('Yes');
       setWpbModuleName(wpbBlock.label);
-      if (isWpbProgressiveRotationRunsModule(wpbBlock.label)) setWpbProgressiveRotationRunsLevel(3);
-      const nextTiers = getWpbTierOptionsForModule(wpbBlock.label);
+      const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
       setWpbTierAchieved(nextTiers[0] ?? '');
     }
 
@@ -370,10 +365,12 @@ export default function TodaySession() {
     setBullseyeProximity(Math.max(0, lastLoggedSession.bullseyeProximity));
     setBullseyeCategory(lastLoggedSession.bullseyeCategory);
     setWpbLesson(lastLoggedSession.wpbLesson);
+    setWpbCategory(lastLoggedSession.wpbCategory ?? 'Fundamentals');
     setWpbModuleName(lastLoggedSession.wpbModuleName);
-    setWpbProgressiveRotationRunsLevel(lastLoggedSession.wpbProgressiveRotationRunsLevel ?? 3);
     setWpbTierAchieved(lastLoggedSession.wpbTierAchieved ?? '');
     setWpbKeyTakeaway(lastLoggedSession.wpbKeyTakeaway ?? '');
+    setGhostDrillPlayed(lastLoggedSession.ghostDrillPlayed ?? 'Yes');
+    setGhostDrillWinRatePct(lastLoggedSession.ghostDrillWinRatePct ?? 50);
     setNotes(lastLoggedSession.notes);
     setCoachTagsInput((lastLoggedSession.coachTags ?? []).join(', '));
     setVideoClipRefsInput((lastLoggedSession.videoClipRefs ?? []).join(', '));
@@ -392,17 +389,10 @@ export default function TodaySession() {
     }
 
     let effectiveLengthMinutes = Math.max(0, lengthMinutes);
-    const wpbDerivedGhostTarget =
-      wpbLesson === 'Yes' && isProgressiveRotationRunsModule
-        ? getGhostTargetFromProgressiveRotationRuns(wpbProgressiveRotationRunsLevel)
-        : undefined;
     const derivedGhostDrillWinRatePct = Math.round(
-      wpbDerivedGhostTarget
-      ??
-      adaptiveDailyPlan?.targetMetrics.ghostDrillWinRatePct
-      ?? smartAutofill.ghostDrillWinRatePct
-      ?? lastLoggedSession?.ghostDrillWinRatePct
-      ?? 50,
+      ghostDrillPlayed === 'Yes'
+        ? clampPct(ghostDrillWinRatePct)
+        : 0,
     );
     const derivedLineUpShotCount = Math.max(
       0,
@@ -444,12 +434,11 @@ export default function TodaySession() {
       bullseyeProximity: Math.max(0, bullseyeProximity),
       bullseyeCategory,
       wpbLesson,
+      wpbCategory: wpbLesson === 'Yes' ? wpbCategory : undefined,
       wpbModuleName,
-      wpbProgressiveRotationRunsLevel: wpbLesson === 'Yes' && isProgressiveRotationRunsModule
-        ? Math.max(3, Math.min(15, Math.round(wpbProgressiveRotationRunsLevel)))
-        : undefined,
       wpbTierAchieved: wpbLesson === 'Yes' ? (wpbTierAchieved || undefined) : undefined,
       wpbKeyTakeaway,
+      ghostDrillPlayed,
       ghostDrillWinRatePct: derivedGhostDrillWinRatePct,
       lineUpShotCount: derivedLineUpShotCount,
       safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
@@ -828,7 +817,7 @@ export default function TodaySession() {
         </label>
 
         <p className="mt-3 text-xs text-chalk-300">
-          Ghost, safety, and line-up values are auto-derived from your daily flow targets and drill prescriptions.
+          Safety and line-up values are auto-derived from your daily flow targets. Ghost drill play and win rate are logged explicitly below.
         </p>
 
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -867,16 +856,60 @@ export default function TodaySession() {
             </select>
           </label>
           <label className="text-sm text-chalk-300">
+            WPB Category
+            <select
+              value={wpbCategory}
+              onChange={(event) => {
+                const nextCategory = event.target.value as WpbCategory;
+                setWpbCategory(nextCategory);
+                const nextTiers = getWpbTierOptionsForCategory(nextCategory);
+                setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
+              }}
+              disabled={wpbLesson !== 'Yes'}
+              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100 disabled:opacity-60"
+            >
+              {wpbCategoryOptions.map((category) => (
+                <option key={category} value={category}>{category}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <label className="text-sm text-chalk-300">
+            Play the Ghost Drill?
+            <select
+              value={ghostDrillPlayed}
+              onChange={(event) => setGhostDrillPlayed(event.target.value as YesNo)}
+              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            >
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </label>
+          <NumberStepperField
+            label="Ghost Win Rate %"
+            value={ghostDrillWinRatePct}
+            min={0}
+            max={100}
+            step={1}
+            onChange={(next) => {
+              if (ghostDrillPlayed !== 'Yes') return;
+              setGhostDrillWinRatePct(clampPct(next));
+            }}
+            className={ghostDrillPlayed !== 'Yes' ? 'opacity-60' : ''}
+          />
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <label className="text-sm text-chalk-300">
             WPB Module Name
             <input
               value={wpbModuleName}
               onChange={(event) => {
                 const nextModule = event.target.value;
                 setWpbModuleName(nextModule);
-                if (isWpbProgressiveRotationRunsModule(nextModule)) {
-                  setWpbProgressiveRotationRunsLevel((prev) => Math.max(3, Math.min(15, Math.round(prev || 3))));
-                }
-                const nextTiers = getWpbTierOptionsForModule(nextModule);
+                const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
                 setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
               }}
               list="wpb-module-suggestions"
@@ -902,21 +935,8 @@ export default function TodaySession() {
               <option key={tier} value={tier}>{tier}</option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-chalk-300">Tier options are based on the selected WPB drill's available range.</p>
+          <p className="mt-1 text-xs text-chalk-300">Tier options are based on WPB category (not individual drill).</p>
         </label>
-        {wpbLesson === 'Yes' && isProgressiveRotationRunsModule ? (
-          <div className="mt-3">
-            <NumberStepperField
-              label="Progressive Rotation Runs Level (3-15)"
-              value={wpbProgressiveRotationRunsLevel}
-              min={3}
-              max={15}
-              step={1}
-              onChange={(next) => setWpbProgressiveRotationRunsLevel(Math.max(3, Math.min(15, Math.round(next))))}
-            />
-            <p className="mt-1 text-xs text-chalk-300">Enter the highest full run level reached: 3 balls up to 15 balls.</p>
-          </div>
-        ) : null}
         <label className="mt-3 block text-sm text-chalk-300">
           WPB Key Takeaway
           {showExtraLogFields ? (

@@ -28,6 +28,14 @@ export type WpbRatingTier =
   | 'Shortstop'
   | 'Pro';
 
+export type WpbCategory =
+  | 'Fundamentals'
+  | 'Aiming & Shotmaking'
+  | 'Cue Ball Control'
+  | 'Position Play & Runouts'
+  | 'Defense'
+  | 'Jump Shots';
+
 export interface DailySessionLog {
   id: string;
   date: string;
@@ -40,10 +48,11 @@ export interface DailySessionLog {
   bullseyeCategory: BullseyeCategory;
   drillRoomDrillName?: string;
   wpbLesson: YesNo;
+  wpbCategory?: WpbCategory;
   wpbModuleName: string;
-  wpbProgressiveRotationRunsLevel?: number;
   wpbTierAchieved?: WpbRatingTier;
   wpbKeyTakeaway?: string;
+  ghostDrillPlayed: YesNo;
   ghostDrillWinRatePct: number;
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
