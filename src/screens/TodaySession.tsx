@@ -3,7 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import { weeklyScheduleTemplate } from '../data/trackerPlan';
+import { trackerDrills, weeklyScheduleTemplate } from '../data/trackerPlan';
 import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
@@ -149,25 +149,29 @@ export default function TodaySession() {
 
   const todaysExactDrills = useMemo(() => {
     type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
+    const normalize = (value: string) => value.trim().toLowerCase();
 
-    function parseDrillroomFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
+    const trackerAppByName = new Map(
+      trackerDrills.map((drill) => [normalize(drill.name), drill.app as DrillApp] as const),
+    );
+
+    function parseDrillroomFromLabel(rawLabel: string): { category: string; label: string } | null {
       const fromCatalog = drillRoomDrillSuggestions.find((option) => {
         const parts = option.split('>').map((item) => item.trim());
         const name = parts[parts.length - 1] ?? '';
-        return name.toLowerCase() === rawLabel.trim().toLowerCase();
+        return normalize(name) === normalize(rawLabel);
       });
       if (!fromCatalog) return null;
       const parts = fromCatalog.split('>').map((item) => item.trim());
       const category = parts[0] ?? 'General';
       const label = parts.slice(1).join(' > ') || rawLabel;
-      return { app: 'DrillRoom', category, label };
+      return { category, label };
     }
 
-    function parseWpbFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
+    function parseWpbFromLabel(rawLabel: string): { category: string; label: string } | null {
       const direct = rawLabel.split('>').map((item) => item.trim()).filter(Boolean);
       if (direct.length >= 3) {
         return {
-          app: 'WPB',
           category: `${direct[0]} / ${direct[1]}`,
           label: direct.slice(2).join(' > '),
         };
@@ -184,41 +188,42 @@ export default function TodaySession() {
       const topCategory = parts[0] ?? 'General';
       const series = parts[1] ?? 'General';
       return {
-        app: 'WPB',
         category: `${topCategory} / ${series}`,
         label: parts.slice(2).join(' > ') || rawLabel,
       };
     }
 
-    function parseBullseyeFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
-      const normalized = rawLabel.toLowerCase();
-      const match = bullseyeCategoryOptions.find((category) => normalized.includes(category.toLowerCase()));
+    function parseBullseyeFromLabel(rawLabel: string): { category: string; label: string } | null {
+      const normalized = normalize(rawLabel);
+      const match = bullseyeCategoryOptions.find((category) => normalized.includes(normalize(category)));
       if (!match) return null;
       return {
-        app: 'Bullseye',
         category: match,
         label: rawLabel,
       };
     }
 
-    function inferDrill(rawLabel: string, fallbackApp: DrillApp): { app: DrillApp; category: string; label: string } {
-      return (
-        parseWpbFromLabel(rawLabel)
-        ?? parseDrillroomFromLabel(rawLabel)
-        ?? parseBullseyeFromLabel(rawLabel)
-        ?? {
-          app: fallbackApp,
-          category: 'General',
-          label: rawLabel,
-        }
-      );
+    function resolveForApp(rawLabel: string, app: DrillApp): { app: DrillApp; category: string; label: string } {
+      if (app === 'WPB') {
+        const parsed = parseWpbFromLabel(rawLabel);
+        return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
+      }
+
+      if (app === 'DrillRoom') {
+        const parsed = parseDrillroomFromLabel(rawLabel);
+        return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
+      }
+
+      const parsed = parseBullseyeFromLabel(rawLabel);
+      return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
     }
 
     const fallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
 
     if (adaptiveDailyPlan?.prescribedDrills?.length) {
       return adaptiveDailyPlan.prescribedDrills.slice(0, 3).map((label, index) => {
-        const inferred = inferDrill(label, fallbackApps[index] ?? 'DrillRoom');
+        const preferredApp = trackerAppByName.get(normalize(label)) ?? fallbackApps[index] ?? 'DrillRoom';
+        const inferred = resolveForApp(label, preferredApp);
         return {
           step: index + 1,
           app: inferred.app,
@@ -229,7 +234,7 @@ export default function TodaySession() {
     }
 
     return roiPlanner.prescription.slice(0, 3).map((item, index) => {
-      const inferred = inferDrill(item.label, item.app);
+      const inferred = resolveForApp(item.label, item.app);
       return {
         step: index + 1,
         app: inferred.app,
