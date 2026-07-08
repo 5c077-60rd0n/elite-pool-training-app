@@ -113,6 +113,7 @@ export default function TodaySession() {
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
   const [adhdSessionModeOverride, setAdhdSessionModeOverride] = useState<AdhdSessionMode | null>(null);
   const capEventSentRef = useRef(false);
+  const autoModePresetAppliedRef = useRef(false);
 
   const smartAutofill = useMemo(
     () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
@@ -192,10 +193,81 @@ export default function TodaySession() {
     template.focusArea,
   ]);
 
+  function upsertModePresetNote(mode: AdhdSessionMode): void {
+    const modeLabel = mode[0].toUpperCase() + mode.slice(1);
+    setNotes((prev) => {
+      const stripped = prev
+        .replace(/\n?\[Mode Preset: (Quick|Standard|Recovery)\]/g, '')
+        .trimEnd();
+      return `${stripped ? `${stripped}\n` : ''}[Mode Preset: ${modeLabel}]`;
+    });
+  }
+
+  function applyAdhdModePreset(
+    mode: AdhdSessionMode,
+    source: 'manual_override' | 'auto_recommendation',
+    persistOverride: boolean,
+  ): void {
+    if (persistOverride) {
+      setAdhdSessionModeOverride(mode);
+    }
+
+    setLengthTouched(true);
+    setLengthMinutes(getAdhdModeRecommendedMinutes(mode));
+
+    if (mode === 'quick') {
+      setShowAdvancedPanels(false);
+      setGhostDrillPlayed('Yes');
+      setWpbLesson('Yes');
+      setWpbCategory('Fundamentals');
+      setWpbTierAchieved((prev) => prev || 'Beginner');
+      if (!focusTouched) {
+        setFocusTouched(true);
+        setFocusArea('Quick Consistency Session');
+      }
+    }
+
+    if (mode === 'standard') {
+      setGhostDrillPlayed('Yes');
+      setWpbLesson('Yes');
+      if (!focusTouched) {
+        setFocusTouched(true);
+        setFocusArea(template.focusArea);
+      }
+    }
+
+    if (mode === 'recovery') {
+      setShowAdvancedPanels(false);
+      setGhostDrillPlayed('No');
+      setGhostDrillWinRatePct(0);
+      setWpbLesson('No');
+      setWpbTierAchieved('');
+      setFocusTouched(true);
+      setFocusArea(recoveryRecommendationPlan?.recommendedFocusArea ?? 'Recovery Reset Session');
+    }
+
+    upsertModePresetNote(mode);
+
+    emitTelemetryEvent('session_mode_selected', {
+      mode,
+      source,
+      presetApplied: true,
+    });
+  }
+
   useEffect(() => {
-    if (!adhdModeEnabled || alreadyLogged || lengthTouched) return;
-    setLengthMinutes(getAdhdModeRecommendedMinutes(effectiveAdhdSessionMode));
-  }, [adhdModeEnabled, effectiveAdhdSessionMode, alreadyLogged, lengthTouched]);
+    if (!adhdModeEnabled || alreadyLogged || autoModePresetAppliedRef.current || focusTouched || lengthTouched) return;
+    autoModePresetAppliedRef.current = true;
+    applyAdhdModePreset(effectiveAdhdSessionMode, 'auto_recommendation', false);
+  }, [
+    adhdModeEnabled,
+    alreadyLogged,
+    effectiveAdhdSessionMode,
+    focusTouched,
+    lengthTouched,
+    recoveryRecommendationPlan?.recommendedFocusArea,
+    template.focusArea,
+  ]);
 
   useEffect(() => {
     if (!adhdModeEnabled || capEventSentRef.current) return;
@@ -563,13 +635,7 @@ export default function TodaySession() {
                   key={mode}
                   type="button"
                   variant={isActive ? 'primary' : 'secondary'}
-                  onClick={() => {
-                    setAdhdSessionModeOverride(mode);
-                    emitTelemetryEvent('session_mode_selected', {
-                      mode,
-                      source: 'manual_override',
-                    });
-                  }}
+                  onClick={() => applyAdhdModePreset(mode, 'manual_override', true)}
                 >
                   {mode[0].toUpperCase() + mode.slice(1)}
                 </Button>
