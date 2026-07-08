@@ -158,6 +158,7 @@ export default function Dashboard() {
   }, [currentWeekStats, logs, profile.currentWeek]);
 
   const compactFocusView = Boolean(profile.adhdModeEnabled) && !showDeepInsights;
+  const deepInsightsVisible = !profile.adhdModeEnabled || showDeepInsights;
   const nextAction = useMemo(() => {
     if (lastSessionRecommendation?.nextStep) {
       return lastSessionRecommendation.nextStep;
@@ -265,7 +266,7 @@ export default function Dashboard() {
         <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
       </Card>
 
-      {!compactFocusView ? (
+      {deepInsightsVisible ? (
         <>
           <Card className="mb-4" title="Rating Progress">
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -321,7 +322,8 @@ export default function Dashboard() {
         </>
       ) : null}
 
-      <Card className="mb-4" title="This Week in 60 Seconds">
+      {deepInsightsVisible ? (
+        <Card className="mb-4" title="This Week in 60 Seconds">
         {weekIn60.sessions ? (
           <>
             <div className="grid grid-cols-2 gap-2 text-sm">
@@ -355,9 +357,10 @@ export default function Dashboard() {
             </div>
           </>
         )}
-      </Card>
+        </Card>
+      ) : null}
 
-      {!compactFocusView ? (
+      {deepInsightsVisible ? (
         <>
 
       {notificationInsights.length ? (
