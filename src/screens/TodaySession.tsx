@@ -51,6 +51,16 @@ function formatElapsed(seconds: number): string {
   return [hours, minutes, secs].map((part) => part.toString().padStart(2, '0')).join(':');
 }
 
+function speakAnnouncement(text: string): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const utterance = new SpeechSynthesisUtterance(text);
+  utterance.rate = 0.96;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(utterance);
+}
+
 export default function TodaySession() {
   const currentWeek = useProgramStore((s) => s.currentWeek);
   const profile = useSettingsStore((s) => s.profile);
@@ -114,6 +124,8 @@ export default function TodaySession() {
   const [adhdSessionModeOverride, setAdhdSessionModeOverride] = useState<AdhdSessionMode | null>(null);
   const capEventSentRef = useRef(false);
   const autoModePresetAppliedRef = useRef(false);
+  const breakAnnouncementSentRef = useRef(false);
+  const returnAnnouncementSentRef = useRef(false);
 
   const smartAutofill = useMemo(
     () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
@@ -297,6 +309,11 @@ export default function TodaySession() {
     return () => window.clearInterval(interval);
   }, [timerRunning]);
 
+  useEffect(() => {
+    breakAnnouncementSentRef.current = false;
+    returnAnnouncementSentRef.current = false;
+  }, [effectiveAdhdSessionMode, timerDate, today]);
+
   const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
     ? Math.max(0, Math.floor((nowMs - Date.parse(timerStartedAt)) / 1000))
     : 0);
@@ -322,6 +339,33 @@ export default function TodaySession() {
   const adhdStopRuleDue = adhdModeEnabled
     && activeAdhdPreset.optionalSecondBlockMinutes > 0
     && liveElapsedSeconds >= adhdStopCheckpointSeconds;
+
+  useEffect(() => {
+    if (!adhdModeEnabled || !timerRunning || soundEnabled === false) return;
+
+    if (!breakAnnouncementSentRef.current && liveElapsedSeconds >= adhdBreakStartSeconds) {
+      breakAnnouncementSentRef.current = true;
+      speakAnnouncement(
+        `Break time. Reset for ${activeAdhdPreset.breakMinutes} minutes. Keep it simple and avoid extra analysis.`,
+      );
+      return;
+    }
+
+    if (!returnAnnouncementSentRef.current && liveElapsedSeconds >= adhdSecondBlockStartSeconds) {
+      returnAnnouncementSentRef.current = true;
+      speakAnnouncement(
+        `Return to the table. Quick readiness check. If focus is below six out of ten, stop and save. If focus feels steady, continue.`,
+      );
+    }
+  }, [
+    activeAdhdPreset.breakMinutes,
+    adhdBreakStartSeconds,
+    adhdModeEnabled,
+    adhdSecondBlockStartSeconds,
+    liveElapsedSeconds,
+    soundEnabled,
+    timerRunning,
+  ]);
 
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
@@ -715,6 +759,7 @@ export default function TodaySession() {
               <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Stop Rule</p>
               <p className="mt-1 text-ivory-100">{activeAdhdPreset.stopRule}</p>
             </div>
+            <p className="text-xs text-chalk-300">Audio cues will announce the break and the return/readiness check if sound is enabled.</p>
           </div>
         </Card>
       ) : null}
