@@ -1173,44 +1173,47 @@ export default function TodaySession() {
         </label>
       </Card>
 
-      <Card title="Session Notes & Save">
+      <Card className="border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Session Notes & Save">
         {postSessionSummary ? (
-          <div className="mb-3 rounded-xl border border-cue-700/40 bg-cue-950/20 p-3">
-            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Post-session summary</p>
-            <p className="mt-1 text-sm text-ivory-100">{postSessionSummary.title}</p>
-            <p className="mt-1 text-sm text-chalk-300">{postSessionSummary.nextStep}</p>
-            <p className="mt-1 text-xs text-chalk-300">{postSessionSummary.rationale}</p>
-            <p className="mt-2 text-xs text-cue-200">Suggested mode next time: {postSessionSummary.nextMode.toUpperCase()}</p>
+          <div className="mb-4 rounded-2xl border border-cue-600/40 bg-cue-950/20 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
+            <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Post-session summary</p>
+            <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{postSessionSummary.title}</p>
+            <p className="mt-3 text-sm text-chalk-300">{postSessionSummary.nextStep}</p>
+            <p className="mt-2 text-xs text-chalk-300">{postSessionSummary.rationale}</p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+              <span className="rounded-full border border-cue-600/50 bg-cue-900/20 px-2 py-1 text-cue-200">Next mode: {postSessionSummary.nextMode.toUpperCase()}</span>
+              <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Close the loop</span>
+            </div>
           </div>
         ) : null}
         {showExtraLogFields ? (
           <>
-            <label className="mb-2 block text-sm text-chalk-300">Notes</label>
+            <label className="mb-2 block text-xs uppercase tracking-[0.08em] text-cue-300">Notes</label>
             <textarea
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
-              className="mb-3 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
+              className="mb-3 min-h-28 w-full rounded-2xl border border-felt-600 bg-felt-800 p-4 text-ivory-100 shadow-[0_10px_20px_rgba(0,0,0,0.12)]"
             />
-            <label className="mb-2 block text-sm text-chalk-300">Coach Tags (comma separated)</label>
+            <label className="mb-2 block text-xs uppercase tracking-[0.08em] text-cue-300">Coach Tags</label>
             <input
               value={coachTagsInput}
               onChange={(event) => setCoachTagsInput(event.target.value)}
               placeholder="break, pressure, safety, rhythm"
-              className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              className="mb-3 min-h-11 w-full rounded-2xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
-            <label className="mb-2 block text-sm text-chalk-300">Video Clip Refs (comma separated links or labels)</label>
+            <label className="mb-2 block text-xs uppercase tracking-[0.08em] text-cue-300">Video Clip Refs</label>
             <input
               value={videoClipRefsInput}
               onChange={(event) => setVideoClipRefsInput(event.target.value)}
               placeholder="Clip 12 @ 00:42, https://..."
-              className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              className="mb-3 min-h-11 w-full rounded-2xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             />
           </>
         ) : (
-          <p className="mb-3 text-xs text-chalk-300">Notes, coach tags, and video refs are hidden in ADHD mode until advanced tools are enabled.</p>
+          <p className="mb-3 rounded-2xl border border-felt-600 bg-felt-800/55 p-3 text-xs text-chalk-300">Notes, coach tags, and video refs are hidden in ADHD mode until advanced tools are enabled.</p>
         )}
         {dataConfidenceNudges.length ? (
-          <p className="mb-3 text-xs text-chalk-300">
+          <p className="mb-3 rounded-2xl border border-felt-600 bg-felt-800/55 p-3 text-xs text-chalk-300">
             Data confidence nudge: still zero or blank: {dataConfidenceNudges.join(' · ')}
           </p>
         ) : null}
