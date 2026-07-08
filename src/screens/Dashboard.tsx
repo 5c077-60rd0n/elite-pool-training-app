@@ -210,8 +210,9 @@ export default function Dashboard() {
 
   return (
     <PageWrapper title="Dashboard">
-      <Card className="mb-4" title="Coaching Loop">
+      <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/25 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Coaching Loop">
         <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="rounded-full border border-flash-500/30 bg-flash-950/20 px-2 py-1 text-flash-200">Home Base</span>
           {profile.adhdModeEnabled ? (
             <span className="rounded-full border border-cue-600/60 bg-cue-900/20 px-2 py-1 text-cue-200">ADHD Focus Surface</span>
           ) : null}
@@ -219,25 +220,37 @@ export default function Dashboard() {
             <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Next mode: {lastSessionRecommendation.nextMode.toUpperCase()}</span>
           ) : null}
         </div>
-        <p className="mt-3 text-lg text-ivory-100">{nextAction}</p>
-        <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+        <div className="mt-3 rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
+          <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Primary move</p>
+          <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{nextAction}</p>
+          <p className="mt-2 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+        </div>
         {lastSessionRecommendation ? (
-          <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+          <div className="mt-3 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
+            <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Session carryover</p>
             <p className="text-sm text-ivory-100">{lastSessionRecommendation.title}</p>
             <p className="mt-1 text-sm text-chalk-300">{lastSessionRecommendation.rationale}</p>
           </div>
         ) : null}
-        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
-          <p className="text-chalk-300">Current Fargo</p>
-          <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
-          <p className="text-chalk-300">Current Week</p>
-          <p className="text-right text-ivory-100">Week {profile.currentWeek}</p>
-          <p className="text-chalk-300">Training Streak</p>
-          <p className="text-right text-ivory-100">{gamification.streakDays} days</p>
-          <p className="text-chalk-300">Focus State</p>
-          <p className="text-right text-ivory-100">{profile.adhdModeEnabled ? 'Light' : 'Full'}</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Current Fargo</p>
+            <p className="mt-1 text-lg text-ivory-100">{profile.currentFargoRating}</p>
+          </div>
+          <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Week</p>
+            <p className="mt-1 text-lg text-ivory-100">{profile.currentWeek}</p>
+          </div>
+          <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Streak</p>
+            <p className="mt-1 text-lg text-ivory-100">{gamification.streakDays} days</p>
+          </div>
+          <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Focus</p>
+            <p className="mt-1 text-lg text-ivory-100">{profile.adhdModeEnabled ? 'Light' : 'Full'}</p>
+          </div>
         </div>
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link to="/session/today">
             <Button className="w-full">Start Today&apos;s Session</Button>
           </Link>
