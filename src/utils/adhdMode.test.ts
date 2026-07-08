@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getAdhdModeRecommendedMinutes, getAdhdSessionMode } from './adhdMode';
+import { getAdhdModePreset, getAdhdModeRecommendedMinutes, getAdhdSessionMode } from './adhdMode';
 import type { DailySessionLog } from '../types/tracker';
 
 function log(id: string, date: string, lengthMinutes = 60): DailySessionLog {
@@ -41,5 +41,22 @@ describe('adhd mode session logic', () => {
     expect(getAdhdModeRecommendedMinutes('quick')).toBe(25);
     expect(getAdhdModeRecommendedMinutes('recovery')).toBe(15);
     expect(getAdhdModeRecommendedMinutes('standard')).toBe(60);
+  });
+
+  it('returns a full protocol preset for each mode', () => {
+    const quick = getAdhdModePreset('quick');
+    expect(quick.workBlockMinutes).toBe(25);
+    expect(quick.breakMinutes).toBe(5);
+    expect(quick.optionalSecondBlockMinutes).toBe(0);
+
+    const standard = getAdhdModePreset('standard');
+    expect(standard.workBlockMinutes).toBe(30);
+    expect(standard.breakMinutes).toBe(7);
+    expect(standard.optionalSecondBlockMinutes).toBe(20);
+
+    const recovery = getAdhdModePreset('recovery');
+    expect(recovery.workBlockMinutes).toBe(12);
+    expect(recovery.recommendedMinutes).toBe(15);
+    expect(recovery.stopRule.length).toBeGreaterThan(0);
   });
 });

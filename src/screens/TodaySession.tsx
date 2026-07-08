@@ -21,7 +21,7 @@ import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import {
-  getAdhdModeRecommendedMinutes,
+  getAdhdModePreset,
   getAdhdRecommendationLimit,
   getAdhdSessionMode,
   type AdhdSessionMode,
@@ -143,6 +143,10 @@ export default function TodaySession() {
     [logs, today],
   );
   const effectiveAdhdSessionMode = adhdSessionModeOverride ?? adhdSessionMode;
+  const activeAdhdPreset = useMemo(
+    () => getAdhdModePreset(effectiveAdhdSessionMode),
+    [effectiveAdhdSessionMode],
+  );
 
   const recommendationLimit = getAdhdRecommendationLimit(adhdModeEnabled);
   const showExtraLogFields = !adhdModeEnabled || showAdvancedPanels;
@@ -208,12 +212,14 @@ export default function TodaySession() {
     source: 'manual_override' | 'auto_recommendation',
     persistOverride: boolean,
   ): void {
+    const preset = getAdhdModePreset(mode);
+
     if (persistOverride) {
       setAdhdSessionModeOverride(mode);
     }
 
     setLengthTouched(true);
-    setLengthMinutes(getAdhdModeRecommendedMinutes(mode));
+    setLengthMinutes(preset.recommendedMinutes);
 
     if (mode === 'quick') {
       setShowAdvancedPanels(false);
@@ -223,7 +229,7 @@ export default function TodaySession() {
       setWpbTierAchieved((prev) => prev || 'Beginner');
       if (!focusTouched) {
         setFocusTouched(true);
-        setFocusArea('Quick Consistency Session');
+        setFocusArea(preset.defaultFocusArea);
       }
     }
 
@@ -232,7 +238,7 @@ export default function TodaySession() {
       setWpbLesson('Yes');
       if (!focusTouched) {
         setFocusTouched(true);
-        setFocusArea(template.focusArea);
+        setFocusArea(template.focusArea || preset.defaultFocusArea);
       }
     }
 
@@ -243,7 +249,7 @@ export default function TodaySession() {
       setWpbLesson('No');
       setWpbTierAchieved('');
       setFocusTouched(true);
-      setFocusArea(recoveryRecommendationPlan?.recommendedFocusArea ?? 'Recovery Reset Session');
+      setFocusArea(recoveryRecommendationPlan?.recommendedFocusArea ?? preset.defaultFocusArea);
     }
 
     upsertModePresetNote(mode);
@@ -306,6 +312,16 @@ export default function TodaySession() {
     : liveElapsedSeconds > 0
       ? 'Resume Timer'
       : 'Start Timer';
+  const adhdBreakStartSeconds = activeAdhdPreset.workBlockMinutes * 60;
+  const adhdSecondBlockStartSeconds = (activeAdhdPreset.workBlockMinutes + activeAdhdPreset.breakMinutes) * 60;
+  const adhdStopCheckpointSeconds =
+    (activeAdhdPreset.workBlockMinutes + activeAdhdPreset.breakMinutes + activeAdhdPreset.optionalSecondBlockMinutes) * 60;
+  const adhdBreakDue = adhdModeEnabled
+    && liveElapsedSeconds >= adhdBreakStartSeconds
+    && liveElapsedSeconds < adhdSecondBlockStartSeconds;
+  const adhdStopRuleDue = adhdModeEnabled
+    && activeAdhdPreset.optionalSecondBlockMinutes > 0
+    && liveElapsedSeconds >= adhdStopCheckpointSeconds;
 
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
@@ -645,6 +661,12 @@ export default function TodaySession() {
         ) : null}
         <p className="mt-1 text-lg text-ivory-100">{focusArea || template.focusArea}</p>
         <p className="mt-1 text-sm text-ivory-200">{template.sessionLengthLabel} · Start with one full DrillRoom + Bullseye + WPB cycle.</p>
+        {adhdModeEnabled ? (
+          <p className="mt-2 rounded-xl border border-cue-700/50 bg-cue-950/20 px-3 py-2 text-xs text-cue-200">
+            ADHD protocol: {activeAdhdPreset.workBlockMinutes}m focus + {activeAdhdPreset.breakMinutes}m reset
+            {activeAdhdPreset.optionalSecondBlockMinutes > 0 ? ` + optional ${activeAdhdPreset.optionalSecondBlockMinutes}m second block` : ''}. {activeAdhdPreset.stopRule}
+          </p>
+        ) : null}
         <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">1. Set the day</p>
           <p className="mt-1 text-xs text-chalk-300">Apply the default 3-app plan. Only open advanced tools if you actually need them.</p>
@@ -673,6 +695,21 @@ export default function TodaySession() {
       <Card className="mb-4" title="2. Practice Timer">
         <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
         <p className="mt-1 text-xs text-chalk-300">Start practice, run the timer, then apply the minutes to your log.</p>
+        {adhdModeEnabled ? (
+          <p className="mt-2 text-xs text-cue-200">
+            Timer cue: break at {activeAdhdPreset.workBlockMinutes}m. {activeAdhdPreset.stopRule}
+          </p>
+        ) : null}
+        {adhdBreakDue ? (
+          <p className="mt-2 rounded-lg border border-cue-700/50 bg-cue-950/20 px-2 py-1 text-xs text-cue-200">
+            Break window active: take {activeAdhdPreset.breakMinutes} minutes now, then decide if you want another block.
+          </p>
+        ) : null}
+        {adhdStopRuleDue ? (
+          <p className="mt-2 rounded-lg border border-cue-700/50 bg-cue-950/20 px-2 py-1 text-xs text-cue-200">
+            Stop checkpoint reached: if execution quality has dropped, save now and protect consistency.
+          </p>
+        ) : null}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {!timerRunning && liveElapsedSeconds === 0 ? (
             <Button onClick={startTimer}>{primaryTimerActionLabel}</Button>

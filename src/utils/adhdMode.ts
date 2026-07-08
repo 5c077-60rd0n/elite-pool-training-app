@@ -2,6 +2,46 @@ import type { DailySessionLog } from '../types/tracker';
 
 export type AdhdSessionMode = 'quick' | 'standard' | 'recovery';
 
+export interface AdhdModePreset {
+  mode: AdhdSessionMode;
+  recommendedMinutes: number;
+  workBlockMinutes: number;
+  breakMinutes: number;
+  optionalSecondBlockMinutes: number;
+  defaultFocusArea: string;
+  stopRule: string;
+}
+
+const adhdModePresets: Record<AdhdSessionMode, AdhdModePreset> = {
+  quick: {
+    mode: 'quick',
+    recommendedMinutes: 25,
+    workBlockMinutes: 25,
+    breakMinutes: 5,
+    optionalSecondBlockMinutes: 0,
+    defaultFocusArea: 'Quick Consistency Session',
+    stopRule: 'Stop after one block if quality slips for two drills in a row.',
+  },
+  standard: {
+    mode: 'standard',
+    recommendedMinutes: 60,
+    workBlockMinutes: 30,
+    breakMinutes: 7,
+    optionalSecondBlockMinutes: 20,
+    defaultFocusArea: 'Standard Transfer Session',
+    stopRule: 'After block two, stop if focus is below 6/10.',
+  },
+  recovery: {
+    mode: 'recovery',
+    recommendedMinutes: 15,
+    workBlockMinutes: 12,
+    breakMinutes: 5,
+    optionalSecondBlockMinutes: 0,
+    defaultFocusArea: 'Recovery Reset Session',
+    stopRule: 'If focus starts below 5/10, end early and protect consistency.',
+  },
+};
+
 function toEpochDay(value: string): number {
   const parsed = Date.parse(`${value}T00:00:00`);
   if (Number.isNaN(parsed)) return 0;
@@ -31,9 +71,11 @@ export function getAdhdSessionMode(
 }
 
 export function getAdhdModeRecommendedMinutes(mode: AdhdSessionMode): number {
-  if (mode === 'quick') return 25;
-  if (mode === 'recovery') return 15;
-  return 60;
+  return adhdModePresets[mode].recommendedMinutes;
+}
+
+export function getAdhdModePreset(mode: AdhdSessionMode): AdhdModePreset {
+  return adhdModePresets[mode];
 }
 
 export function getAdhdRecommendationLimit(adhdModeEnabled: boolean): number {
