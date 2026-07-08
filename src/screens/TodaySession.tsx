@@ -116,6 +116,12 @@ export default function TodaySession() {
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
+  const [postSessionSummary, setPostSessionSummary] = useState<{
+    title: string;
+    nextMode: 'quick' | 'standard' | 'recovery';
+    nextStep: string;
+    rationale: string;
+  } | null>(null);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [focusTouched, setFocusTouched] = useState(false);
@@ -617,6 +623,18 @@ export default function TodaySession() {
 
     const latestXp = after.latestSession?.xpEarned ?? 0;
     const latestQuality = after.latestSession?.qualityScore ?? 0;
+    const suggestedNextMode: 'quick' | 'standard' | 'recovery' =
+      latestQuality < 60 || effectiveLengthMinutes < 20
+        ? 'recovery'
+        : latestQuality >= 78 && effectiveLengthMinutes >= 45
+          ? 'standard'
+          : 'quick';
+    const suggestedNextStep =
+      suggestedNextMode === 'recovery'
+        ? 'Use a recovery day next: short block, lower friction, one simple target.'
+        : suggestedNextMode === 'standard'
+          ? 'Use a standard session next: one focused block, one break, then decide whether to continue.'
+          : 'Use a quick session next: one short clean block and stop before fatigue blurs the work.';
     const comebackBonusAwarded = Boolean(after.latestSession?.bonusTags.includes('Comeback bonus'));
     if (comebackBonusAwarded) {
       emitTelemetryEvent('comeback_bonus_awarded', {
@@ -630,6 +648,17 @@ export default function TodaySession() {
         leveledUp ? ' (Level Up!)' : ''
       }`,
     );
+    setPostSessionSummary({
+      title: `Next session: ${suggestedNextMode.toUpperCase()}`,
+      nextMode: suggestedNextMode,
+      nextStep: suggestedNextStep,
+      rationale:
+        latestQuality < 60
+          ? 'Quality was low enough that the app is favoring a lower-friction recovery pattern.'
+          : latestQuality >= 78
+            ? 'Quality held up well, so the next session can stay efficient without shrinking the work too much.'
+            : 'The app is steering toward a short, repeatable block to protect consistency and attention.' ,
+    });
 
     if (leveledUp) {
       setCelebration({
@@ -1128,6 +1157,15 @@ export default function TodaySession() {
       </Card>
 
       <Card title="Session Notes & Save">
+        {postSessionSummary ? (
+          <div className="mb-3 rounded-xl border border-cue-700/40 bg-cue-950/20 p-3">
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Post-session summary</p>
+            <p className="mt-1 text-sm text-ivory-100">{postSessionSummary.title}</p>
+            <p className="mt-1 text-sm text-chalk-300">{postSessionSummary.nextStep}</p>
+            <p className="mt-1 text-xs text-chalk-300">{postSessionSummary.rationale}</p>
+            <p className="mt-2 text-xs text-cue-200">Suggested mode next time: {postSessionSummary.nextMode.toUpperCase()}</p>
+          </div>
+        ) : null}
         {showExtraLogFields ? (
           <>
             <label className="mb-2 block text-sm text-chalk-300">Notes</label>
