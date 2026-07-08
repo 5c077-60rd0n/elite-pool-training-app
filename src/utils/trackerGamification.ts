@@ -35,6 +35,14 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
+function hasTriadSessionSignals(log: DailySessionLog): boolean {
+  return (
+    log.drillRoomShotmakingPct > 0
+    && log.ghostDrillPlayed === 'Yes'
+    && log.wpbLesson === 'Yes'
+  );
+}
+
 function levelFloor(level: number): number {
   return 120 * level * level;
 }
@@ -186,9 +194,13 @@ export function evaluateTrackerSessionReward(
   const drillRoom = clamp(log.drillRoomShotmakingPct, 0, 100);
   const ghost = clamp(log.ghostDrillWinRatePct, 0, 100);
   const safety = clamp(log.safetyExchangeSuccessPct, 0, 100);
-  const bullseye = clamp((5 - log.bullseyeProximity) * 20, 0, 100);
+  const bullseye = log.bullseyeProximity > 0
+    ? clamp((5 - log.bullseyeProximity) * 20, 0, 100)
+    : 55;
   const lineup = clamp((log.lineUpShotCount / 30) * 100, 0, 100);
   const wpbTierPoints = getWpbLessonTierPoints(log);
+  const triadSignals = hasTriadSessionSignals(log);
+  const protocolWindowHit = log.lengthMinutes >= 15 && log.lengthMinutes <= 70;
 
   const qualityScore = Math.round(
     drillRoom * 0.3 +
@@ -209,6 +221,14 @@ export function evaluateTrackerSessionReward(
   if (drillRoom >= 80 && ghost >= 60) {
     xpEarned += 12;
     bonusTags.push('Pressure conversion');
+  }
+  if (triadSignals) {
+    xpEarned += 10;
+    bonusTags.push('Training triad');
+  }
+  if (triadSignals && protocolWindowHit) {
+    xpEarned += 10;
+    bonusTags.push('Protocol adherence');
   }
 
   const sevenDaysAgo = toEpochDay(log.date) - 7;
@@ -248,6 +268,7 @@ function computeWeeklyQuests(
 ): TrackerQuestProgress[] {
   const qualitySessions = thisWeekLogs.filter((log) => (rewards.get(log.id)?.qualityScore ?? 0) >= 70).length;
   const wpbLessons = thisWeekLogs.filter((log) => log.wpbLesson === 'Yes').length;
+  const triadSessions = thisWeekLogs.filter((log) => hasTriadSessionSignals(log)).length;
 
   return [
     {
@@ -270,6 +291,13 @@ function computeWeeklyQuests(
       progress: wpbLessons,
       target: 2,
       completed: wpbLessons >= 2,
+    },
+    {
+      id: 'weekly-triad-3',
+      name: 'Triad Discipline',
+      progress: triadSessions,
+      target: 3,
+      completed: triadSessions >= 3,
     },
   ];
 }

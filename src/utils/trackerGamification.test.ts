@@ -75,4 +75,36 @@ describe('getTrackerGamificationSnapshot seasonal data', () => {
 
     expect((proSnapshot.latestSession?.xpEarned ?? 0)).toBeGreaterThan(beginnerSnapshot.latestSession?.xpEarned ?? 0);
   });
+
+  it('awards protocol and triad bonuses for aligned sessions', () => {
+    const aligned = session('aligned', '2026-07-06', 'Pattern Play', 4);
+    aligned.lengthMinutes = 45;
+    aligned.ghostDrillPlayed = 'Yes';
+    aligned.wpbLesson = 'Yes';
+
+    const offProtocol = session('off', '2026-07-07', 'Pattern Play', 4);
+    offProtocol.lengthMinutes = 95;
+    offProtocol.ghostDrillPlayed = 'No';
+    offProtocol.wpbLesson = 'No';
+
+    const alignedSnapshot = getTrackerGamificationSnapshot([aligned], new Date('2026-07-08T00:00:00.000Z'));
+    const offSnapshot = getTrackerGamificationSnapshot([offProtocol], new Date('2026-07-08T00:00:00.000Z'));
+
+    expect(alignedSnapshot.latestSession?.bonusTags).toContain('Training triad');
+    expect(alignedSnapshot.latestSession?.bonusTags).toContain('Protocol adherence');
+    expect((alignedSnapshot.latestSession?.xpEarned ?? 0)).toBeGreaterThan(offSnapshot.latestSession?.xpEarned ?? 0);
+  });
+
+  it('does not over-reward zero bullseye proximity defaults', () => {
+    const realistic = session('real', '2026-07-08', 'Pattern Play', 2);
+    realistic.bullseyeProximity = 2.0;
+
+    const defaultZero = session('zero', '2026-07-09', 'Pattern Play', 2);
+    defaultZero.bullseyeProximity = 0;
+
+    const realisticSnapshot = getTrackerGamificationSnapshot([realistic], new Date('2026-07-10T00:00:00.000Z'));
+    const zeroSnapshot = getTrackerGamificationSnapshot([defaultZero], new Date('2026-07-10T00:00:00.000Z'));
+
+    expect((zeroSnapshot.latestSession?.qualityScore ?? 0)).toBeLessThanOrEqual(realisticSnapshot.latestSession?.qualityScore ?? 0);
+  });
 });
