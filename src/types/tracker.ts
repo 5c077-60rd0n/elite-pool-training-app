@@ -20,6 +20,16 @@ export type MatchResult = 'Win' | 'Loss';
 
 export type YesNo = 'Yes' | 'No';
 
+export type SessionRecommendationMode = 'quick' | 'standard' | 'recovery';
+
+export interface SessionRecommendation {
+  title: string;
+  nextMode: SessionRecommendationMode;
+  nextStep: string;
+  rationale: string;
+  updatedAt: string;
+}
+
 export type WpbRatingTier =
   | 'Beginner'
   | 'Novice'

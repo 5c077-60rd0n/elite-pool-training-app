@@ -26,6 +26,7 @@ import type {
   MilestonePhaseStatus,
   MilestoneTrackerRow,
   OpponentPrepCard,
+  SessionRecommendation,
   SeasonChallengeProgress,
   SeasonMeta,
   TrackerSyncConflict,
@@ -120,8 +121,10 @@ interface TrackerState {
   eliteLab: ElitePerformanceLabData;
   adaptiveDailyPlan: AdaptiveDailyPlan | null;
   recoveryRecommendationPlan: RecoveryRecommendationPlan | null;
+  lastSessionRecommendation: SessionRecommendation | null;
   syncState: TrackerSyncState;
   addDailySessionLog: (entry: DailySessionLog, currentFargo: number) => void;
+  setLastSessionRecommendation: (entry: SessionRecommendation | null) => void;
   addFargoRating: (entry: FargoRatingLogEntry) => void;
   addMechanicsWeeklyAudit: (entry: MechanicsWeeklyAuditLog) => void;
   upsertMechanicsChecklistItem: (entry: MechanicsChecklistItem) => void;
@@ -161,6 +164,7 @@ export const useTrackerStore = create<TrackerState>()(
       coachExportHistory: [],
       adaptiveDailyPlan: null,
       recoveryRecommendationPlan: null,
+      lastSessionRecommendation: null,
       syncState: { pendingLogIds: [], lastSyncAt: undefined, conflicts: [] },
       addDailySessionLog: (entry, currentFargo) =>
         set((state) => {
@@ -255,6 +259,7 @@ export const useTrackerStore = create<TrackerState>()(
             },
           };
         }),
+      setLastSessionRecommendation: (entry) => set({ lastSessionRecommendation: entry }),
       addFargoRating: (entry) =>
         set((state) => {
           const nextFargo = [entry, ...state.fargoRatingLog.filter((item) => item.id !== entry.id)];

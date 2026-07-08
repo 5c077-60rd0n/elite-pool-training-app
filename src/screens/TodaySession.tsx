@@ -27,7 +27,7 @@ import {
   type AdhdSessionMode,
 } from '../utils/adhdMode';
 import { emitTelemetryEvent } from '../utils/telemetry';
-import type { BullseyeCategory, DailySessionLog, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
+import type { BullseyeCategory, DailySessionLog, SessionRecommendation, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
 
 const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
 
@@ -79,6 +79,7 @@ export default function TodaySession() {
   const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
+  const setLastSessionRecommendation = useTrackerStore((s) => s.setLastSessionRecommendation);
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const competitionLog = useTrackerStore((s) => s.competitionLog);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
@@ -116,12 +117,7 @@ export default function TodaySession() {
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
-  const [postSessionSummary, setPostSessionSummary] = useState<{
-    title: string;
-    nextMode: 'quick' | 'standard' | 'recovery';
-    nextStep: string;
-    rationale: string;
-  } | null>(null);
+  const [postSessionSummary, setPostSessionSummary] = useState<SessionRecommendation | null>(null);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [focusTouched, setFocusTouched] = useState(false);
@@ -657,7 +653,20 @@ export default function TodaySession() {
           ? 'Quality was low enough that the app is favoring a lower-friction recovery pattern.'
           : latestQuality >= 78
             ? 'Quality held up well, so the next session can stay efficient without shrinking the work too much.'
-            : 'The app is steering toward a short, repeatable block to protect consistency and attention.' ,
+            : 'The app is steering toward a short, repeatable block to protect consistency and attention.',
+      updatedAt: now,
+    });
+    setLastSessionRecommendation({
+      title: `Next session: ${suggestedNextMode.toUpperCase()}`,
+      nextMode: suggestedNextMode,
+      nextStep: suggestedNextStep,
+      rationale:
+        latestQuality < 60
+          ? 'Quality was low enough that the app is favoring a lower-friction recovery pattern.'
+          : latestQuality >= 78
+            ? 'Quality held up well, so the next session can stay efficient without shrinking the work too much.'
+            : 'The app is steering toward a short, repeatable block to protect consistency and attention.',
+      updatedAt: now,
     });
 
     if (leveledUp) {

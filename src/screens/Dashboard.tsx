@@ -31,6 +31,7 @@ export default function Dashboard() {
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
+  const lastSessionRecommendation = useTrackerStore((s) => s.lastSessionRecommendation);
   const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
   const personalRecords = useTrackerStore((s) => s.personalRecords);
   const confidenceIndexHistory = useTrackerStore((s) => s.confidenceIndexHistory);
@@ -158,6 +159,9 @@ export default function Dashboard() {
 
   const compactFocusView = Boolean(profile.adhdModeEnabled) && !showDeepInsights;
   const nextAction = useMemo(() => {
+    if (lastSessionRecommendation?.nextStep) {
+      return lastSessionRecommendation.nextStep;
+    }
     if (recoveryRecommendationPlan?.actions?.length) {
       return recoveryRecommendationPlan.actions[0];
     }
@@ -165,7 +169,7 @@ export default function Dashboard() {
       return adaptiveDailyPlan.actionChecklist[0];
     }
     return 'Run one focused session and save the log before opening analytics.';
-  }, [adaptiveDailyPlan, recoveryRecommendationPlan]);
+  }, [adaptiveDailyPlan, lastSessionRecommendation, recoveryRecommendationPlan]);
 
   useEffect(() => {
     if (!notificationsEnabled) return;
@@ -221,6 +225,15 @@ export default function Dashboard() {
               {showDeepInsights ? 'Hide Deep Insights' : 'Show Deep Insights'}
             </Button>
           </div>
+        </Card>
+      ) : null}
+
+      {lastSessionRecommendation ? (
+        <Card className="mb-4" title="Last Session Summary">
+          <p className="text-sm text-ivory-100">{lastSessionRecommendation.title}</p>
+          <p className="mt-1 text-sm text-chalk-300">{lastSessionRecommendation.nextStep}</p>
+          <p className="mt-1 text-xs text-chalk-300">{lastSessionRecommendation.rationale}</p>
+          <p className="mt-2 text-xs text-cue-200">Suggested mode next time: {lastSessionRecommendation.nextMode.toUpperCase()}</p>
         </Card>
       ) : null}
 
