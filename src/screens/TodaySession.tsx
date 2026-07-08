@@ -147,6 +147,22 @@ export default function TodaySession() {
     [adaptiveDailyPlan, competitionLog, logs],
   );
 
+  const todaysExactDrills = useMemo(() => {
+    if (adaptiveDailyPlan?.prescribedDrills?.length) {
+      return adaptiveDailyPlan.prescribedDrills.slice(0, 3).map((label, index) => ({
+        step: index + 1,
+        app: index === 0 ? 'DrillRoom' : index === 1 ? 'Bullseye' : 'WPB',
+        label,
+      }));
+    }
+
+    return roiPlanner.prescription.slice(0, 3).map((item, index) => ({
+      step: index + 1,
+      app: item.app,
+      label: item.label,
+    }));
+  }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
+
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
     [logs, today],
@@ -744,6 +760,26 @@ export default function TodaySession() {
           </div>
         ) : null}
       </Card>
+
+      {todaysExactDrills.length ? (
+        <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Assigned Drills (Do In Order)">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Exact work list</p>
+          <p className="mt-1 text-xs text-chalk-300">Run these in sequence. Do not add extras before finishing all three.</p>
+          <div className="mt-3 space-y-2">
+            {todaysExactDrills.map((item) => (
+              <div key={`${item.step}-${item.app}-${item.label}`} className="flex gap-3 rounded-2xl border border-felt-600/60 bg-felt-900/30 p-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cue-600/50 bg-cue-900/20 text-sm text-cue-200">
+                  {item.step}
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-ivory-100">{item.app}</p>
+                  <p className="mt-1 text-xs text-chalk-300">{item.label}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      ) : null}
 
       {adhdModeEnabled ? (
         <Card className="mb-4" title="Session Protocol">
