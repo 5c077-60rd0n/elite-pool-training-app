@@ -692,6 +692,33 @@ export default function TodaySession() {
         </div>
       </Card>
 
+      {adhdModeEnabled ? (
+        <Card className="mb-4" title="Session Protocol">
+          <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+            <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Block 1</p>
+              <p className="mt-1 text-ivory-100">{activeAdhdPreset.workBlockMinutes} minutes of focused work.</p>
+            </div>
+            <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Break</p>
+              <p className="mt-1 text-ivory-100">{activeAdhdPreset.breakMinutes} minutes off the table.</p>
+            </div>
+            <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Optional Block 2</p>
+              <p className="mt-1 text-ivory-100">
+                {activeAdhdPreset.optionalSecondBlockMinutes > 0
+                  ? `${activeAdhdPreset.optionalSecondBlockMinutes} minutes if focus is still clean.`
+                  : 'Skip this mode and save the win.'}
+              </p>
+            </div>
+            <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Stop Rule</p>
+              <p className="mt-1 text-ivory-100">{activeAdhdPreset.stopRule}</p>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       <Card className="mb-4" title="2. Practice Timer">
         <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
         <p className="mt-1 text-xs text-chalk-300">Start practice, run the timer, then apply the minutes to your log.</p>

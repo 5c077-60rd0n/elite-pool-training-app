@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
@@ -12,6 +12,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
 
 export default function Onboarding() {
   const navigate = useNavigate();
+  const location = useLocation() as { state?: { returnTo?: string } };
   const [step, setStep] = useState<Step>(1);
   const [name, setName] = useState('');
   const [rating, setRating] = useState(550);
@@ -26,6 +27,7 @@ export default function Onboarding() {
   const setCurrentWeek = useProgramStore((s) => s.setCurrentWeek);
 
   const computed = useMemo(() => calculateProgramProgress(startDate), [startDate]);
+  const returnTo = location.state?.returnTo;
 
   function goNext(): void {
     setStep((prev) => (prev < 5 ? ((prev + 1) as Step) : prev));
@@ -50,7 +52,7 @@ export default function Onboarding() {
     });
     setCurrentWeek(computed.week);
     markDone();
-    navigate('/');
+    navigate(returnTo || '/');
   }
 
   return (
@@ -156,6 +158,11 @@ export default function Onboarding() {
             {step === 5 ? (
               <div>
                 <h2 className="mb-2 text-xl font-semibold text-ivory-100">Ready to begin your climb</h2>
+                {returnTo ? (
+                  <p className="mb-3 rounded-xl border border-cue-600/40 bg-cue-900/10 p-3 text-sm text-cue-200">
+                    You started from {returnTo}. Finish setup and I&apos;ll take you there next.
+                  </p>
+                ) : null}
                 <div className="space-y-2 text-sm text-ivory-200">
                   <p>Name: {name || 'Player'}</p>
                   <p>Current Fargo: {rating}</p>
@@ -179,7 +186,7 @@ export default function Onboarding() {
         {step < 5 ? (
           <Button onClick={goNext} disabled={step === 2 && !name.trim()}>Continue</Button>
         ) : (
-          <Button onClick={finishOnboarding}>Begin Your Climb</Button>
+          <Button onClick={finishOnboarding}>{returnTo ? 'Finish Setup & Continue' : 'Begin Your Climb'}</Button>
         )}
       </div>
     </PageWrapper>

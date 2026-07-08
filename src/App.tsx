@@ -6,7 +6,7 @@ import AppRouter from './router/AppRouter';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <div className="min-h-screen bg-felt-900 text-ivory-100 selection:bg-cue-500/30">
         <Header />
         <AppRouter />

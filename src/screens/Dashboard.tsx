@@ -224,62 +224,89 @@ export default function Dashboard() {
         </Card>
       ) : null}
 
+      {compactFocusView ? (
+        <Card className="mb-4" title="Session Snapshot">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <p className="text-chalk-300">Current Fargo</p>
+            <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
+            <p className="text-chalk-300">Current Week</p>
+            <p className="text-right text-ivory-100">Week {profile.currentWeek}</p>
+            <p className="text-chalk-300">Training Streak</p>
+            <p className="text-right text-ivory-100">{gamification.streakDays} days</p>
+            <p className="text-chalk-300">Next Action</p>
+            <p className="text-right text-ivory-100">Start one focused session</p>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Link to="/session/today">
+              <Button className="w-full">Open Today&apos;s Session</Button>
+            </Link>
+            <Button type="button" variant="secondary" onClick={() => setShowDeepInsights(true)}>
+              Show Deep Insights
+            </Button>
+          </div>
+        </Card>
+      ) : null}
+
       <Card className="mb-4" title="Today&apos;s Next Step">
         <p className="text-sm text-ivory-100">{nextAction}</p>
         <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
       </Card>
 
-      <Card className="mb-4" title="Rating Progress">
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <p className="text-chalk-300">Current Fargo Rating</p>
-          <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
-          <p className="text-chalk-300">Target Fargo Rating</p>
-          <p className="text-right text-ivory-100">800</p>
-          <p className="text-chalk-300">Points to Goal</p>
-          <p className="text-right text-ivory-100">{pointsToGoal}</p>
-          <p className="text-chalk-300">Progress to Goal</p>
-          <p className="text-right text-ivory-100">{Math.max(0, Math.min(100, progressToGoal))}%</p>
-          <p className="text-chalk-300">Current Phase</p>
-          <p className="text-right text-ivory-100">Phase {currentPhase}</p>
-          <p className="text-chalk-300">Estimated Fargo (Model)</p>
-          <p className="text-right text-cue-300">{estimatedFargo}</p>
-        </div>
-      </Card>
+      {!compactFocusView ? (
+        <>
+          <Card className="mb-4" title="Rating Progress">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Current Fargo Rating</p>
+              <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
+              <p className="text-chalk-300">Target Fargo Rating</p>
+              <p className="text-right text-ivory-100">800</p>
+              <p className="text-chalk-300">Points to Goal</p>
+              <p className="text-right text-ivory-100">{pointsToGoal}</p>
+              <p className="text-chalk-300">Progress to Goal</p>
+              <p className="text-right text-ivory-100">{Math.max(0, Math.min(100, progressToGoal))}%</p>
+              <p className="text-chalk-300">Current Phase</p>
+              <p className="text-right text-ivory-100">Phase {currentPhase}</p>
+              <p className="text-chalk-300">Estimated Fargo (Model)</p>
+              <p className="text-right text-cue-300">{estimatedFargo}</p>
+            </div>
+          </Card>
 
-      <Card className="mb-4" title="Current Week KPIs">
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <p className="text-chalk-300">DrillRoom Shotmaking % (Avg)</p>
-          <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
-          <p className="text-chalk-300">Bullseye Proximity Score (Avg)</p>
-          <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
-          <p className="text-chalk-300">Ghost Drill Win Rate % (Best)</p>
-          <p className="text-right text-ivory-100">{currentWeekStats?.ghostDrillBestWinRatePct ?? 0}</p>
-          <p className="text-chalk-300">WPB Lessons This Week</p>
-          <p className="text-right text-ivory-100">{currentWeekWpbLessons}</p>
-          <p className="text-chalk-300">Weeks Logged</p>
-          <p className="text-right text-ivory-100">{weeksLogged}</p>
-          <p className="text-chalk-300">Milestones Met</p>
-          <p className="text-right text-ivory-100">{milestonesMet}</p>
-        </div>
-      </Card>
+          <Card className="mb-4" title="Current Week KPIs">
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">DrillRoom Shotmaking % (Avg)</p>
+              <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
+              <p className="text-chalk-300">Bullseye Proximity Score (Avg)</p>
+              <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
+              <p className="text-chalk-300">Ghost Drill Win Rate % (Best)</p>
+              <p className="text-right text-ivory-100">{currentWeekStats?.ghostDrillBestWinRatePct ?? 0}</p>
+              <p className="text-chalk-300">WPB Lessons This Week</p>
+              <p className="text-right text-ivory-100">{currentWeekWpbLessons}</p>
+              <p className="text-chalk-300">Weeks Logged</p>
+              <p className="text-right text-ivory-100">{weeksLogged}</p>
+              <p className="text-chalk-300">Milestones Met</p>
+              <p className="text-right text-ivory-100">{milestonesMet}</p>
+            </div>
+          </Card>
 
-      <Card className="mb-4" title="Tournament Readiness">
-        <div className="mb-2 flex items-center justify-between">
-          <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
-          <p className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-xs text-chalk-200">{tournamentReadiness.status.toUpperCase()}</p>
-        </div>
-        <p className="mb-2 text-xs text-chalk-300">One-glance readiness from training consistency, pressure simulation, and confidence trend.</p>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <p className="text-chalk-300">Readiness score</p>
-          <p className="text-right text-ivory-100">{tournamentReadiness.score}</p>
-          <p className="text-chalk-300">Status</p>
-          <p className="text-right text-ivory-100">{tournamentReadiness.status.toUpperCase()}</p>
-          <p className="text-chalk-300">Drill readiness</p>
-          <p className="text-right text-ivory-100">{drillReadinessScore}</p>
-          <p className="text-chalk-300">Latest match readiness</p>
-          <p className="text-right text-ivory-100">{latestMatchSimulation?.matchReadinessScore ?? 0}</p>
-        </div>
-      </Card>
+          <Card className="mb-4" title="Tournament Readiness">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-3xl font-semibold text-ivory-100">{tournamentReadiness.score}</p>
+              <p className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-xs text-chalk-200">{tournamentReadiness.status.toUpperCase()}</p>
+            </div>
+            <p className="mb-2 text-xs text-chalk-300">One-glance readiness from training consistency, pressure simulation, and confidence trend.</p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <p className="text-chalk-300">Readiness score</p>
+              <p className="text-right text-ivory-100">{tournamentReadiness.score}</p>
+              <p className="text-chalk-300">Status</p>
+              <p className="text-right text-ivory-100">{tournamentReadiness.status.toUpperCase()}</p>
+              <p className="text-chalk-300">Drill readiness</p>
+              <p className="text-right text-ivory-100">{drillReadinessScore}</p>
+              <p className="text-chalk-300">Latest match readiness</p>
+              <p className="text-right text-ivory-100">{latestMatchSimulation?.matchReadinessScore ?? 0}</p>
+            </div>
+          </Card>
+        </>
+      ) : null}
 
       <Card className="mb-4" title="This Week in 60 Seconds">
         {weekIn60.sessions ? (
@@ -303,7 +330,17 @@ export default function Dashboard() {
             </Link>
           </>
         ) : (
-          <p className="text-sm text-chalk-300">No sessions logged for this week yet. Complete one session to unlock your 60-second review.</p>
+          <>
+            <p className="text-sm text-chalk-300">No sessions logged for this week yet. Complete one short session to unlock your 60-second review.</p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Link to="/session/today">
+                <Button className="w-full">Start Today&apos;s Session</Button>
+              </Link>
+              <Link to="/match-simulator">
+                <Button className="w-full" variant="secondary">Open Match Simulator</Button>
+              </Link>
+            </div>
+          </>
         )}
       </Card>
 
@@ -367,11 +404,13 @@ export default function Dashboard() {
             </p>
           </>
         ) : (
-          <p className="text-sm text-chalk-300">No simulation yet. Run your first race-format simulation to baseline match readiness.</p>
+          <>
+            <p className="text-sm text-chalk-300">No simulation yet. Run one race-format simulation to baseline match readiness.</p>
+            <Link to="/match-simulator">
+              <Button className="mt-3">Open Match Simulator</Button>
+            </Link>
+          </>
         )}
-        <Link to="/match-simulator">
-          <Button className="mt-3">Open Match Simulator</Button>
-        </Link>
       </Card>
 
       <Card className="mb-4" title="Confidence Index">
@@ -390,7 +429,12 @@ export default function Dashboard() {
             <p className="mt-2 text-xs text-chalk-300">{confidenceIndexHistory[0].rationale}</p>
           </>
         ) : (
-          <p className="text-sm text-chalk-300">Confidence index will populate after recent training and match logs are available.</p>
+          <>
+            <p className="text-sm text-chalk-300">Confidence index will populate after recent training and match logs are available.</p>
+            <Link to="/session/today">
+              <Button className="mt-3" variant="secondary">Log First Session</Button>
+            </Link>
+          </>
         )}
       </Card>
 
@@ -405,7 +449,17 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-chalk-300">No records yet. Log sessions and simulations to establish baselines.</p>
+          <>
+            <p className="text-sm text-chalk-300">No records yet. Log one session or simulation to create your first baseline.</p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Link to="/session/today">
+                <Button className="w-full">Start Today&apos;s Session</Button>
+              </Link>
+              <Link to="/match-simulator">
+                <Button className="w-full" variant="secondary">Open Match Simulator</Button>
+              </Link>
+            </div>
+          </>
         )}
       </Card>
 

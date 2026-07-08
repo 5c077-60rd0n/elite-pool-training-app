@@ -1,5 +1,5 @@
 import { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useSettingsStore } from '../store/useSettingsStore';
 
 const Dashboard = lazy(() => import('../screens/Dashboard'));
@@ -30,13 +30,14 @@ function RouteFallback() {
 
 function GuardedRoutes() {
   const complete = useSettingsStore((s) => s.profile.onboardingComplete);
+  const location = useLocation();
 
   if (!complete) {
     return (
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="*" element={<Navigate to="/onboarding" replace />} />
+          <Route path="*" element={<Navigate to="/onboarding" replace state={{ returnTo: `${location.pathname}${location.search}` }} />} />
         </Routes>
       </Suspense>
     );
