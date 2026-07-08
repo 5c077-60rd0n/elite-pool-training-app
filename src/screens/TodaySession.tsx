@@ -149,6 +149,8 @@ export default function TodaySession() {
 
   const todaysExactDrills = useMemo(() => {
     type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
+    type ResolvedDrill = { app: DrillApp; category: string; label: string };
+    type DrillCandidate = { app: DrillApp; label: string };
     const normalize = (value: string) => value.trim().toLowerCase();
 
     const trackerAppByName = new Map(
@@ -218,28 +220,58 @@ export default function TodaySession() {
       return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
     }
 
-    const fallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
+    function fallbackForApp(app: DrillApp): ResolvedDrill {
+      if (app === 'DrillRoom') {
+        const candidate = drillRoomDrillSuggestions[0] ?? 'Shotmaking > Center-Ball Straight Shots';
+        const parsed = parseDrillroomFromLabel(candidate.split('>').map((item) => item.trim()).slice(1).join(' > ') || candidate);
+        return { app, category: parsed?.category ?? 'Shotmaking', label: parsed?.label ?? candidate };
+      }
 
-    if (adaptiveDailyPlan?.prescribedDrills?.length) {
-      return adaptiveDailyPlan.prescribedDrills.slice(0, 3).map((label, index) => {
-        const preferredApp = trackerAppByName.get(normalize(label)) ?? fallbackApps[index] ?? 'DrillRoom';
-        const inferred = resolveForApp(label, preferredApp);
-        return {
-          step: index + 1,
-          app: inferred.app,
-          category: inferred.category,
-          label: inferred.label,
-        };
-      });
+      if (app === 'WPB') {
+        const candidate = wpbModuleSuggestions[0] ?? 'Fundamentals > Core > Ghost Drill Race-to-10';
+        const parsed = parseWpbFromLabel(candidate);
+        return { app, category: parsed?.category ?? 'Fundamentals / Core', label: parsed?.label ?? candidate };
+      }
+
+      const category = bullseyeCategoryOptions.find((item) => item !== 'Mixed') ?? 'Follow';
+      return { app, category, label: `${category} Hard Set` };
     }
 
-    return roiPlanner.prescription.slice(0, 3).map((item, index) => {
-      const inferred = resolveForApp(item.label, item.app);
+    const desiredOrder: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
+    const adaptiveFallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
+
+    const adaptiveCandidates: DrillCandidate[] = (adaptiveDailyPlan?.prescribedDrills ?? []).map((label, index) => ({
+      label,
+      app: trackerAppByName.get(normalize(label)) ?? adaptiveFallbackApps[index] ?? 'DrillRoom',
+    }));
+
+    const roiCandidates: DrillCandidate[] = roiPlanner.prescription.map((item) => ({
+      app: item.app,
+      label: item.label,
+    }));
+
+    const candidatePool: DrillCandidate[] = [...adaptiveCandidates, ...roiCandidates];
+    const usedLabels = new Set<string>();
+
+    return desiredOrder.map((app, index) => {
+      const picked = candidatePool.find((candidate) => candidate.app === app && !usedLabels.has(normalize(candidate.label)));
+      if (picked) {
+        usedLabels.add(normalize(picked.label));
+        const resolved = resolveForApp(picked.label, app);
+        return {
+          step: index + 1,
+          app: resolved.app,
+          category: resolved.category,
+          label: resolved.label,
+        };
+      }
+
+      const fallback = fallbackForApp(app);
       return {
         step: index + 1,
-        app: inferred.app,
-        category: inferred.category,
-        label: inferred.label,
+        app: fallback.app,
+        category: fallback.category,
+        label: fallback.label,
       };
     });
   }, [adaptiveDailyPlan?.prescribedDrills, bullseyeCategoryOptions, drillRoomDrillSuggestions, roiPlanner.prescription, wpbModuleSuggestions]);
