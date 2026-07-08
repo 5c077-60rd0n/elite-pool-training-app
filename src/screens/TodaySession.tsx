@@ -167,28 +167,30 @@ export default function TodaySession() {
   const linearSessionSteps = useMemo(() => {
     if (!adhdModeEnabled) return [];
 
+    const returnStepAction =
+      activeAdhdPreset.mode === 'standard'
+        ? `Return immediately and run the second ${activeAdhdPreset.optionalSecondBlockMinutes}-minute block.`
+        : 'Return immediately, then stop and save the session.';
+
     return [
       {
-        title: 'Start now',
-        action: `Run ${activeAdhdPreset.workBlockMinutes} minutes of focused work using ${focusArea || template.focusArea}.`,
+        title: '1. Start',
+        action: `Run ${activeAdhdPreset.workBlockMinutes} minutes on ${focusArea || template.focusArea}.`,
       },
       {
-        title: 'Take the break',
-        action: `When the timer announces it, stop for ${activeAdhdPreset.breakMinutes} minutes. No extra analysis.`,
+        title: '2. Break',
+        action: `Stop for ${activeAdhdPreset.breakMinutes} minutes. No phone. No analysis.`,
       },
       {
-        title: 'Return and check focus',
-        action:
-          activeAdhdPreset.optionalSecondBlockMinutes > 0
-            ? `On return, do a quick focus check. If you are steady, continue with the optional ${activeAdhdPreset.optionalSecondBlockMinutes}-minute second block.`
-            : 'On return, save the session instead of forcing a second block.',
+        title: '3. Return',
+        action: returnStepAction,
       },
       {
-        title: 'Close the session',
-        action: 'Fill the quick log, save the session, and use the post-session summary as your next-step instruction.',
+        title: '4. Close',
+        action: 'Fill the quick log and save the session.',
       },
     ];
-  }, [activeAdhdPreset.breakMinutes, activeAdhdPreset.optionalSecondBlockMinutes, activeAdhdPreset.workBlockMinutes, adhdModeEnabled, focusArea, template.focusArea]);
+  }, [activeAdhdPreset.breakMinutes, activeAdhdPreset.mode, activeAdhdPreset.optionalSecondBlockMinutes, activeAdhdPreset.workBlockMinutes, adhdModeEnabled, focusArea, template.focusArea]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -373,19 +375,18 @@ export default function TodaySession() {
     if (!breakAnnouncementSentRef.current && liveElapsedSeconds >= adhdBreakStartSeconds) {
       breakAnnouncementSentRef.current = true;
       speakAnnouncement(
-        `Break time. Reset for ${activeAdhdPreset.breakMinutes} minutes. Keep it simple and avoid extra analysis.`,
+        `Break. Reset for ${activeAdhdPreset.breakMinutes} minutes.`,
       );
       return;
     }
 
     if (!returnAnnouncementSentRef.current && liveElapsedSeconds >= adhdSecondBlockStartSeconds) {
       returnAnnouncementSentRef.current = true;
-      speakAnnouncement(
-        `Return to the table. Quick readiness check. If focus is below six out of ten, stop and save. If focus feels steady, continue.`,
-      );
+      speakAnnouncement(activeAdhdPreset.mode === 'standard' ? 'Return. Run the second block now.' : 'Return. Stop and save now.');
     }
   }, [
     activeAdhdPreset.breakMinutes,
+    activeAdhdPreset.mode,
     adhdBreakStartSeconds,
     adhdModeEnabled,
     adhdSecondBlockStartSeconds,
@@ -731,7 +732,7 @@ export default function TodaySession() {
         ) : null}
         {adhdModeEnabled ? (
           <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
-            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Your exact path</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Follow this path</p>
             <div className="mt-3 space-y-3">
               {linearSessionSteps.map((step, index) => (
                 <div key={step.title} className="flex gap-3 rounded-2xl border border-felt-600/60 bg-felt-900/30 p-3">
@@ -745,14 +746,6 @@ export default function TodaySession() {
                 </div>
               ))}
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Button type="button" onClick={() => setShowAdvancedPanels((prev) => !prev)}>
-                {showAdvancedPanels ? 'Hide Advanced Tools' : 'Show Advanced Tools'}
-              </Button>
-              <Button type="button" variant="secondary" onClick={() => applyAdhdModePreset(effectiveAdhdSessionMode, 'manual_override', true)}>
-                Re-apply Exact Path
-              </Button>
-            </div>
           </div>
         ) : null}
       </Card>
@@ -761,26 +754,26 @@ export default function TodaySession() {
         <Card className="mb-4" title="Session Protocol">
           <div className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
             <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Block 1</p>
-              <p className="mt-1 text-ivory-100">{activeAdhdPreset.workBlockMinutes} minutes of focused work.</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Step 1</p>
+              <p className="mt-1 text-ivory-100">Run {activeAdhdPreset.workBlockMinutes} minutes on the assigned focus.</p>
             </div>
             <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Break</p>
-              <p className="mt-1 text-ivory-100">{activeAdhdPreset.breakMinutes} minutes off the table.</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Step 2</p>
+              <p className="mt-1 text-ivory-100">Stop for {activeAdhdPreset.breakMinutes} minutes.</p>
             </div>
             <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Optional Block 2</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Step 3</p>
               <p className="mt-1 text-ivory-100">
-                {activeAdhdPreset.optionalSecondBlockMinutes > 0
-                  ? `${activeAdhdPreset.optionalSecondBlockMinutes} minutes if focus is still clean.`
-                  : 'Skip this mode and save the win.'}
+                {activeAdhdPreset.mode === 'standard'
+                  ? `Run the next ${activeAdhdPreset.optionalSecondBlockMinutes}-minute block.`
+                  : 'Return and save the session.'}
               </p>
             </div>
             <div className="rounded-lg border border-felt-600 bg-felt-800/60 p-3">
-              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Stop Rule</p>
-              <p className="mt-1 text-ivory-100">{activeAdhdPreset.stopRule}</p>
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Step 4</p>
+              <p className="mt-1 text-ivory-100">Save the log. No extra work.</p>
             </div>
-            <p className="text-xs text-chalk-300">Audio cues will announce the break and the return/readiness check if sound is enabled.</p>
+            <p className="text-xs text-chalk-300">Audio cues match the same short commands.</p>
           </div>
         </Card>
       ) : null}
