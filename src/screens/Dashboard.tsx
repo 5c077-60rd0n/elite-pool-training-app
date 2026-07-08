@@ -157,7 +157,6 @@ export default function Dashboard() {
     };
   }, [currentWeekStats, logs, profile.currentWeek]);
 
-  const compactFocusView = Boolean(profile.adhdModeEnabled) && !showDeepInsights;
   const deepInsightsVisible = !profile.adhdModeEnabled || showDeepInsights;
   const nextAction = useMemo(() => {
     if (lastSessionRecommendation?.nextStep) {
@@ -211,13 +210,38 @@ export default function Dashboard() {
 
   return (
     <PageWrapper title="Dashboard">
-      {profile.adhdModeEnabled ? (
-        <Card className="mb-4" title="Focus View">
-          <p className="text-sm text-chalk-300">Keep this view light. Open deep insights only when you need analysis.</p>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link to="/session/today">
-              <Button className="w-full">Start Today&apos;s Session</Button>
-            </Link>
+      <Card className="mb-4" title="Coaching Loop">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {profile.adhdModeEnabled ? (
+            <span className="rounded-full border border-cue-600/60 bg-cue-900/20 px-2 py-1 text-cue-200">ADHD Focus Surface</span>
+          ) : null}
+          {lastSessionRecommendation ? (
+            <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Next mode: {lastSessionRecommendation.nextMode.toUpperCase()}</span>
+          ) : null}
+        </div>
+        <p className="mt-3 text-lg text-ivory-100">{nextAction}</p>
+        <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+        {lastSessionRecommendation ? (
+          <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+            <p className="text-sm text-ivory-100">{lastSessionRecommendation.title}</p>
+            <p className="mt-1 text-sm text-chalk-300">{lastSessionRecommendation.rationale}</p>
+          </div>
+        ) : null}
+        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          <p className="text-chalk-300">Current Fargo</p>
+          <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
+          <p className="text-chalk-300">Current Week</p>
+          <p className="text-right text-ivory-100">Week {profile.currentWeek}</p>
+          <p className="text-chalk-300">Training Streak</p>
+          <p className="text-right text-ivory-100">{gamification.streakDays} days</p>
+          <p className="text-chalk-300">Focus State</p>
+          <p className="text-right text-ivory-100">{profile.adhdModeEnabled ? 'Light' : 'Full'}</p>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Link to="/session/today">
+            <Button className="w-full">Start Today&apos;s Session</Button>
+          </Link>
+          {profile.adhdModeEnabled ? (
             <Button
               type="button"
               variant="secondary"
@@ -225,45 +249,12 @@ export default function Dashboard() {
             >
               {showDeepInsights ? 'Hide Deep Insights' : 'Show Deep Insights'}
             </Button>
-          </div>
-        </Card>
-      ) : null}
-
-      {lastSessionRecommendation ? (
-        <Card className="mb-4" title="Last Session Summary">
-          <p className="text-sm text-ivory-100">{lastSessionRecommendation.title}</p>
-          <p className="mt-1 text-sm text-chalk-300">{lastSessionRecommendation.nextStep}</p>
-          <p className="mt-1 text-xs text-chalk-300">{lastSessionRecommendation.rationale}</p>
-          <p className="mt-2 text-xs text-cue-200">Suggested mode next time: {lastSessionRecommendation.nextMode.toUpperCase()}</p>
-        </Card>
-      ) : null}
-
-      {compactFocusView ? (
-        <Card className="mb-4" title="Session Snapshot">
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <p className="text-chalk-300">Current Fargo</p>
-            <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
-            <p className="text-chalk-300">Current Week</p>
-            <p className="text-right text-ivory-100">Week {profile.currentWeek}</p>
-            <p className="text-chalk-300">Training Streak</p>
-            <p className="text-right text-ivory-100">{gamification.streakDays} days</p>
-            <p className="text-chalk-300">Next Action</p>
-            <p className="text-right text-ivory-100">Start one focused session</p>
-          </div>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Link to="/session/today">
-              <Button className="w-full">Open Today&apos;s Session</Button>
+          ) : (
+            <Link to="/progress">
+              <Button className="w-full" variant="secondary">Open Progress</Button>
             </Link>
-            <Button type="button" variant="secondary" onClick={() => setShowDeepInsights(true)}>
-              Show Deep Insights
-            </Button>
-          </div>
-        </Card>
-      ) : null}
-
-      <Card className="mb-4" title="Today&apos;s Next Step">
-        <p className="text-sm text-ivory-100">{nextAction}</p>
-        <p className="mt-1 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+          )}
+        </div>
       </Card>
 
       {deepInsightsVisible ? (
