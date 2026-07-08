@@ -164,6 +164,31 @@ export default function TodaySession() {
 
   const recommendationLimit = getAdhdRecommendationLimit(adhdModeEnabled);
   const showExtraLogFields = !adhdModeEnabled || showAdvancedPanels;
+  const linearSessionSteps = useMemo(() => {
+    if (!adhdModeEnabled) return [];
+
+    return [
+      {
+        title: 'Start now',
+        action: `Run ${activeAdhdPreset.workBlockMinutes} minutes of focused work using ${focusArea || template.focusArea}.`,
+      },
+      {
+        title: 'Take the break',
+        action: `When the timer announces it, stop for ${activeAdhdPreset.breakMinutes} minutes. No extra analysis.`,
+      },
+      {
+        title: 'Return and check focus',
+        action:
+          activeAdhdPreset.optionalSecondBlockMinutes > 0
+            ? `On return, do a quick focus check. If you are steady, continue with the optional ${activeAdhdPreset.optionalSecondBlockMinutes}-minute second block.`
+            : 'On return, save the session instead of forcing a second block.',
+      },
+      {
+        title: 'Close the session',
+        action: 'Fill the quick log, save the session, and use the post-session summary as your next-step instruction.',
+      },
+    ];
+  }, [activeAdhdPreset.breakMinutes, activeAdhdPreset.optionalSecondBlockMinutes, activeAdhdPreset.workBlockMinutes, adhdModeEnabled, focusArea, template.focusArea]);
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -417,42 +442,6 @@ export default function TodaySession() {
       return `${prefix}ROI prescription: ${roiPlanner.prescription
         .map((item) => `${item.slot.toUpperCase()} - ${item.app} - ${item.label}`)
         .join(' | ')}`;
-    });
-  }
-
-  function applyFullTriadFlow(): void {
-    setFocusTouched(true);
-    setLengthTouched(true);
-    setFocusArea(`3-App Daily Flow: ${roiPlanner.focusBucket}`);
-    setLengthMinutes(Math.max(1, roiPlanner.dailyTriadFlow.totalMinutes));
-
-    const drillRoomBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'DrillRoom');
-    if (drillRoomBlock) {
-      const parts = drillRoomBlock.label.split('>').map((item) => item.trim());
-      setDrillRoomDrillName(parts[parts.length - 1] ?? drillRoomBlock.label);
-    }
-
-    const bullseyeBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'Bullseye');
-    if (bullseyeBlock) {
-      const parts = bullseyeBlock.label.split('>').map((item) => item.trim());
-      const suggestedCategory = parts[0] as BullseyeCategory;
-      if (bullseyeCategoryOptions.includes(suggestedCategory)) {
-        setBullseyeCategory(suggestedCategory);
-      }
-      setBullseyeProximity((prev) => (prev > 0 ? prev : Math.max(0, adaptiveDailyPlan?.targetMetrics.bullseyeProximity ?? 3)));
-    }
-
-    const wpbBlock = roiPlanner.dailyTriadFlow.blocks.find((block) => block.app === 'WPB');
-    if (wpbBlock) {
-      setWpbLesson('Yes');
-      setWpbModuleName(wpbBlock.label);
-      const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
-      setWpbTierAchieved(nextTiers[0] ?? '');
-    }
-
-    setNotes((prev) => {
-      const prefix = prev ? `${prev}\n` : '';
-      return `${prefix}3-App Flow: ${roiPlanner.dailyTriadFlow.executionOrder.join(' | ')}`;
     });
   }
 
@@ -729,23 +718,6 @@ export default function TodaySession() {
         {adhdModeEnabled ? (
           <p className="mt-1 text-xs text-cue-300">ADHD mode active · {effectiveAdhdSessionMode.toUpperCase()} session</p>
         ) : null}
-        {adhdModeEnabled ? (
-          <div className="mt-2 grid grid-cols-3 gap-2">
-            {(['quick', 'standard', 'recovery'] as AdhdSessionMode[]).map((mode) => {
-              const isActive = effectiveAdhdSessionMode === mode;
-              return (
-                <Button
-                  key={mode}
-                  type="button"
-                  variant={isActive ? 'primary' : 'secondary'}
-                  onClick={() => applyAdhdModePreset(mode, 'manual_override', true)}
-                >
-                  {mode[0].toUpperCase() + mode.slice(1)}
-                </Button>
-              );
-            })}
-          </div>
-        ) : null}
         <div className="mt-3 rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
           <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Primary focus</p>
           <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{focusArea || template.focusArea}</p>
@@ -757,29 +729,32 @@ export default function TodaySession() {
             {activeAdhdPreset.optionalSecondBlockMinutes > 0 ? ` + optional ${activeAdhdPreset.optionalSecondBlockMinutes}m second block` : ''}. {activeAdhdPreset.stopRule}
           </p>
         ) : null}
-        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
-          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">1. Set the day</p>
-          <p className="mt-1 text-xs text-chalk-300">Apply the default 3-app plan. Only open advanced tools if you actually need them.</p>
-          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Button type="button" onClick={applyFullTriadFlow}>Apply Full 3-App Day</Button>
-            <Button type="button" variant="secondary" onClick={() => setShowAdvancedPanels((prev) => !prev)}>
-              {showAdvancedPanels ? 'Hide Advanced Tools' : 'Show Advanced Tools'}
-            </Button>
+        {adhdModeEnabled ? (
+          <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Your exact path</p>
+            <div className="mt-3 space-y-3">
+              {linearSessionSteps.map((step, index) => (
+                <div key={step.title} className="flex gap-3 rounded-2xl border border-felt-600/60 bg-felt-900/30 p-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cue-600/50 bg-cue-900/20 text-sm text-cue-200">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-ivory-100">{step.title}</p>
+                    <p className="mt-1 text-xs text-chalk-300">{step.action}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button type="button" onClick={() => setShowAdvancedPanels((prev) => !prev)}>
+                {showAdvancedPanels ? 'Hide Advanced Tools' : 'Show Advanced Tools'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={() => applyAdhdModePreset(effectiveAdhdSessionMode, 'manual_override', true)}>
+                Re-apply Exact Path
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
-          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Today's 3-App Sequence</p>
-          <div className="mt-2 space-y-1 text-xs text-ivory-200">
-            {roiPlanner.dailyTriadFlow.blocks.map((block) => (
-              <p key={block.app}>{block.app} · {block.minutes}m · {block.label}</p>
-            ))}
-          </div>
-          <div className="mt-2 space-y-1 text-xs text-chalk-300">
-            {roiPlanner.dailyTriadFlow.executionOrder.slice(0, recommendationLimit).map((item) => (
-              <p key={item}>- {item}</p>
-            ))}
-          </div>
-        </div>
+        ) : null}
       </Card>
 
       {adhdModeEnabled ? (
