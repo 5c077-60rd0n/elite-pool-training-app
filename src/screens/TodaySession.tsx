@@ -123,6 +123,7 @@ export default function TodaySession() {
   const [lengthTouched, setLengthTouched] = useState(false);
   const [showAdvancedPanels, setShowAdvancedPanels] = useState(false);
   const [adhdSessionModeOverride, setAdhdSessionModeOverride] = useState<AdhdSessionMode | null>(null);
+  const [breakLockUntilMs, setBreakLockUntilMs] = useState<number | null>(null);
   const capEventSentRef = useRef(false);
   const autoModePresetAppliedRef = useRef(false);
   const breakAnnouncementSentRef = useRef(false);
@@ -325,16 +326,17 @@ export default function TodaySession() {
   }, [resetTimer, timerDate, today]);
 
   useEffect(() => {
-    if (!timerRunning) return;
+    if (!timerRunning && !breakLockUntilMs) return;
     const interval = window.setInterval(() => {
       setNowMs(Date.now());
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [timerRunning]);
+  }, [breakLockUntilMs, timerRunning]);
 
   useEffect(() => {
     breakAnnouncementSentRef.current = false;
     returnAnnouncementSentRef.current = false;
+    setBreakLockUntilMs(null);
   }, [effectiveAdhdSessionMode, timerDate, today]);
 
   const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
@@ -353,46 +355,74 @@ export default function TodaySession() {
       ? 'Resume Timer'
       : 'Start Timer';
   const adhdBreakStartSeconds = activeAdhdPreset.workBlockMinutes * 60;
-  const adhdSecondBlockStartSeconds = (activeAdhdPreset.workBlockMinutes + activeAdhdPreset.breakMinutes) * 60;
+  const adhdBreakLockActive = adhdModeEnabled
+    && breakLockUntilMs !== null
+    && nowMs < breakLockUntilMs;
+  const adhdBreakRemainingSeconds = adhdBreakLockActive && breakLockUntilMs
+    ? Math.max(0, Math.ceil((breakLockUntilMs - nowMs) / 1000))
+    : 0;
+  const adhdBreakCompleted = adhdModeEnabled
+    && breakLockUntilMs !== null
+    && nowMs >= breakLockUntilMs;
   const adhdStopCheckpointSeconds =
-    (activeAdhdPreset.workBlockMinutes + activeAdhdPreset.breakMinutes + activeAdhdPreset.optionalSecondBlockMinutes) * 60;
+    (activeAdhdPreset.workBlockMinutes + activeAdhdPreset.optionalSecondBlockMinutes) * 60;
   const adhdBreakDue = adhdModeEnabled
-    && liveElapsedSeconds >= adhdBreakStartSeconds
-    && liveElapsedSeconds < adhdSecondBlockStartSeconds;
+    && !adhdBreakLockActive
+    && !adhdBreakCompleted
+    && liveElapsedSeconds >= adhdBreakStartSeconds;
   const adhdStopRuleDue = adhdModeEnabled
     && activeAdhdPreset.optionalSecondBlockMinutes > 0
     && liveElapsedSeconds >= adhdStopCheckpointSeconds;
 
   useEffect(() => {
-    if (!adhdModeEnabled || !timerRunning || soundEnabled === false) return;
+    if (!adhdModeEnabled || !timerRunning || breakLockUntilMs !== null || liveElapsedSeconds < adhdBreakStartSeconds) return;
 
-    if (!breakAnnouncementSentRef.current && liveElapsedSeconds >= adhdBreakStartSeconds) {
+    pauseTimer();
+    setBreakLockUntilMs(Date.now() + (activeAdhdPreset.breakMinutes * 60 * 1000));
+
+    if (!breakAnnouncementSentRef.current) {
       breakAnnouncementSentRef.current = true;
-      speakAnnouncement(
-        `Break. Reset for ${activeAdhdPreset.breakMinutes} minutes.`,
-      );
-      return;
+      speakAnnouncement(`Break. Reset for ${activeAdhdPreset.breakMinutes} minutes.`);
     }
 
-    if (!returnAnnouncementSentRef.current && liveElapsedSeconds >= adhdSecondBlockStartSeconds) {
-      returnAnnouncementSentRef.current = true;
-      speakAnnouncement(activeAdhdPreset.mode === 'standard' ? 'Return. Run the second block now.' : 'Return. Stop and save now.');
-    }
+    emitTelemetryEvent('adhd_break_enforced', {
+      mode: activeAdhdPreset.mode,
+      breakMinutes: activeAdhdPreset.breakMinutes,
+      elapsedSeconds: liveElapsedSeconds,
+    });
   }, [
     activeAdhdPreset.breakMinutes,
     activeAdhdPreset.mode,
     adhdBreakStartSeconds,
     adhdModeEnabled,
-    adhdSecondBlockStartSeconds,
+    breakLockUntilMs,
     liveElapsedSeconds,
-    soundEnabled,
+    pauseTimer,
     timerRunning,
   ]);
+
+  useEffect(() => {
+    if (!adhdModeEnabled || !adhdBreakCompleted || returnAnnouncementSentRef.current) return;
+    returnAnnouncementSentRef.current = true;
+    speakAnnouncement(activeAdhdPreset.mode === 'standard' ? 'Return. Run the second block now.' : 'Return. Stop and save now.');
+  }, [activeAdhdPreset.mode, adhdBreakCompleted, adhdModeEnabled]);
 
   function handleTimerEndAndApply(): void {
     const totalSeconds = timerRunning ? stopTimer() : liveElapsedSeconds;
     const roundedMinutes = Math.max(1, Math.round(totalSeconds / 60));
     setLengthMinutes(roundedMinutes);
+    setBreakLockUntilMs(null);
+  }
+
+  function handleResumeTimer(): void {
+    if (adhdBreakLockActive) return;
+    setBreakLockUntilMs(null);
+    resumeTimer();
+  }
+
+  function handleResetTimer(): void {
+    setBreakLockUntilMs(null);
+    resetTimer();
   }
 
   function applySmartAutofill(): void {
@@ -508,6 +538,7 @@ export default function TodaySession() {
         setLengthMinutes(suggestedMinutes);
       }
       stopTimer();
+      setBreakLockUntilMs(null);
     }
 
     const log: DailySessionLog = {
@@ -755,6 +786,16 @@ export default function TodaySession() {
             Break window active: take {activeAdhdPreset.breakMinutes} minutes now, then decide if you want another block.
           </p>
         ) : null}
+        {adhdBreakLockActive ? (
+          <p className="mt-2 rounded-lg border border-cue-700/50 bg-cue-950/20 px-2 py-1 text-xs text-cue-200">
+            Timed break running: {formatElapsed(adhdBreakRemainingSeconds)} remaining. Timer is locked until break ends.
+          </p>
+        ) : null}
+        {adhdBreakCompleted ? (
+          <p className="mt-2 rounded-lg border border-cue-700/50 bg-cue-950/20 px-2 py-1 text-xs text-cue-200">
+            Break complete: {activeAdhdPreset.mode === 'standard' ? 'resume for block two' : 'end and save your session now'}.
+          </p>
+        ) : null}
         {adhdStopRuleDue ? (
           <p className="mt-2 rounded-lg border border-cue-700/50 bg-cue-950/20 px-2 py-1 text-xs text-cue-200">
             Stop checkpoint reached: if execution quality has dropped, save now and protect consistency.
@@ -768,10 +809,10 @@ export default function TodaySession() {
             <Button variant="secondary" onClick={pauseTimer}>{primaryTimerActionLabel}</Button>
           ) : null}
           {!timerRunning && liveElapsedSeconds > 0 ? (
-            <Button variant="secondary" onClick={resumeTimer}>{primaryTimerActionLabel}</Button>
+            <Button variant="secondary" onClick={handleResumeTimer} disabled={adhdBreakLockActive}>{primaryTimerActionLabel}</Button>
           ) : null}
-          <Button variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0}>End & Apply</Button>
-          <Button variant="secondary" onClick={resetTimer} disabled={timerRunning || liveElapsedSeconds === 0}>Reset</Button>
+          <Button variant="secondary" onClick={handleTimerEndAndApply} disabled={liveElapsedSeconds === 0 || adhdBreakLockActive}>End & Apply</Button>
+          <Button variant="secondary" onClick={handleResetTimer} disabled={timerRunning || liveElapsedSeconds === 0 || adhdBreakLockActive}>Reset</Button>
         </div>
       </Card>
 
