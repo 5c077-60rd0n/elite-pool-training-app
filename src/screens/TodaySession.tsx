@@ -8,7 +8,6 @@ import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
   getWpbTierOptionsForCategory,
-  wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
 import { useProgramStore } from '../store/useProgramStore';
@@ -105,12 +104,12 @@ export default function TodaySession() {
   const [drillRoomShotmakingPct, setDrillRoomShotmakingPct] = useState(0);
   const [drillRoomDrillName, setDrillRoomDrillName] = useState('');
   const [bullseyeProximity, setBullseyeProximity] = useState(0);
-  const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
+  const bullseyeCategory: BullseyeCategory = 'Mixed';
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
   const [wpbCategory, setWpbCategory] = useState<WpbCategory>('Fundamentals');
   const [wpbModuleName, setWpbModuleName] = useState('');
   const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
-  const [wpbKeyTakeaway, setWpbKeyTakeaway] = useState('');
+  const wpbKeyTakeaway = '';
   const [ghostDrillPlayed, setGhostDrillPlayed] = useState<YesNo>('Yes');
   const [ghostDrillWinRatePct, setGhostDrillWinRatePct] = useState(50);
   const [notes, setNotes] = useState('');
@@ -145,11 +144,6 @@ export default function TodaySession() {
         bullseyeCategories: bullseyeCategoryOptions,
       }),
     [adaptiveDailyPlan, competitionLog, logs],
-  );
-
-  const wpbTierOptions = useMemo(
-    () => getWpbTierOptionsForCategory(wpbCategory),
-    [wpbCategory],
   );
 
   const adhdSessionMode = useMemo(
@@ -401,14 +395,6 @@ export default function TodaySession() {
     setLengthMinutes(roundedMinutes);
   }
 
-  function applyAdaptiveTargets(): void {
-    if (!adaptiveDailyPlan) return;
-    setLengthTouched(true);
-    setLengthMinutes(Math.max(1, adaptiveDailyPlan.recommendedMinutes));
-    setDrillRoomShotmakingPct(clampPct(adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct));
-    setBullseyeProximity(Math.max(0, adaptiveDailyPlan.targetMetrics.bullseyeProximity));
-  }
-
   function applySmartAutofill(): void {
     setFocusTouched(true);
     setLengthTouched(true);
@@ -476,28 +462,6 @@ export default function TodaySession() {
     setLengthMinutes(lowLoadMinutes);
     setFocusArea(recoveryRecommendationPlan.recommendedFocusArea);
     setNotes((prev) => `${prev ? `${prev}\n` : ''}Recovery protocol: ${recoveryRecommendationPlan.actions.join(' | ')}`);
-  }
-
-  function applyLastSession(): void {
-    if (!lastLoggedSession) return;
-    setFocusTouched(true);
-    setLengthTouched(true);
-    setFocusArea(lastLoggedSession.focusArea);
-    setLengthMinutes(Math.max(0, lastLoggedSession.lengthMinutes));
-    setDrillRoomShotmakingPct(clampPct(lastLoggedSession.drillRoomShotmakingPct));
-    setDrillRoomDrillName(lastLoggedSession.drillRoomDrillName ?? '');
-    setBullseyeProximity(Math.max(0, lastLoggedSession.bullseyeProximity));
-    setBullseyeCategory(lastLoggedSession.bullseyeCategory);
-    setWpbLesson(lastLoggedSession.wpbLesson);
-    setWpbCategory(lastLoggedSession.wpbCategory ?? 'Fundamentals');
-    setWpbModuleName(lastLoggedSession.wpbModuleName);
-    setWpbTierAchieved(lastLoggedSession.wpbTierAchieved ?? '');
-    setWpbKeyTakeaway(lastLoggedSession.wpbKeyTakeaway ?? '');
-    setGhostDrillPlayed(lastLoggedSession.ghostDrillPlayed ?? 'Yes');
-    setGhostDrillWinRatePct(lastLoggedSession.ghostDrillWinRatePct ?? 50);
-    setNotes(lastLoggedSession.notes);
-    setCoachTagsInput((lastLoggedSession.coachTags ?? []).join(', '));
-    setVideoClipRefsInput((lastLoggedSession.videoClipRefs ?? []).join(', '));
   }
 
   function saveSessionLog(): void {
@@ -942,203 +906,72 @@ export default function TodaySession() {
       ) : null}
 
       <Card className="mb-4" title="3. Quick Log">
-        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button type="button" variant="secondary" onClick={applyLastSession} disabled={!lastLoggedSession}>
-            Copy Last Session
-          </Button>
-          {showAdvancedPanels ? (
-            <Button type="button" variant="secondary" onClick={applyAdaptiveTargets} disabled={!adaptiveDailyPlan}>
-              Use Adaptive Targets
-            </Button>
-          ) : null}
-        </div>
+        <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Log only the essentials</p>
+        <p className="mt-2 text-sm text-chalk-300">In ADHD mode, fill these four fields and move on. Everything else stays hidden unless advanced tools are opened.</p>
 
-        <label className="mb-2 block text-sm text-chalk-300">Focus Area</label>
-        <input
-          value={focusArea}
-          onChange={(event) => {
-            setFocusTouched(true);
-            setFocusArea(event.target.value);
-          }}
-          className="mb-3 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
-
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Length (min)"
-            value={lengthMinutes}
-            min={0}
-            step={5}
-            onChange={(next) => {
-              setLengthTouched(true);
-              setLengthMinutes(next);
-            }}
-          />
-          <NumberStepperField
-            label="DrillRoom Shotmaking %"
-            value={drillRoomShotmakingPct}
-            min={0}
-            max={100}
-            step={1}
-            onChange={(next) => setDrillRoomShotmakingPct(clampPct(next))}
-          />
-        </div>
-        <label className="mt-3 block text-sm text-chalk-300">
-          DrillRoom Drill Name
-          {showExtraLogFields ? (
-            <>
-              <input
-                value={drillRoomDrillName}
-                onChange={(event) => setDrillRoomDrillName(event.target.value)}
-                list="drillroom-drill-suggestions"
-                placeholder="Shotmaking > Straight Shot Level II"
-                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-              />
-              <datalist id="drillroom-drill-suggestions">
-                {drillRoomDrillSuggestions.map((option) => (
-                  <option key={option} value={option} />
-                ))}
-              </datalist>
-            </>
-          ) : (
-            <p className="mt-1 text-xs text-chalk-300">Hidden in ADHD mode. Use Show Advanced Tools to edit.</p>
-          )}
-        </label>
-
-        <p className="mt-3 text-xs text-chalk-300">
-          Safety and line-up values are auto-derived from your daily flow targets. Ghost drill play and win rate are logged explicitly below.
-        </p>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <NumberStepperField
-            label="Bullseye Proximity"
-            value={bullseyeProximity}
-            min={0}
-            step={0.1}
-            decimals={1}
-            onChange={(next) => setBullseyeProximity(Math.max(0, next))}
-          />
-          <label className="text-sm text-chalk-300">
-            Bullseye Category
-            <select
-              value={bullseyeCategory}
-              onChange={(event) => setBullseyeCategory(event.target.value as BullseyeCategory)}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            >
-              {bullseyeCategoryOptions.map((option) => (
-                <option key={option} value={option}>{option}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            WPB Lesson?
-            <select
-              value={wpbLesson}
-              onChange={(event) => setWpbLesson(event.target.value as YesNo)}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            >
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
-          </label>
-          <label className="text-sm text-chalk-300">
-            WPB Category
-            <select
-              value={wpbCategory}
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+            <label className="text-xs uppercase tracking-[0.08em] text-cue-300">1. Focus Area</label>
+            <input
+              value={focusArea}
               onChange={(event) => {
-                const nextCategory = event.target.value as WpbCategory;
-                setWpbCategory(nextCategory);
-                const nextTiers = getWpbTierOptionsForCategory(nextCategory);
-                setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
+                setFocusTouched(true);
+                setFocusArea(event.target.value);
               }}
-              disabled={wpbLesson !== 'Yes'}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100 disabled:opacity-60"
-            >
-              {wpbCategoryOptions.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            Play the Ghost Drill?
+              className="mt-2 min-h-11 w-full rounded-2xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+          </div>
+          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+            <NumberStepperField
+              label="2. Length (min)"
+              value={lengthMinutes}
+              min={0}
+              step={5}
+              onChange={(next) => {
+                setLengthTouched(true);
+                setLengthMinutes(next);
+              }}
+            />
+          </div>
+          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+            <NumberStepperField
+              label="3. DrillRoom %"
+              value={drillRoomShotmakingPct}
+              min={0}
+              max={100}
+              step={1}
+              onChange={(next) => setDrillRoomShotmakingPct(clampPct(next))}
+            />
+          </div>
+          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+            <label className="text-xs uppercase tracking-[0.08em] text-cue-300">4. Ghost Drill</label>
             <select
               value={ghostDrillPlayed}
               onChange={(event) => setGhostDrillPlayed(event.target.value as YesNo)}
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              className="mt-2 min-h-11 w-full rounded-2xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
             >
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
-          </label>
-          <NumberStepperField
-            label="Ghost Win Rate %"
-            value={ghostDrillWinRatePct}
-            min={0}
-            max={100}
-            step={1}
-            onChange={(next) => {
-              if (ghostDrillPlayed !== 'Yes') return;
-              setGhostDrillWinRatePct(clampPct(next));
-            }}
-            className={ghostDrillPlayed !== 'Yes' ? 'opacity-60' : ''}
-          />
+            <NumberStepperField
+              label="Ghost Win %"
+              value={ghostDrillWinRatePct}
+              min={0}
+              max={100}
+              step={1}
+              onChange={(next) => {
+                if (ghostDrillPlayed !== 'Yes') return;
+                setGhostDrillWinRatePct(clampPct(next));
+              }}
+              className={ghostDrillPlayed !== 'Yes' ? 'opacity-60' : ''}
+            />
+          </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <label className="text-sm text-chalk-300">
-            WPB Module Name
-            <input
-              value={wpbModuleName}
-              onChange={(event) => {
-                const nextModule = event.target.value;
-                setWpbModuleName(nextModule);
-                const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
-                setWpbTierAchieved((prev) => (nextTiers.includes(prev as WpbRatingTier) ? prev : (nextTiers[0] ?? '')));
-              }}
-              list="wpb-module-suggestions"
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-            <datalist id="wpb-module-suggestions">
-              {wpbModuleSuggestions.map((option) => (
-                <option key={option} value={option} />
-              ))}
-            </datalist>
-          </label>
+        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Hidden until advanced tools</p>
+          <p className="mt-1 text-xs text-chalk-300">Bullseye, WPB details, notes, coach tags, and clips stay out of the way unless you intentionally open them.</p>
         </div>
-        <label className="mt-3 block text-sm text-chalk-300">
-          WPB Tier Achieved
-          <select
-            value={wpbTierAchieved}
-            onChange={(event) => setWpbTierAchieved(event.target.value as WpbRatingTier | '')}
-            disabled={wpbLesson !== 'Yes'}
-            className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100 disabled:opacity-60"
-          >
-            <option value="">Select Tier</option>
-            {wpbTierOptions.map((tier) => (
-              <option key={tier} value={tier}>{tier}</option>
-            ))}
-          </select>
-          <p className="mt-1 text-xs text-chalk-300">Tier options are based on WPB category (not individual drill).</p>
-        </label>
-        <label className="mt-3 block text-sm text-chalk-300">
-          WPB Key Takeaway
-          {showExtraLogFields ? (
-            <input
-              value={wpbKeyTakeaway}
-              onChange={(event) => setWpbKeyTakeaway(event.target.value)}
-              placeholder="One usable idea from today's WPB work"
-              className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            />
-          ) : (
-            <p className="mt-1 text-xs text-chalk-300">Hidden in ADHD mode. Use Show Advanced Tools to edit.</p>
-          )}
-        </label>
       </Card>
 
       <Card className="border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Session Notes & Save">
