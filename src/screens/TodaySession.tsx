@@ -148,20 +148,96 @@ export default function TodaySession() {
   );
 
   const todaysExactDrills = useMemo(() => {
-    if (adaptiveDailyPlan?.prescribedDrills?.length) {
-      return adaptiveDailyPlan.prescribedDrills.slice(0, 3).map((label, index) => ({
-        step: index + 1,
-        app: index === 0 ? 'DrillRoom' : index === 1 ? 'Bullseye' : 'WPB',
-        label,
-      }));
+    type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
+
+    function parseDrillroomFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
+      const fromCatalog = drillRoomDrillSuggestions.find((option) => {
+        const parts = option.split('>').map((item) => item.trim());
+        const name = parts[parts.length - 1] ?? '';
+        return name.toLowerCase() === rawLabel.trim().toLowerCase();
+      });
+      if (!fromCatalog) return null;
+      const parts = fromCatalog.split('>').map((item) => item.trim());
+      const category = parts[0] ?? 'General';
+      const label = parts.slice(1).join(' > ') || rawLabel;
+      return { app: 'DrillRoom', category, label };
     }
 
-    return roiPlanner.prescription.slice(0, 3).map((item, index) => ({
-      step: index + 1,
-      app: item.app,
-      label: item.label,
-    }));
-  }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
+    function parseWpbFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
+      const direct = rawLabel.split('>').map((item) => item.trim()).filter(Boolean);
+      if (direct.length >= 3) {
+        return {
+          app: 'WPB',
+          category: `${direct[0]} / ${direct[1]}`,
+          label: direct.slice(2).join(' > '),
+        };
+      }
+
+      const fromCatalog = wpbModuleSuggestions.find((option) => {
+        const parts = option.split('>').map((item) => item.trim());
+        const name = parts[parts.length - 1] ?? '';
+        return name.toLowerCase() === rawLabel.trim().toLowerCase();
+      });
+      if (!fromCatalog) return null;
+
+      const parts = fromCatalog.split('>').map((item) => item.trim());
+      const topCategory = parts[0] ?? 'General';
+      const series = parts[1] ?? 'General';
+      return {
+        app: 'WPB',
+        category: `${topCategory} / ${series}`,
+        label: parts.slice(2).join(' > ') || rawLabel,
+      };
+    }
+
+    function parseBullseyeFromLabel(rawLabel: string): { app: DrillApp; category: string; label: string } | null {
+      const normalized = rawLabel.toLowerCase();
+      const match = bullseyeCategoryOptions.find((category) => normalized.includes(category.toLowerCase()));
+      if (!match) return null;
+      return {
+        app: 'Bullseye',
+        category: match,
+        label: rawLabel,
+      };
+    }
+
+    function inferDrill(rawLabel: string, fallbackApp: DrillApp): { app: DrillApp; category: string; label: string } {
+      return (
+        parseWpbFromLabel(rawLabel)
+        ?? parseDrillroomFromLabel(rawLabel)
+        ?? parseBullseyeFromLabel(rawLabel)
+        ?? {
+          app: fallbackApp,
+          category: 'General',
+          label: rawLabel,
+        }
+      );
+    }
+
+    const fallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
+
+    if (adaptiveDailyPlan?.prescribedDrills?.length) {
+      return adaptiveDailyPlan.prescribedDrills.slice(0, 3).map((label, index) => {
+        const inferred = inferDrill(label, fallbackApps[index] ?? 'DrillRoom');
+        return {
+          step: index + 1,
+          app: inferred.app,
+          category: inferred.category,
+          label: inferred.label,
+        };
+      });
+    }
+
+    return roiPlanner.prescription.slice(0, 3).map((item, index) => {
+      const inferred = inferDrill(item.label, item.app);
+      return {
+        step: index + 1,
+        app: inferred.app,
+        category: inferred.category,
+        label: inferred.label,
+      };
+    });
+  }, [adaptiveDailyPlan?.prescribedDrills, bullseyeCategoryOptions, drillRoomDrillSuggestions, roiPlanner.prescription, wpbModuleSuggestions]);
 
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
@@ -773,6 +849,7 @@ export default function TodaySession() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-ivory-100">{item.app}</p>
+                  <p className="mt-1 text-xs text-cue-300">Category: {item.category}</p>
                   <p className="mt-1 text-xs text-chalk-300">{item.label}</p>
                 </div>
               </div>
