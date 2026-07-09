@@ -99,6 +99,10 @@ export default function TodaySession() {
   );
 
   const alreadyLogged = logs.some((item) => item.date === today);
+  const todayLog = useMemo(
+    () => logs.find((item) => item.date === today),
+    [logs, today],
+  );
   const lastLoggedSession = useMemo(
     () => logs.find((item) => item.date !== today) ?? logs[0],
     [logs, today],
@@ -806,7 +810,7 @@ export default function TodaySession() {
     }
 
     const log: DailySessionLog = {
-      id: `session-${Date.now()}`,
+      id: todayLog?.id ?? `session-${Date.now()}`,
       date: today,
       dayOfWeek: day,
       weekNumber: currentWeek,
@@ -868,7 +872,7 @@ export default function TodaySession() {
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean),
-      createdAt: now,
+      createdAt: todayLog?.createdAt ?? now,
       updatedAt: now,
     };
 

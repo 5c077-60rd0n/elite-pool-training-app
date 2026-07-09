@@ -193,6 +193,9 @@ export const useTrackerStore = create<TrackerState>()(
             ].slice(0, 20);
           }
 
+          // If this date has been intentionally corrected, clear stale conflicts for that day.
+          nextConflicts = nextConflicts.filter((conflict) => conflict.date !== entry.date);
+
           const weekNumbers = Array.from(new Set(nextLogs.map((item) => item.weekNumber))).sort((a, b) => a - b);
           const weeklySummaries = weekNumbers
             .map((weekNumber) => calculateWeeklySummary(nextLogs, weekNumber, state.weeklySummaries))
@@ -528,7 +531,7 @@ export const useTrackerStore = create<TrackerState>()(
           syncState: {
             pendingLogIds: [],
             lastSyncAt: new Date().toISOString(),
-            conflicts: state.syncState.conflicts ?? [],
+            conflicts: [],
           },
         }));
       },
