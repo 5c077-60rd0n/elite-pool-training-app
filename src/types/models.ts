@@ -26,9 +26,8 @@ export interface UserProfile {
   name: string;
   currentFargoRating: number;
   planningFargoRating?: number;
+  wpbFargoLastSyncedAt?: string;
   targetFargoRating: number;
-  lastOfficialFargoRating?: number;
-  lastOfficialFargoDate?: string;
   historicalPeakFargoRating?: number;
   yearsAwayFromCompetition?: number;
   programStartDate: string;

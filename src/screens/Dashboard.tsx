@@ -24,6 +24,7 @@ import { calculateTournamentReadinessScore } from '../utils/progressIntelligence
 import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
+import { estimateLatestWpbFargo } from '../utils/wpbFargo';
 
 export default function Dashboard() {
   const profile = useSettingsStore((s) => s.profile);
@@ -53,6 +54,7 @@ export default function Dashboard() {
     () => estimateFargo(activeTrainingFargo, logs, fargoLog),
     [activeTrainingFargo, fargoLog, logs],
   );
+  const wpbEstimatedFargo = useMemo(() => estimateLatestWpbFargo(logs), [logs]);
   const currentPhase = phaseFromFargo(estimatedFargo);
   const pointsToGoal = Math.max(0, 800 - activeTrainingFargo);
   const progressToGoal = Math.round(((activeTrainingFargo - 550) / (800 - 550)) * 100);
@@ -232,6 +234,10 @@ export default function Dashboard() {
             <p className="mt-1 text-lg text-ivory-100">{activeTrainingFargo}</p>
           </div>
           <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">WPB Est Fargo</p>
+            <p className="mt-1 text-lg text-cue-300">{wpbEstimatedFargo ?? '\u2014'}</p>
+          </div>
+          <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
             <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Week</p>
             <p className="mt-1 text-lg text-ivory-100">{profile.currentWeek}</p>
           </div>
@@ -280,6 +286,8 @@ export default function Dashboard() {
               <p className="text-right text-ivory-100">Phase {currentPhase}</p>
               <p className="text-chalk-300">Estimated Fargo (Model)</p>
               <p className="text-right text-cue-300">{estimatedFargo}</p>
+              <p className="text-chalk-300">WPB Estimated Fargo</p>
+              <p className="text-right text-cue-300">{wpbEstimatedFargo ?? '\u2014'}</p>
             </div>
           </Card>
 

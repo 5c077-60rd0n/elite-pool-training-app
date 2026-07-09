@@ -504,7 +504,22 @@ export default function Settings() {
           }}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
+        <Button
+          type="button"
+          variant="secondary"
+          className="mt-2"
+          onClick={() => setProfile({ planningFargoRating: profile.currentFargoRating })}
+        >
+          Use Base Fargo For Training Fargo
+        </Button>
         <p className="mt-1 text-xs text-chalk-300">This is the active Fargo used across training plans, KPI targets, readiness, and forecasting. Current default is 653.</p>
+        {profile.wpbFargoLastSyncedAt ? (
+          <p className="mt-1 text-xs text-cue-300">
+            Last WPB sync: {new Date(profile.wpbFargoLastSyncedAt).toLocaleString()}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-chalk-300">Last WPB sync: not synced yet.</p>
+        )}
 
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Target Fargo Rating</label>
         <input
@@ -519,29 +534,6 @@ export default function Settings() {
             if (!raw) return;
             setProfile({ targetFargoRating: Number(raw) });
           }}
-          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
-
-        <label className="mb-2 mt-3 block text-sm text-chalk-300">Last Official Fargo Rating</label>
-        <input
-          type="number"
-          inputMode="numeric"
-          step={1}
-          min={200}
-          max={850}
-          value={profile.lastOfficialFargoRating ?? ''}
-          onChange={(event) => {
-            const raw = event.target.value.trim();
-            setProfile({ lastOfficialFargoRating: raw ? Number(raw) : undefined });
-          }}
-          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
-
-        <label className="mb-2 mt-3 block text-sm text-chalk-300">Last Official Fargo Date</label>
-        <input
-          type="date"
-          value={profile.lastOfficialFargoDate ?? ''}
-          onChange={(event) => setProfile({ lastOfficialFargoDate: event.target.value })}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
 

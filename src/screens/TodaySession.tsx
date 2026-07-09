@@ -30,6 +30,7 @@ import {
 } from '../utils/adhdMode';
 import { unlockAppAudio } from '../utils/mobileAudio';
 import { emitTelemetryEvent } from '../utils/telemetry';
+import { estimateWpbFargo } from '../utils/wpbFargo';
 import type { BullseyeCategory, DailySessionLog, SessionRecommendation, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
 
 const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
@@ -318,6 +319,14 @@ export default function TodaySession() {
 
   const recommendationLimit = getAdhdRecommendationLimit(adhdModeEnabled);
   const showExtraLogFields = !adhdModeEnabled || showAdvancedPanels;
+  const wpbEstimatedFargo = useMemo(
+    () => estimateWpbFargo({
+      highestScore: wpbHighestScore,
+      currentAvgScore: wpbCurrentAvgScore,
+      avgPracticeMinutes: wpbAvgPracticeMinutes,
+    }),
+    [wpbAvgPracticeMinutes, wpbCurrentAvgScore, wpbHighestScore],
+  );
 
   useEffect(() => {
     const drillroomAssigned = todaysExactDrills.find((item) => item.app === 'DrillRoom');
@@ -878,7 +887,15 @@ export default function TodaySession() {
       updatedAt: now,
     };
 
-    addDailySessionLog(log, activeTrainingFargo);
+    const nextTrainingFargo = wpbEstimatedFargo ?? activeTrainingFargo;
+    if (wpbEstimatedFargo && wpbEstimatedFargo !== profile.planningFargoRating) {
+      setProfile({
+        planningFargoRating: wpbEstimatedFargo,
+        wpbFargoLastSyncedAt: now,
+      });
+    }
+
+    addDailySessionLog(log, nextTrainingFargo);
     markComplete();
 
     const after = getTrackerGamificationSnapshot([log, ...logs]);
@@ -928,10 +945,13 @@ export default function TodaySession() {
         date: today,
       });
     }
+    const syncedTrainingFargoMessage = wpbEstimatedFargo
+      ? ` · Training Fargo synced to ${wpbEstimatedFargo}`
+      : '';
     setSaveMessage(
       `Session logged. +${latestXp} XP · Quality ${latestQuality} · Level ${after.level}${
         leveledUp ? ' (Level Up!)' : ''
-      }`,
+      }${syncedTrainingFargoMessage}`,
     );
     setPostSessionSummary({
       title: `Next session: ${suggestedNextMode.toUpperCase()}`,
@@ -1655,6 +1675,9 @@ export default function TodaySession() {
                 onChange={(next) => setWpbAvgPracticeMinutes(Math.max(0, next))}
               />
             </div>
+            <p className="mt-2 text-xs text-chalk-300">
+              WPB Estimated Fargo: <span className="text-cue-300">{wpbEstimatedFargo ?? '\u2014'}</span>
+            </p>
           </>
         ) : (
           <>
