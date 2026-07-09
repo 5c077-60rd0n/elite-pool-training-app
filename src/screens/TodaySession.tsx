@@ -19,6 +19,7 @@ import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
+import { createPostSessionCoachVerdict, type PostSessionCoachVerdict } from '../utils/appStatsIntelligence';
 import {
   getAdhdModePreset,
   getAdhdRecommendationLimit,
@@ -130,6 +131,7 @@ export default function TodaySession() {
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
   const [saveMessage, setSaveMessage] = useState('');
   const [postSessionSummary, setPostSessionSummary] = useState<SessionRecommendation | null>(null);
+  const [postSessionVerdict, setPostSessionVerdict] = useState<PostSessionCoachVerdict | null>(null);
   const [celebration, setCelebration] = useState<{ title: string; subtitle: string } | null>(null);
   const [nowMs, setNowMs] = useState(() => Date.now());
   const [focusTouched, setFocusTouched] = useState(false);
@@ -830,6 +832,7 @@ export default function TodaySession() {
             : 'The app is steering toward a short, repeatable block to protect consistency and attention.',
       updatedAt: now,
     });
+    setPostSessionVerdict(createPostSessionCoachVerdict([log, ...logs]));
     setLastSessionRecommendation({
       title: `Next session: ${suggestedNextMode.toUpperCase()}`,
       nextMode: suggestedNextMode,
@@ -1363,6 +1366,22 @@ export default function TodaySession() {
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
               <span className="rounded-full border border-cue-600/50 bg-cue-900/20 px-2 py-1 text-cue-200">Next mode: {postSessionSummary.nextMode.toUpperCase()}</span>
               <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Close the loop</span>
+            </div>
+          </div>
+        ) : null}
+        {postSessionVerdict ? (
+          <div className="mb-4 rounded-2xl border border-felt-600 bg-felt-800/55 p-4">
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Coach verdict</p>
+            <p className="mt-2 text-sm text-ivory-100">Transfer score: {postSessionVerdict.transferScore}</p>
+            <p className="mt-1 text-xs text-chalk-300">Strongest: {postSessionVerdict.strongestApp} · Weakest: {postSessionVerdict.weakestApp}</p>
+            <p className="mt-2 text-sm text-ivory-100">Next target: {postSessionVerdict.nextTarget}</p>
+            <p className="mt-2 text-xs text-chalk-300">{postSessionVerdict.rationale}</p>
+            <div className="mt-2 flex flex-wrap gap-2 text-xs">
+              {postSessionVerdict.trendSignals.map((trend) => (
+                <span key={trend.app} className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">
+                  {trend.app} 7d {trend.delta7 >= 0 ? '+' : ''}{trend.delta7}
+                </span>
+              ))}
             </div>
           </div>
         ) : null}
