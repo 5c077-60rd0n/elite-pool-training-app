@@ -1,4 +1,5 @@
 import type { BullseyeCategory, WpbCategory, WpbRatingTier } from '../types/tracker';
+import { trackerDrills } from './trackerPlan';
 
 import bullseyeCanonicalRaw from '../../docs/catalogs/bullseye-canonical.json?raw';
 import drillroomCanonicalRaw from '../../docs/catalogs/drillroom-canonical.json?raw';
@@ -86,6 +87,19 @@ for (const entry of wpbCatalog?.entries ?? []) {
     if (!normalizedDrill) continue;
     wpbSuggestionSet.add(`${topCategory} > ${seriesName} > ${normalizedDrill}`);
   }
+}
+
+for (const drill of trackerDrills.filter((item) => item.app === 'WPB')) {
+  const name = drill.name.trim();
+  if (!name) continue;
+
+  const topCategory =
+    drill.metricField === 'safetyExchangeSuccessPct'
+      ? 'Defense'
+      : drill.metricField === 'lineUpShotCount'
+        ? 'Position Play & Runouts'
+        : 'Fundamentals';
+  wpbSuggestionSet.add(`${topCategory} > Core > ${name}`);
 }
 
 export const wpbModuleSuggestions = Array.from(wpbSuggestionSet.values()).sort((a, b) => a.localeCompare(b));
