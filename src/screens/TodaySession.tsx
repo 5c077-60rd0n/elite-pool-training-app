@@ -127,6 +127,9 @@ export default function TodaySession() {
   const [wpbHighestScore, setWpbHighestScore] = useState(0);
   const [wpbCurrentAvgScore, setWpbCurrentAvgScore] = useState(0);
   const [wpbAvgPracticeMinutes, setWpbAvgPracticeMinutes] = useState(0);
+  const [drillRoomCompleted, setDrillRoomCompleted] = useState(false);
+  const [bullseyeCompleted, setBullseyeCompleted] = useState(false);
+  const [wpbCompleted, setWpbCompleted] = useState(false);
   const [notes, setNotes] = useState('');
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
@@ -144,6 +147,9 @@ export default function TodaySession() {
   const autoModePresetAppliedRef = useRef(false);
   const breakAnnouncementSentRef = useRef(false);
   const returnAnnouncementSentRef = useRef(false);
+  const quickLogSectionRef = useRef<HTMLDivElement | null>(null);
+  const appStatsSectionRef = useRef<HTMLDivElement | null>(null);
+  const saveSectionRef = useRef<HTMLDivElement | null>(null);
 
   const smartAutofill = useMemo(
     () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
@@ -520,12 +526,26 @@ export default function TodaySession() {
   const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
     ? Math.max(0, Math.floor((nowMs - Date.parse(timerStartedAt)) / 1000))
     : 0);
+  const allAppsCompleted = drillRoomCompleted && bullseyeCompleted && wpbCompleted;
   const dataConfidenceNudges = useMemo(() => {
     const nudges: string[] = [];
-    if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom %');
+    if (!allAppsCompleted) nudges.push('3-app completion strip');
+    if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom shotmaking %');
+    if (ghostDrillPlayed === 'Yes' && ghostDrillWinRatePct === 0) nudges.push('Ghost win %');
+    if (wpbLesson === 'Yes' && !wpbModuleName.trim()) nudges.push('WPB module name');
+    if (bullseyeCategory === 'Mixed') nudges.push('Bullseye category');
     if (!notes.trim()) nudges.push('Session notes');
     return nudges;
-  }, [drillRoomShotmakingPct, notes]);
+  }, [
+    allAppsCompleted,
+    bullseyeCategory,
+    drillRoomShotmakingPct,
+    ghostDrillPlayed,
+    ghostDrillWinRatePct,
+    notes,
+    wpbLesson,
+    wpbModuleName,
+  ]);
 
   const primaryTimerActionLabel = timerRunning
     ? 'Pause Timer'
@@ -625,6 +645,52 @@ export default function TodaySession() {
     setBullseyeProximity(Math.max(0, smartAutofill.bullseyeProximity));
   }
 
+  function applyAssignedAppSet(): void {
+    const drillroomAssigned = todaysExactDrills.find((item) => item.app === 'DrillRoom');
+    const bullseyeAssigned = todaysExactDrills.find((item) => item.app === 'Bullseye');
+    const wpbAssigned = todaysExactDrills.find((item) => item.app === 'WPB');
+
+    if (drillroomAssigned?.label) {
+      setDrillRoomDrillName(drillroomAssigned.label);
+      setDrillRoomCompleted(true);
+    }
+
+    if (bullseyeAssigned?.category && bullseyeAssigned.category !== 'General') {
+      const match = bullseyeCategoryOptions.find((option) => option.toLowerCase() === bullseyeAssigned.category.toLowerCase());
+      if (match) {
+        setBullseyeCategory(match);
+        setBullseyeCompleted(true);
+      }
+    }
+
+    if (wpbAssigned?.label) {
+      setWpbLesson('Yes');
+      setWpbModuleName(wpbAssigned.label);
+      setWpbCompleted(true);
+    }
+
+    setSaveMessage('Applied assigned DrillRoom, Bullseye, and WPB set for today.');
+  }
+
+  function applyLastSessionAppSet(): void {
+    if (!lastLoggedSession) {
+      setSaveMessage('No previous session found to copy app fields from.');
+      return;
+    }
+
+    setDrillRoomDrillName(lastLoggedSession.drillRoomDrillName ?? '');
+    setBullseyeCategory(lastLoggedSession.bullseyeCategory ?? 'Mixed');
+    setWpbLesson(lastLoggedSession.wpbLesson);
+    setWpbCategory(lastLoggedSession.wpbCategory ?? 'Fundamentals');
+    setWpbModuleName(lastLoggedSession.wpbModuleName ?? '');
+    setWpbTierAchieved(lastLoggedSession.wpbTierAchieved ?? '');
+
+    setDrillRoomCompleted(Boolean(lastLoggedSession.drillRoomDrillName?.trim()));
+    setBullseyeCompleted(lastLoggedSession.bullseyeCategory !== 'Mixed');
+    setWpbCompleted(Boolean(lastLoggedSession.wpbLesson === 'Yes' && lastLoggedSession.wpbModuleName?.trim()));
+    setSaveMessage('Copied app fields from your last logged session.');
+  }
+
   function applyRoiPrescription(): void {
     setFocusTouched(true);
     setLengthTouched(true);
@@ -690,7 +756,12 @@ export default function TodaySession() {
     const before = getTrackerGamificationSnapshot(logs);
     const missingCoreFields = dataConfidenceNudges.filter((item) => item !== 'Session notes');
 
-    if (missingCoreFields.length >= 3) {
+    if (!allAppsCompleted) {
+      setSaveMessage('Complete all three app checkboxes before saving the session.');
+      return;
+    }
+
+    if (missingCoreFields.length >= 2) {
       const proceed = window.confirm(
         `Quick quality check: ${missingCoreFields.join(', ')} are still zero/blank. Save anyway?`,
       );
@@ -910,6 +981,39 @@ export default function TodaySession() {
         subtitle: `+${latestXp} XP · Great consistency`,
       });
     }
+  }
+
+  function scrollToSection(ref: { current: HTMLDivElement | null }): void {
+    ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function finishSessionFast(): void {
+    const hasDrillRoomEvidence = Boolean(drillRoomDrillName.trim())
+      || drillRoomAttempts > 0
+      || drillRoomScore > 0
+      || drillRoomShotmakingPct > 0;
+    const hasBullseyeEvidence = bullseyeCategory !== 'Mixed'
+      || bullseyeTotalAttempts > 0
+      || bullseyeSuccessfulAttempts > 0
+      || bullseyeProximity > 0;
+    const hasWpbEvidence = (wpbLesson === 'Yes' && Boolean(wpbModuleName.trim()))
+      || wpbAvgPracticeMinutes > 0
+      || wpbHighestScore > 0;
+
+    if (!allAppsCompleted) {
+      setSaveMessage('Finish check failed: mark DrillRoom, Bullseye, and WPB complete first.');
+      scrollToSection(quickLogSectionRef);
+      return;
+    }
+
+    if (!hasDrillRoomEvidence || !hasBullseyeEvidence || !hasWpbEvidence) {
+      setSaveMessage('Finish check failed: add at least one evidence signal for each app in App Stats Capture.');
+      scrollToSection(appStatsSectionRef);
+      return;
+    }
+
+    scrollToSection(saveSectionRef);
+    saveSessionLog();
   }
 
   return (
@@ -1207,9 +1311,46 @@ export default function TodaySession() {
         </Card>
       ) : null}
 
+      <div ref={quickLogSectionRef}>
       <Card className="mb-4" title="3. Quick Log">
         <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Log only the essentials</p>
         <p className="mt-2 text-sm text-chalk-300">In ADHD mode, fill essentials first, then confirm each app drill below before saving.</p>
+
+        <div className="mt-3 rounded-2xl border border-cue-600/35 bg-cue-950/15 p-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Mandatory three-app completion</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+              <input
+                type="checkbox"
+                checked={drillRoomCompleted}
+                onChange={(event) => setDrillRoomCompleted(event.target.checked)}
+                className="h-4 w-4"
+              />
+              DrillRoom done
+            </label>
+            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+              <input
+                type="checkbox"
+                checked={bullseyeCompleted}
+                onChange={(event) => setBullseyeCompleted(event.target.checked)}
+                className="h-4 w-4"
+              />
+              Bullseye done
+            </label>
+            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+              <input
+                type="checkbox"
+                checked={wpbCompleted}
+                onChange={(event) => setWpbCompleted(event.target.checked)}
+                className="h-4 w-4"
+              />
+              WPB done
+            </label>
+          </div>
+          {!allAppsCompleted ? (
+            <p className="mt-2 text-xs text-chalk-300">Check all three after table work. Save is locked until this strip is complete.</p>
+          ) : null}
+        </div>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
@@ -1272,12 +1413,24 @@ export default function TodaySession() {
 
         <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Session drills by app</p>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Button type="button" variant="secondary" onClick={applyAssignedAppSet}>
+              Use Assigned App Set
+            </Button>
+            <Button type="button" variant="secondary" onClick={applyLastSessionAppSet}>
+              Copy Last Session App Set
+            </Button>
+          </div>
           <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="text-sm text-chalk-300">
               DrillRoom Drill
               <input
                 value={drillRoomDrillName}
-                onChange={(event) => setDrillRoomDrillName(event.target.value)}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setDrillRoomDrillName(next);
+                  if (next.trim()) setDrillRoomCompleted(true);
+                }}
                 list="quicklog-drillroom-suggestions"
                 className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
               />
@@ -1291,7 +1444,11 @@ export default function TodaySession() {
               Bullseye Category
               <select
                 value={bullseyeCategory}
-                onChange={(event) => setBullseyeCategory(event.target.value as BullseyeCategory)}
+                onChange={(event) => {
+                  const next = event.target.value as BullseyeCategory;
+                  setBullseyeCategory(next);
+                  if (next !== 'Mixed') setBullseyeCompleted(true);
+                }}
                 className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
               >
                 {bullseyeCategoryOptions.map((option) => (
@@ -1329,7 +1486,10 @@ export default function TodaySession() {
                 onChange={(event) => {
                   const next = event.target.value;
                   setWpbModuleName(next);
-                  if (next.trim() && wpbLesson !== 'Yes') setWpbLesson('Yes');
+                  if (next.trim()) {
+                    if (wpbLesson !== 'Yes') setWpbLesson('Yes');
+                    setWpbCompleted(true);
+                  }
                 }}
                 list="quicklog-wpb-suggestions"
                 className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
@@ -1348,7 +1508,9 @@ export default function TodaySession() {
           <p className="mt-1 text-xs text-chalk-300">Notes, coach tags, and clips stay out of the way unless you intentionally open full logging options.</p>
         </div>
       </Card>
+      </div>
 
+      <div ref={appStatsSectionRef}>
       <Card className="mb-4" title="4. App Stats Capture">
         {showExtraLogFields ? (
           <>
@@ -1457,12 +1619,39 @@ export default function TodaySession() {
             </div>
           </>
         ) : (
-          <p className="rounded-2xl border border-felt-600 bg-felt-800/55 p-3 text-xs text-chalk-300">
-            App-level stat capture is hidden in ADHD mode. Use Show Full Logging Options to enter DrillRoom, Bullseye, and WPB stats.
-          </p>
+          <>
+            <p className="rounded-2xl border border-felt-600 bg-felt-800/55 p-3 text-xs text-chalk-300">
+              Full stat capture is hidden in ADHD mode. Enter one quick stat per app below.
+            </p>
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <NumberStepperField
+                label="DrillRoom attempts"
+                value={drillRoomAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Bullseye attempts"
+                value={bullseyeTotalAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setBullseyeTotalAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="WPB minutes"
+                value={wpbAvgPracticeMinutes}
+                min={0}
+                step={1}
+                onChange={(next) => setWpbAvgPracticeMinutes(Math.max(0, next))}
+              />
+            </div>
+          </>
         )}
       </Card>
+      </div>
 
+      <div ref={saveSectionRef}>
       <Card className="border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Session Notes & Save">
         {postSessionSummary ? (
           <div className="mb-4 rounded-2xl border border-cue-600/40 bg-cue-950/20 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
@@ -1523,10 +1712,15 @@ export default function TodaySession() {
             Data confidence nudge: still zero or blank: {dataConfidenceNudges.join(' · ')}
           </p>
         ) : null}
-        <Button className="w-full" onClick={saveSessionLog}>Save Today's Log</Button>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button className="w-full" type="button" variant="secondary" onClick={finishSessionFast}>Finish Session (Auto Check + Save)</Button>
+          <Button className="w-full" onClick={saveSessionLog} disabled={!allAppsCompleted}>Save Today's Log</Button>
+        </div>
+        {!allAppsCompleted ? <p className="mt-2 text-sm text-chalk-300">Complete DrillRoom, Bullseye, and WPB checkboxes to unlock save.</p> : null}
         {alreadyLogged ? <p className="mt-2 text-sm text-cue-300">Today's session is already logged.</p> : null}
         {saveMessage ? <p className="mt-2 text-sm text-cue-300">{saveMessage}</p> : null}
       </Card>
+      </div>
     </PageWrapper>
   );
 }

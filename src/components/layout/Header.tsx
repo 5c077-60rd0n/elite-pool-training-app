@@ -43,8 +43,8 @@ export function Header() {
     <header className="sticky top-0 z-20 border-b border-flash-600/50 bg-felt-900/95 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-5xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-3">
-          <img src="/brand/flash-gordon-logo.png" alt="Flash Gordon Pool" width={320} height={135} className="h-8 w-auto" loading="eager" />
-          <p className="hidden text-[11px] uppercase tracking-[0.22em] text-chalk-300 sm:block">Fargo Climb Training Console</p>
+          <img src="/brand/flash-gordon-logo.png" alt="Fargo Climb CueSports" width={320} height={135} className="h-8 w-auto" loading="eager" />
+          <p className="hidden text-[11px] uppercase tracking-[0.22em] text-chalk-300 sm:block">CueSports Coaching Console</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-full border border-cue-600/50 bg-felt-800/80 px-2 py-1 text-xs uppercase tracking-wide text-cue-400" aria-label="training streak">

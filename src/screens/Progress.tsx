@@ -96,7 +96,7 @@ export default function Progress() {
   }
 
   return (
-    <PageWrapper title="Tracking">
+    <PageWrapper title="Progress Review">
       <div className="mb-4 flex flex-wrap gap-2">
         <Button variant={tab === 'weekly' ? 'primary' : 'secondary'} onClick={() => setTab('weekly')}>Weekly Summary</Button>
         <Button variant={tab === 'fargo' ? 'primary' : 'secondary'} onClick={() => setTab('fargo')}>Fargo Rating Log</Button>

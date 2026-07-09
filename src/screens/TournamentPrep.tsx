@@ -511,6 +511,7 @@ export default function TournamentPrep() {
     if (value === 'men' || value === 'open' || value === 'women') return value;
     return 'men';
   });
+  const [showAdvancedFinder, setShowAdvancedFinder] = useState(false);
   const [selectedFinderId, setSelectedFinderId] = useState('');
   const [selectedTournamentEmbedUrl, setSelectedTournamentEmbedUrl] = useState('');
 
@@ -989,6 +990,7 @@ export default function TournamentPrep() {
   return (
     <PageWrapper title="Tournament Prep">
       <Card className="mb-4" title="Create Tournament Plan">
+        <p className="mb-2 text-xs text-chalk-300">At-table purpose: lock event constraints so daily work matches race format, table conditions, and decision pressure.</p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <input
             value={tournamentName}
@@ -1021,6 +1023,7 @@ export default function TournamentPrep() {
       </Card>
 
       <Card className="mb-4" title="Match Simulator Signal">
+        <p className="mb-2 text-xs text-chalk-300">At-table purpose: calibrate whether your current practice quality transfers to match pressure before event day.</p>
         {latestMatchSimulation ? (
           <>
             <p className="text-sm text-ivory-100">Last simulation: {latestMatchSimulation.date} · {latestMatchSimulation.opponentArchetype}</p>
@@ -1036,34 +1039,45 @@ export default function TournamentPrep() {
       </Card>
 
       <Card className="mb-4" title="Tournament Value Finder">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
-          <select
-            value={selectedFeedId}
-            onChange={(event) => applySavedFeed(event.target.value)}
-            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-          >
-            <option value="custom">Custom feed URL</option>
-            {savedFeeds.map((feed) => (
-              <option key={feed.id} value={feed.id}>{feed.name}</option>
-            ))}
-          </select>
-          <Button variant="secondary" onClick={saveCurrentFeedPreset} disabled={!feedUrl.trim()}>
-            Save Feed
-          </Button>
-          <Button variant="secondary" onClick={removeSelectedFeedPreset} disabled={selectedFeedId === 'custom'}>
-            Remove
-          </Button>
-        </div>
-
-        <input
-          value={feedUrl}
-          onChange={(event) => setFeedUrl(event.target.value)}
-          placeholder="Tournament API feed URL (JSON)"
-          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-        />
-        <Button className="mt-2" variant="secondary" onClick={() => void refreshEventFeed()}>
-          {feedStatus === 'loading' ? 'Refreshing Feed...' : 'Refresh Event Feed'}
+        <p className="text-xs text-chalk-300">At-table purpose: pick the event that best develops your next competitive skill edge with manageable risk.</p>
+        <p className="text-sm text-chalk-300">Pick game/division, review the best-fit event, then apply it to your 14-day prep plan.</p>
+        <Button className="mt-2" type="button" variant="secondary" onClick={() => setShowAdvancedFinder((prev) => !prev)}>
+          {showAdvancedFinder ? 'Hide Advanced Feed Tools' : 'Show Advanced Feed Tools'}
         </Button>
+
+        {showAdvancedFinder ? (
+          <div className="mt-3 rounded-xl border border-felt-600 bg-felt-800/50 p-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto_auto]">
+              <select
+                value={selectedFeedId}
+                onChange={(event) => applySavedFeed(event.target.value)}
+                className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              >
+                <option value="custom">Custom feed URL</option>
+                {savedFeeds.map((feed) => (
+                  <option key={feed.id} value={feed.id}>{feed.name}</option>
+                ))}
+              </select>
+              <Button variant="secondary" onClick={saveCurrentFeedPreset} disabled={!feedUrl.trim()}>
+                Save Feed
+              </Button>
+              <Button variant="secondary" onClick={removeSelectedFeedPreset} disabled={selectedFeedId === 'custom'}>
+                Remove
+              </Button>
+            </div>
+
+            <input
+              value={feedUrl}
+              onChange={(event) => setFeedUrl(event.target.value)}
+              placeholder="Tournament API feed URL (JSON)"
+              className="mt-2 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+            />
+            <Button className="mt-2" variant="secondary" onClick={() => void refreshEventFeed()}>
+              {feedStatus === 'loading' ? 'Refreshing Feed...' : 'Refresh Event Feed'}
+            </Button>
+          </div>
+        ) : null}
+
         {feedStatus === 'success' ? <p className="mt-2 text-xs text-cue-300">Feed loaded: {feedEvents.length} events</p> : null}
         {feedError ? <p className="mt-2 text-xs text-chalk-300">Feed note: {feedError}</p> : null}
 
@@ -1124,12 +1138,12 @@ export default function TournamentPrep() {
             />
           </div>
         ) : null}
-        {selectedTournamentMapUrl ? (
+        {showAdvancedFinder && selectedTournamentMapUrl ? (
           <a href={selectedTournamentMapUrl} target="_blank" rel="noreferrer" className="mt-2 inline-block text-xs text-cue-300 underline underline-offset-2">
             Open venue map
           </a>
         ) : null}
-        {selectedTournament?.registrationUrl ? (
+        {showAdvancedFinder && selectedTournament?.registrationUrl ? (
           <a href={selectedTournament.registrationUrl} target="_blank" rel="noreferrer" className="mt-1 inline-block text-xs text-cue-300 underline underline-offset-2">
             Open registration link
           </a>
@@ -1147,6 +1161,7 @@ export default function TournamentPrep() {
       </Card>
 
       <Card className="mb-4" title="Opponent Prep Cards">
+        <p className="mb-2 text-xs text-chalk-300">At-table purpose: reduce in-match hesitation by preloading opening patterns, safety decisions, and bailout choices.</p>
         <select
           value={selectedCardId}
           onChange={(event) => setSelectedCardId(event.target.value)}
@@ -1209,6 +1224,7 @@ export default function TournamentPrep() {
 
       {sortedPreps.length ? (
         <Card className="mb-4" title="Tournament Plans">
+          <p className="mb-2 text-xs text-chalk-300">At-table purpose: keep each prep cycle visible so execution is tied to a live event, not generic practice.</p>
           <div className="space-y-2">
             {sortedPreps.map((entry) => {
               const done = entry.checklistItems.filter((item) => item.completed).length;
@@ -1243,6 +1259,7 @@ export default function TournamentPrep() {
 
       {activePrep ? (
         <Card className="mb-4" title="Active Prep Timeline">
+          <p className="mb-2 text-xs text-chalk-300">At-table purpose: execute one concrete prep action each day and avoid last-minute decision overload.</p>
           <p className="text-sm text-chalk-300">{activePrep.tournamentName} · {activePrep.date} · {activePrep.location}</p>
           <p className="mb-2 text-sm text-ivory-200">Prep starts: {activePrep.prepStartDate} · Current step: {activePrep.currentStep}/{activePrep.checklistItems.length}</p>
           {activePrep.opponentPrepCardId && opponentCardMap[activePrep.opponentPrepCardId] ? (
@@ -1275,6 +1292,7 @@ export default function TournamentPrep() {
 
       {activePrep && eventReached ? (
         <Card title="Post-Event Analysis">
+          <p className="mb-2 text-xs text-chalk-300">At-table purpose: convert match outcomes into one correction focus that feeds your next training block immediately.</p>
           <select
             value={result}
             onChange={(event) => setResult(event.target.value)}

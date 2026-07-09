@@ -11,7 +11,9 @@ export default function CompetitionLog() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [eventName, setEventName] = useState('');
   const [format, setFormat] = useState('Race to 7');
-  const [result, setResult] = useState('');
+  const [result, setResult] = useState<'Win' | 'Loss' | 'Mixed'>('Win');
+  const [scoreline, setScoreline] = useState('');
+  const [primaryLesson, setPrimaryLesson] = useState('');
   const [notes, setNotes] = useState('');
 
   function saveEntry(): void {
@@ -21,11 +23,19 @@ export default function CompetitionLog() {
       eventName,
       format,
       result,
-      notes,
+      notes: [
+        scoreline.trim() ? `Scoreline: ${scoreline.trim()}` : '',
+        primaryLesson.trim() ? `Primary lesson: ${primaryLesson.trim()}` : '',
+        notes.trim(),
+      ]
+        .filter(Boolean)
+        .join(' | '),
     });
 
     setEventName('');
-    setResult('');
+    setResult('Win');
+    setScoreline('');
+    setPrimaryLesson('');
     setNotes('');
   }
 
@@ -51,20 +61,35 @@ export default function CompetitionLog() {
             placeholder="Format"
             className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
           />
-          <input
+          <select
             value={result}
-            onChange={(event) => setResult(event.target.value)}
-            placeholder="Result"
+            onChange={(event) => setResult(event.target.value as 'Win' | 'Loss' | 'Mixed')}
+            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+          >
+            <option value="Win">Win</option>
+            <option value="Loss">Loss</option>
+            <option value="Mixed">Mixed</option>
+          </select>
+          <input
+            value={scoreline}
+            onChange={(event) => setScoreline(event.target.value)}
+            placeholder="Scoreline (example: 7-5)"
+            className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+          />
+          <input
+            value={primaryLesson}
+            onChange={(event) => setPrimaryLesson(event.target.value)}
+            placeholder="Primary lesson"
             className="min-h-11 rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
           />
         </div>
         <textarea
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          placeholder="Notes"
+          placeholder="Key patterns, tactical misses, and next correction"
           className="mt-2 min-h-24 w-full rounded-xl border border-felt-600 bg-felt-800 p-3 text-ivory-100"
         />
-        <Button className="mt-3 w-full" onClick={saveEntry} disabled={!eventName.trim() || !result.trim()}>
+        <Button className="mt-3 w-full" onClick={saveEntry} disabled={!eventName.trim()}>
           Save Competition Entry
         </Button>
       </Card>

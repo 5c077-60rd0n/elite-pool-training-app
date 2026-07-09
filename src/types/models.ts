@@ -245,3 +245,14 @@ export interface MentalGameTip {
   title: string;
   content: string;
 }
+
+export interface MentalGameLogEntry {
+  id: string;
+  date: string;
+  tipId: string;
+  category: MentalGameTip['category'];
+  scenario: 'practice' | 'match' | 'post-miss' | 'closing-rack';
+  used: boolean;
+  effectScore: 1 | 2 | 3 | 4 | 5;
+  notes: string;
+}

@@ -61,6 +61,7 @@ type BackupPayload = {
       weeklyKpis?: ReturnType<typeof useProgressStore.getState>['weeklyKpis'];
       breakChartEntries?: ReturnType<typeof useProgressStore.getState>['breakChartEntries'];
       tournamentPreps?: ReturnType<typeof useProgressStore.getState>['tournamentPreps'];
+      mentalGameLogs?: ReturnType<typeof useProgressStore.getState>['mentalGameLogs'];
     };
     session?: {
       activeDate?: string;
@@ -179,6 +180,7 @@ export default function Settings() {
         weeklyKpis: progress.weeklyKpis,
         breakChartEntries: progress.breakChartEntries,
         tournamentPreps: progress.tournamentPreps,
+        mentalGameLogs: progress.mentalGameLogs,
       },
       tracker: {
         dailySessionLogs: tracker.dailySessionLogs,
@@ -210,6 +212,7 @@ export default function Settings() {
           weeklyKpis: progress.weeklyKpis,
           breakChartEntries: progress.breakChartEntries,
           tournamentPreps: progress.tournamentPreps,
+          mentalGameLogs: progress.mentalGameLogs,
         },
         session: {
           activeDate: session.activeDate,
@@ -274,6 +277,7 @@ export default function Settings() {
           weeklyKpis: legacyProgress.weeklyKpis ?? state.weeklyKpis,
           breakChartEntries: legacyProgress.breakChartEntries ?? state.breakChartEntries,
           tournamentPreps: legacyProgress.tournamentPreps ?? state.tournamentPreps,
+          mentalGameLogs: legacyProgress.mentalGameLogs ?? state.mentalGameLogs,
         }));
       }
       if (trackerData) {
@@ -400,6 +404,7 @@ export default function Settings() {
       weeklyKpis: [],
       breakChartEntries: [],
       tournamentPreps: [],
+      mentalGameLogs: [],
     }));
     const emptySeason = getTrackerGamificationSnapshot([]);
     useTrackerStore.setState((state) => ({
