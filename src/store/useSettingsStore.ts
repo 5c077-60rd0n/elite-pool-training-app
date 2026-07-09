@@ -13,6 +13,7 @@ const defaultProfile: UserProfile = {
   id: 'default-user',
   name: '',
   currentFargoRating: 550,
+  planningFargoRating: 653,
   targetFargoRating: 800,
   lastOfficialFargoRating: undefined,
   lastOfficialFargoDate: '',

@@ -5,6 +5,7 @@ import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import {
   buildWeeklyReviewAssistant,
   calculateTournamentReadinessScore,
@@ -26,6 +27,7 @@ export default function Progress() {
   const confidence = useTrackerStore((s) => s.confidenceIndexHistory);
   const recoveryPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const addFargoRating = useTrackerStore((s) => s.addFargoRating);
+  const activeTrainingFargo = getActiveTrainingFargo(profile);
   const [forecastSessionsPerWeek, setForecastSessionsPerWeek] = useState(4);
   const [forecastQualityLiftPct, setForecastQualityLiftPct] = useState(5);
 
@@ -45,13 +47,13 @@ export default function Progress() {
   const forecast = useMemo(
     () =>
       estimateGoalDate(
-        profile.currentFargoRating,
+        activeTrainingFargo,
         profile.targetFargoRating,
         fargoLog.map((item) => ({ date: item.date, rating: item.newFargoRating })),
         forecastSessionsPerWeek,
         forecastQualityLiftPct,
       ),
-    [fargoLog, forecastQualityLiftPct, forecastSessionsPerWeek, profile.currentFargoRating, profile.targetFargoRating],
+    [activeTrainingFargo, fargoLog, forecastQualityLiftPct, forecastSessionsPerWeek, profile.targetFargoRating],
   );
   const weeklyAssistant = useMemo(
     () => buildWeeklyReviewAssistant(logs, sims, competition, profile.currentWeek),

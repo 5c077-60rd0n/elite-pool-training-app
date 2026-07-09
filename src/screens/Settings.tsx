@@ -13,6 +13,7 @@ import { bullseyeCategorySeed, mechanicsChecklistSeed, milestoneRows, phaseStatu
 import { eliteLabSeed } from '../data/eliteLab';
 import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import { buildCoachReviewExport } from '../utils/coachExport';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import type { TelemetryEventPayload } from '../utils/telemetry';
 import { clearPwaMetrics, getPwaMetricsSnapshot, type PwaMetricsSnapshot } from '../utils/pwaMetrics';
@@ -367,10 +368,11 @@ export default function Settings() {
   }
 
   function exportCoachReview(): void {
+      const activeTrainingFargo = getActiveTrainingFargo(profile);
     const payload = buildCoachReviewExport({
       athlete: {
         name: profile.name,
-        currentFargoRating: profile.currentFargoRating,
+          currentFargoRating: activeTrainingFargo,
         targetFargoRating: profile.targetFargoRating,
         currentWeek: profile.currentWeek,
       },
@@ -487,6 +489,22 @@ export default function Settings() {
           }}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
+
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">WPB Estimated Fargo (used for training plans)</label>
+        <input
+          type="number"
+          inputMode="numeric"
+          step={1}
+          min={300}
+          max={850}
+          value={profile.planningFargoRating ?? ''}
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            setProfile({ planningFargoRating: raw ? Number(raw) : undefined });
+          }}
+          className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+        />
+        <p className="mt-1 text-xs text-chalk-300">Training benchmarks and adaptive plans will use this rating. Current default is 653.</p>
 
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Target Fargo Rating</label>
         <input

@@ -8,6 +8,7 @@ import {
 import type { DailySessionLog, WeeklySummary } from '../types/tracker';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 
 type TrackerWeeklyKpi = {
   kpiId: string;
@@ -106,7 +107,8 @@ function mergeWeeklyMetrics(
 export function useKPICalc() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
-  const rating = useSettingsStore((s) => s.profile.currentFargoRating);
+  const profile = useSettingsStore((s) => s.profile);
+  const rating = getActiveTrainingFargo(profile);
 
   const sourceWeeklyKpis = useMemo(() => {
     const derived = weeklyMetricsFromDailyLogs(logs);

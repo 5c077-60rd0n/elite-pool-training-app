@@ -2,6 +2,7 @@ import { Card } from '../components/ui/Card';
 import { PageWrapper } from '../components/layout/PageWrapper';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
 export default function PhaseOverview() {
@@ -10,7 +11,8 @@ export default function PhaseOverview() {
   const ratings = useTrackerStore((s) => s.fargoRatingLog);
   const phaseStatuses = useTrackerStore((s) => s.milestonePhaseStatuses);
   const milestoneRows = useTrackerStore((s) => s.milestoneTrackerRows);
-  const estimatedFargo = estimateFargo(profile.currentFargoRating, logs, ratings);
+  const activeTrainingFargo = getActiveTrainingFargo(profile);
+  const estimatedFargo = estimateFargo(activeTrainingFargo, logs, ratings);
   const phase = phaseFromFargo(estimatedFargo);
 
   return (

@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { useProgressStore } from '../store/useProgressStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { trackerKpis } from '../data/trackerKpis';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
@@ -566,9 +567,10 @@ export default function TournamentPrep() {
     [opponentPrepCards],
   );
   const drillReadinessScore = useMemo(() => calculateDrillReadinessScore(logs), [logs]);
+  const activeTrainingFargo = getActiveTrainingFargo(profile);
   const estimatedFargo = useMemo(
-    () => estimateFargo(profile.currentFargoRating, logs, fargoRatingLog),
-    [fargoRatingLog, logs, profile.currentFargoRating],
+    () => estimateFargo(activeTrainingFargo, logs, fargoRatingLog),
+    [activeTrainingFargo, fargoRatingLog, logs],
   );
   const activePhase = useMemo(() => Math.max(profile.currentPhase, phaseFromFargo(estimatedFargo)), [estimatedFargo, profile.currentPhase]);
   const confidenceScore = confidenceIndexHistory[0]?.score ?? 0;

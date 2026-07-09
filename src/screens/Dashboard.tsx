@@ -21,6 +21,7 @@ import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { getNotificationInsights } from '../utils/notificationIntelligence';
 import { buildPauseUntilIso, isPaused, shouldPauseSmartAlerts } from '../utils/notificationThrottle';
 import { calculateTournamentReadinessScore } from '../utils/progressIntelligence';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { estimateFargo, phaseFromFargo } from '../utils/trackerCalculations';
 
@@ -46,14 +47,15 @@ export default function Dashboard() {
   const recordSmartAlertSent = useNotificationStore((s) => s.recordSmartAlertSent);
   const setSmartAlertsPausedUntil = useNotificationStore((s) => s.setSmartAlertsPausedUntil);
   const [showDeepInsights, setShowDeepInsights] = useState(false);
+  const activeTrainingFargo = getActiveTrainingFargo(profile);
 
   const estimatedFargo = useMemo(
-    () => estimateFargo(profile.currentFargoRating, logs, fargoLog),
-    [fargoLog, logs, profile.currentFargoRating],
+    () => estimateFargo(activeTrainingFargo, logs, fargoLog),
+    [activeTrainingFargo, fargoLog, logs],
   );
   const currentPhase = phaseFromFargo(estimatedFargo);
-  const pointsToGoal = Math.max(0, 800 - profile.currentFargoRating);
-  const progressToGoal = Math.round(((profile.currentFargoRating - 550) / (800 - 550)) * 100);
+  const pointsToGoal = Math.max(0, 800 - activeTrainingFargo);
+  const progressToGoal = Math.round(((activeTrainingFargo - 550) / (800 - 550)) * 100);
   const milestonesMet = milestoneRows.filter((item) => item.status === 'Met').length;
   const weeksLogged = new Set(logs.map((item) => item.weekNumber)).size;
 
@@ -227,7 +229,7 @@ export default function Dashboard() {
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
             <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Current Fargo</p>
-            <p className="mt-1 text-lg text-ivory-100">{profile.currentFargoRating}</p>
+            <p className="mt-1 text-lg text-ivory-100">{activeTrainingFargo}</p>
           </div>
           <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
             <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Week</p>
@@ -267,7 +269,7 @@ export default function Dashboard() {
           <Card className="mb-4" title="Rating Progress">
             <div className="grid grid-cols-2 gap-2 text-sm">
               <p className="text-chalk-300">Current Fargo Rating</p>
-              <p className="text-right text-ivory-100">{profile.currentFargoRating}</p>
+              <p className="text-right text-ivory-100">{activeTrainingFargo}</p>
               <p className="text-chalk-300">Target Fargo Rating</p>
               <p className="text-right text-ivory-100">800</p>
               <p className="text-chalk-300">Points to Goal</p>

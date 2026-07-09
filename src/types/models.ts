@@ -25,6 +25,7 @@ export interface UserProfile {
   id: string;
   name: string;
   currentFargoRating: number;
+  planningFargoRating?: number;
   targetFargoRating: number;
   lastOfficialFargoRating?: number;
   lastOfficialFargoDate?: string;

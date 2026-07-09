@@ -20,6 +20,7 @@ import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
+import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { createPostSessionCoachVerdict, type PostSessionCoachVerdict } from '../utils/appStatsIntelligence';
 import {
   getAdhdModePreset,
@@ -88,6 +89,7 @@ export default function TodaySession() {
   const competitionLog = useTrackerStore((s) => s.competitionLog);
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
+  const activeTrainingFargo = getActiveTrainingFargo(profile);
 
   const today = isoDate();
   const day = dayName();
@@ -395,11 +397,11 @@ export default function TodaySession() {
   }, [celebration]);
 
   useEffect(() => {
-    refreshAdaptiveDailyPlan(profile.currentFargoRating, currentWeek);
+    refreshAdaptiveDailyPlan(activeTrainingFargo, currentWeek);
     refreshRecoveryRecommendationPlan();
   }, [
+    activeTrainingFargo,
     currentWeek,
-    profile.currentFargoRating,
     refreshAdaptiveDailyPlan,
     refreshRecoveryRecommendationPlan,
     logs.length,
@@ -876,7 +878,7 @@ export default function TodaySession() {
       updatedAt: now,
     };
 
-    addDailySessionLog(log, profile.currentFargoRating);
+    addDailySessionLog(log, activeTrainingFargo);
     markComplete();
 
     const after = getTrackerGamificationSnapshot([log, ...logs]);
