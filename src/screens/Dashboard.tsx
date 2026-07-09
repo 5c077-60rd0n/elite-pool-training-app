@@ -228,7 +228,7 @@ export default function Dashboard() {
         ) : null}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
-            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Current Fargo</p>
+            <p className="text-xs uppercase tracking-[0.1em] text-chalk-300">Training Fargo</p>
             <p className="mt-1 text-lg text-ivory-100">{activeTrainingFargo}</p>
           </div>
           <div className="rounded-xl border border-felt-600/60 bg-felt-800/50 p-3">
@@ -268,7 +268,7 @@ export default function Dashboard() {
         <>
           <Card className="mb-4" title="Rating Progress">
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <p className="text-chalk-300">Current Fargo Rating</p>
+              <p className="text-chalk-300">Training Fargo Rating</p>
               <p className="text-right text-ivory-100">{activeTrainingFargo}</p>
               <p className="text-chalk-300">Target Fargo Rating</p>
               <p className="text-right text-ivory-100">800</p>

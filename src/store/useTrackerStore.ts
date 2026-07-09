@@ -267,7 +267,7 @@ export const useTrackerStore = create<TrackerState>()(
       addFargoRating: (entry) =>
         set((state) => {
           const nextFargo = [entry, ...state.fargoRatingLog.filter((item) => item.id !== entry.id)];
-          const estFargo = estimateFargo(550, state.dailySessionLogs, nextFargo);
+          const estFargo = estimateFargo(entry.newFargoRating, state.dailySessionLogs, nextFargo);
           const updatedRows = milestoneStatusRows(state.milestoneTrackerRows, estFargo);
           const updatedStatuses = milestonePhaseStatus(state.milestonePhaseStatuses, updatedRows);
           const currentWeek = Math.max(1, ...state.dailySessionLogs.map((item) => item.weekNumber));

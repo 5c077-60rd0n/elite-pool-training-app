@@ -474,7 +474,7 @@ export default function Settings() {
           onChange={(event) => setProfile({ name: event.target.value })}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
-        <label className="mb-2 mt-3 block text-sm text-chalk-300">Current Fargo Rating</label>
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Base Fargo Rating</label>
         <input
           type="number"
           inputMode="numeric"
@@ -490,7 +490,7 @@ export default function Settings() {
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
 
-        <label className="mb-2 mt-3 block text-sm text-chalk-300">WPB Estimated Fargo (used for training plans)</label>
+        <label className="mb-2 mt-3 block text-sm text-chalk-300">Training Fargo Rating (WPB estimate)</label>
         <input
           type="number"
           inputMode="numeric"
@@ -504,7 +504,7 @@ export default function Settings() {
           }}
           className="min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
         />
-        <p className="mt-1 text-xs text-chalk-300">Training benchmarks and adaptive plans will use this rating. Current default is 653.</p>
+        <p className="mt-1 text-xs text-chalk-300">This is the active Fargo used across training plans, KPI targets, readiness, and forecasting. Current default is 653.</p>
 
         <label className="mb-2 mt-3 block text-sm text-chalk-300">Target Fargo Rating</label>
         <input
