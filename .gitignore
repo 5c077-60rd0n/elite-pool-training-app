@@ -28,3 +28,5 @@ dist-ssr
 .tmp_docs/
 Pro Pool Training Plan — 550 to 800+ Fargo.docx
 Pro Pool Training Tracker — 550 to 800+ Fargo.xlsx
+.vercel
+.env*
