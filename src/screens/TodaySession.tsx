@@ -63,6 +63,7 @@ function speakAnnouncement(text: string): void {
 export default function TodaySession() {
   const currentWeek = useProgramStore((s) => s.currentWeek);
   const profile = useSettingsStore((s) => s.profile);
+  const setProfile = useSettingsStore((s) => s.setProfile);
   const markComplete = useSessionStore((s) => s.markComplete);
   const timerDate = useSessionStore((s) => s.timerDate);
   const timerRunning = useSessionStore((s) => s.timerRunning);
@@ -554,6 +555,19 @@ export default function TodaySession() {
     resetTimer();
   }
 
+  function handleToggleAdhdMode(): void {
+    const nextEnabled = !adhdModeEnabled;
+    setProfile({ adhdModeEnabled: nextEnabled });
+
+    if (!nextEnabled) {
+      setShowAdvancedPanels(true);
+      setSaveMessage('ADHD mode turned off. Full logging options are now visible.');
+      return;
+    }
+
+    setSaveMessage('ADHD mode turned on. Minimal logging view is active.');
+  }
+
   function applySmartAutofill(): void {
     setFocusTouched(true);
     setLengthTouched(true);
@@ -922,6 +936,20 @@ export default function TodaySession() {
           </div>
         </Card>
       ) : null}
+
+      <Card className="mb-4" title="View Controls">
+        <p className="text-xs text-chalk-300">If you need every field from all three apps, use these toggles.</p>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {adhdModeEnabled ? (
+            <Button type="button" variant="secondary" onClick={() => setShowAdvancedPanels((prev) => !prev)}>
+              {showAdvancedPanels ? 'Hide Full Logging Options' : 'Show Full Logging Options'}
+            </Button>
+          ) : null}
+          <Button type="button" variant="secondary" onClick={handleToggleAdhdMode}>
+            {adhdModeEnabled ? 'Turn ADHD Mode Off' : 'Turn ADHD Mode On'}
+          </Button>
+        </div>
+      </Card>
 
       <Card className="mb-4" title="2. Practice Timer">
         <p className="font-display text-3xl uppercase tracking-[0.08em] text-ivory-100">{formatElapsed(liveElapsedSeconds)}</p>
