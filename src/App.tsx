@@ -4,6 +4,7 @@ import { BottomNav } from './components/layout/BottomNav';
 import { Header } from './components/layout/Header';
 import AppRouter from './router/AppRouter';
 import { useTrackerStore } from './store/useTrackerStore';
+import { installAudioUnlockListeners } from './utils/mobileAudio';
 
 const PwaExperience = lazy(() => import('./components/pwa/PwaExperience').then((module) => ({ default: module.PwaExperience })));
 
@@ -54,6 +55,8 @@ function App() {
     const timeoutId = globalThis.setTimeout(activate, 1200);
     return () => globalThis.clearTimeout(timeoutId);
   }, []);
+
+  useEffect(() => installAudioUnlockListeners(), []);
 
   return (
     <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>

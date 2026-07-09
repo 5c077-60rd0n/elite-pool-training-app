@@ -27,6 +27,7 @@ import {
   getAdhdSessionMode,
   type AdhdSessionMode,
 } from '../utils/adhdMode';
+import { unlockAppAudio } from '../utils/mobileAudio';
 import { emitTelemetryEvent } from '../utils/telemetry';
 import type { BullseyeCategory, DailySessionLog, SessionRecommendation, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
 
@@ -54,6 +55,7 @@ function formatElapsed(seconds: number): string {
 
 function speakAnnouncement(text: string): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  void unlockAppAudio();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.rate = 0.96;
   utterance.pitch = 1;

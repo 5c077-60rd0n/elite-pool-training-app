@@ -1,25 +1,11 @@
+import { getSharedAudioContext } from './mobileAudio';
+
 interface RewardCueOptions {
   xpEarned: number;
   leveledUp?: boolean;
   questCompleted?: boolean;
   soundEnabled?: boolean;
   hapticsEnabled?: boolean;
-}
-
-let audioContext: AudioContext | null = null;
-
-function getAudioContext(): AudioContext | null {
-  if (typeof window === 'undefined') return null;
-  const Ctx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctx) return null;
-  if (!audioContext) {
-    try {
-      audioContext = new Ctx();
-    } catch {
-      return null;
-    }
-  }
-  return audioContext;
 }
 
 function vibrate(pattern: number | number[]): void {
@@ -48,7 +34,7 @@ function toneAt(ctx: AudioContext, frequency: number, delaySeconds: number, dura
 }
 
 function playRewardTones(options: RewardCueOptions): void {
-  const ctx = getAudioContext();
+  const ctx = getSharedAudioContext();
   if (!ctx) return;
 
   if (ctx.state === 'suspended') {

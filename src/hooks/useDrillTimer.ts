@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { SessionSegment } from '../types/models';
+import { getSharedAudioContext } from '../utils/mobileAudio';
 
 interface DrillTimerState {
   timeRemaining: number;
@@ -13,9 +14,12 @@ interface DrillTimerState {
 }
 
 function beep(freq: number, durationMs: number): void {
-  const AudioCtx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AudioCtx) return;
-  const ctx = new AudioCtx();
+  const ctx = getSharedAudioContext();
+  if (!ctx) return;
+  if (ctx.state === 'suspended') {
+    void ctx.resume().catch(() => undefined);
+  }
+
   const osc = ctx.createOscillator();
   const gain = ctx.createGain();
   osc.frequency.value = freq;
@@ -26,7 +30,6 @@ function beep(freq: number, durationMs: number): void {
   osc.start();
   setTimeout(() => {
     osc.stop();
-    void ctx.close();
   }, durationMs);
 }
 
