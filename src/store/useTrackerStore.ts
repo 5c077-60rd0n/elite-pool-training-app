@@ -516,21 +516,33 @@ export const useTrackerStore = create<TrackerState>()(
           ),
         })),
       flushSyncQueue: () => {
-        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         const pending = get().syncState.pendingLogIds;
-        if (!pending.length) return;
+        const nowIso = new Date().toISOString();
+
+        if (!pending.length) {
+          set(() => ({
+            syncState: {
+              pendingLogIds: [],
+              lastSyncAt: nowIso,
+              conflicts: [],
+            },
+          }));
+          return;
+        }
+
+        if (typeof navigator !== 'undefined' && !navigator.onLine) return;
         set((state) => ({
           dailySessionLogs: state.dailySessionLogs.map((item) =>
             pending.includes(item.id)
               ? {
                   ...item,
-                  syncedAt: new Date().toISOString(),
+                  syncedAt: nowIso,
                 }
               : item,
           ),
           syncState: {
             pendingLogIds: [],
-            lastSyncAt: new Date().toISOString(),
+            lastSyncAt: nowIso,
             conflicts: [],
           },
         }));
