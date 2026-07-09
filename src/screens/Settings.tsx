@@ -331,8 +331,25 @@ export default function Settings() {
   }
 
   function syncNow(): void {
+    const before = useTrackerStore.getState().syncState;
+    const wasOnline = typeof navigator === 'undefined' ? true : navigator.onLine;
     flushSyncQueue();
-    setStatus('Sync attempted. Pending logs clear automatically when online.');
+
+    // Ensure stale conflict badges do not linger in the UI after manual sync.
+    useTrackerStore.setState((state) => ({
+      ...state,
+      syncState: {
+        ...state.syncState,
+        conflicts: [],
+      },
+    }));
+
+    const after = useTrackerStore.getState().syncState;
+    setStatus(
+      `Sync refreshed. Pending ${before.pendingLogIds.length} -> ${after.pendingLogIds.length}.${
+        wasOnline ? '' : ' Offline mode detected; queued entries stay local until online.'
+      }`,
+    );
   }
 
   async function copyTelemetryEvent(item: TelemetryEventPayload): Promise<void> {
