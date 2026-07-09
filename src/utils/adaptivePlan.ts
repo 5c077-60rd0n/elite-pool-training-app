@@ -83,8 +83,8 @@ function defaultPlan(currentWeek: number, forDate: string): AdaptiveDailyPlan {
     ],
     prescribedDrills: [
       'Center-Ball Straight Shots',
-      'Ghost Drill Race-to-10',
-      '2-Ball Safety Exchange',
+      'Progressive Rotation Runs',
+      'Consecutive Containing Safes',
     ],
   };
 }

@@ -462,14 +462,14 @@ export const weeklyScheduleTemplate: DailyTemplate[] = [
     focusArea: 'Pattern Recognition & Run-Out Drills',
     primaryApp: 'WPB',
     sessionLengthLabel: '~80 min',
-    keyDrills: ['9-Ball Ghost Drill (race to 10)', 'Line-Up Drill (15 balls)', 'L-shape position routes'],
+    keyDrills: ['Progressive Rotation Runs', 'The Buffet Line', '5-Ball L-Drill'],
   },
   {
     day: 'Friday',
     focusArea: 'Safety Play & Kicking Systems',
     primaryApp: 'WPB + DrillRoom',
     sessionLengthLabel: '~75 min',
-    keyDrills: ['2-ball safety exchange', '1-rail kick from 10 positions', 'hill-hill scenario drill'],
+    keyDrills: ['Consecutive Containing Safes', 'Build-A-Wall', 'hill-hill scenario drill'],
   },
   {
     day: 'Saturday',
@@ -483,7 +483,7 @@ export const weeklyScheduleTemplate: DailyTemplate[] = [
     focusArea: 'Integration Match Play & Mental Reset',
     primaryApp: 'WPB',
     sessionLengthLabel: '~45 min max',
-    keyDrills: ['Ghost Ball race to 10', 'Self-game 9-ball/8-ball scoring', 'Weekly written debrief'],
+    keyDrills: ['Progressive Rotation Runs', 'Self-game 9-ball/8-ball scoring', 'Weekly written debrief'],
   },
 ];
 

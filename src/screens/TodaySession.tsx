@@ -183,6 +183,31 @@ export default function TodaySession() {
     type ResolvedDrill = { app: DrillApp; category: string; label: string };
     type DrillCandidate = { app: DrillApp; label: string };
     const normalize = (value: string) => value.trim().toLowerCase();
+    const normalizeLoose = (value: string) =>
+      value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    const wpbLegacyAliases = new Map<string, { category: string; label: string }>([
+      [
+        normalizeLoose('Ghost Drill Race-to-10'),
+        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
+      ],
+      [
+        normalizeLoose('Ghost Ball race to 10'),
+        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
+      ],
+      [
+        normalizeLoose('9-Ball Ghost Drill (race to 10)'),
+        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
+      ],
+      [
+        normalizeLoose('2-Ball Safety Exchange'),
+        { category: 'Defense / Containing Safes', label: 'Consecutive Containing Safes' },
+      ],
+    ]);
 
     const trackerAppByName = new Map(
       trackerDrills.map((drill) => [normalize(drill.name), drill.app as DrillApp] as const),
@@ -202,6 +227,9 @@ export default function TodaySession() {
     }
 
     function parseWpbFromLabel(rawLabel: string): { category: string; label: string } | null {
+      const alias = wpbLegacyAliases.get(normalizeLoose(rawLabel));
+      if (alias) return alias;
+
       const direct = rawLabel.split('>').map((item) => item.trim()).filter(Boolean);
       if (direct.length >= 3) {
         return {
@@ -213,7 +241,7 @@ export default function TodaySession() {
       const fromCatalog = wpbModuleSuggestions.find((option) => {
         const parts = option.split('>').map((item) => item.trim());
         const name = parts[parts.length - 1] ?? '';
-        return name.toLowerCase() === rawLabel.trim().toLowerCase();
+        return normalizeLoose(name) === normalizeLoose(rawLabel);
       });
       if (!fromCatalog) return null;
 
@@ -239,7 +267,7 @@ export default function TodaySession() {
     function resolveForApp(rawLabel: string, app: DrillApp): { app: DrillApp; category: string; label: string } {
       if (app === 'WPB') {
         const parsed = parseWpbFromLabel(rawLabel);
-        return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
+        return { app, category: parsed?.category ?? 'Fundamentals / Core', label: parsed?.label ?? rawLabel };
       }
 
       if (app === 'DrillRoom') {
@@ -259,9 +287,16 @@ export default function TodaySession() {
       }
 
       if (app === 'WPB') {
-        const candidate = wpbModuleSuggestions[0] ?? 'Fundamentals > Core > Ghost Drill Race-to-10';
+        const candidate =
+          wpbModuleSuggestions.find((option) => option.toLowerCase().includes('progressive rotation runs'))
+          ?? wpbModuleSuggestions[0]
+          ?? 'Position Play & Runouts > Progressive Rotation Runs > Progressive Rotation Runs';
         const parsed = parseWpbFromLabel(candidate);
-        return { app, category: parsed?.category ?? 'Fundamentals / Core', label: parsed?.label ?? candidate };
+        return {
+          app,
+          category: parsed?.category ?? 'Position Play & Runouts / Progressive Rotation Runs',
+          label: parsed?.label ?? candidate,
+        };
       }
 
       const category = bullseyeCategoryOptions.find((item) => item !== 'Mixed') ?? 'Follow';
