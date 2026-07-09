@@ -1018,6 +1018,30 @@ export default function TodaySession() {
     saveSessionLog();
   }
 
+  function swapDrillRoomAndBullseyeAppStats(): void {
+    const nextDrillRoomAttempts = Math.max(0, Math.round(bullseyeTotalAttempts));
+    const nextDrillRoomScore = Math.max(0, Number(bullseyeSuccessfulAttempts.toFixed(1)));
+    const nextDrillRoomPocketing = clampPct(bullseyeShortRangePct);
+    const nextDrillRoomPositioning = clampPct(bullseyeMidRangePct);
+
+    const nextBullseyeSuccessful = Math.max(0, Math.round(drillRoomScore));
+    const nextBullseyeTotal = Math.max(0, Math.round(drillRoomAttempts));
+    const nextBullseyeShort = clampPct(drillRoomPocketingPct);
+    const nextBullseyeMid = clampPct(drillRoomPositioningPct);
+
+    setDrillRoomAttempts(nextDrillRoomAttempts);
+    setDrillRoomScore(nextDrillRoomScore);
+    setDrillRoomPocketingPct(nextDrillRoomPocketing);
+    setDrillRoomPositioningPct(nextDrillRoomPositioning);
+
+    setBullseyeSuccessfulAttempts(nextBullseyeSuccessful);
+    setBullseyeTotalAttempts(nextBullseyeTotal);
+    setBullseyeShortRangePct(nextBullseyeShort);
+    setBullseyeMidRangePct(nextBullseyeMid);
+
+    setSaveMessage('Swapped DrillRoom and Bullseye app stats. Review once, then save to keep this capture.');
+  }
+
   return (
     <PageWrapper title="Today's Session">
       {celebration ? (
@@ -1514,9 +1538,15 @@ export default function TodaySession() {
 
       <div ref={appStatsSectionRef}>
       <Card className="mb-4" title="4. App Stats Capture">
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <Button type="button" variant="secondary" onClick={swapDrillRoomAndBullseyeAppStats}>
+            Swap DrillRoom and Bullseye Entries
+          </Button>
+          <p className="text-xs text-chalk-300">Use this if values were entered in the wrong app block.</p>
+        </div>
         {showExtraLogFields ? (
           <>
-            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">DrillRoom</p>
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Bullseye</p>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <NumberStepperField
                 label="Attempts"
@@ -1551,7 +1581,7 @@ export default function TodaySession() {
               />
             </div>
 
-            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">Bullseye</p>
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">DrillRoom</p>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <NumberStepperField
                 label="Successful Attempts"
@@ -1627,14 +1657,14 @@ export default function TodaySession() {
             </p>
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <NumberStepperField
-                label="DrillRoom attempts"
+                label="Bullseye attempts"
                 value={drillRoomAttempts}
                 min={0}
                 step={1}
                 onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
               />
               <NumberStepperField
-                label="Bullseye attempts"
+                label="DrillRoom attempts"
                 value={bullseyeTotalAttempts}
                 min={0}
                 step={1}

@@ -84,6 +84,7 @@ function mergeSessionLogs(existing: DailySessionLog, incoming: DailySessionLog):
   mergeField('ghostDrillWinRatePct');
   mergeField('lineUpShotCount');
   mergeField('safetyExchangeSuccessPct');
+  mergeField('appStats');
   mergeField('notes');
 
   const mergedTags = Array.from(new Set([...(existing.coachTags ?? []), ...(incoming.coachTags ?? [])]));
