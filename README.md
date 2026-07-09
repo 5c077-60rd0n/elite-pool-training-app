@@ -372,9 +372,10 @@ Find Mac IP: `ipconfig getifaddr en0`
 ## Offline-First Behavior
 
 - Uses `vite-plugin-pwa` + Workbox service worker
-- Static assets are precached after first online load
-- Supports update prompts and cache cleanup
-- Designed to keep core workflows available offline
+- Uses an inject-manifest service worker with explicit cache policies for pages, static assets, images, fonts, and local JSON feeds
+- Static assets are precached after first online load and outdated caches are cleaned automatically
+- Supports update prompts, background update checks, and one-tap reload into the newest version
+- Keeps core coaching workflows available offline with automatic sync retries when the app returns online
 
 ## Data, Storage, and Safety Notes
 
@@ -397,6 +398,15 @@ Find Mac IP: `ipconfig getifaddr en0`
 3. Smoke-test onboarding, daily logging, Elite Lab bridge, and settings backup/import
 4. Verify offline behavior by loading once online, then going offline
 5. Version with `npm version patch|minor|major` and push tags
+
+### Performance Baseline
+
+- Final Lighthouse desktop baseline is tracked in `lighthouse-report-final.report.json`
+- Scores: Performance 100, Accessibility 100, Best Practices 100, SEO 100
+- Key optimizations shipped:
+	- non-blocking local font stack (removed external Google Fonts import)
+	- optimized header brand image payload and explicit intrinsic dimensions
+	- deferred load for PWA experience UI bundle after initial paint
 
 ## Tech Stack
 

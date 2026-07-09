@@ -47,14 +47,6 @@ export default function Dashboard() {
   const setSmartAlertsPausedUntil = useNotificationStore((s) => s.setSmartAlertsPausedUntil);
   const [showDeepInsights, setShowDeepInsights] = useState(false);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onOnline = () => flushSyncQueue();
-    window.addEventListener('online', onOnline);
-    if (navigator.onLine) flushSyncQueue();
-    return () => window.removeEventListener('online', onOnline);
-  }, [flushSyncQueue]);
-
   const estimatedFargo = useMemo(
     () => estimateFargo(profile.currentFargoRating, logs, fargoLog),
     [fargoLog, logs, profile.currentFargoRating],
@@ -223,7 +215,7 @@ export default function Dashboard() {
         <div className="mt-3 rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
           <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Primary move</p>
           <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{nextAction}</p>
-          <p className="mt-2 text-xs text-chalk-300">CueStops coaching rule: complete one clear action before reviewing extra metrics.</p>
+          <p className="mt-2 text-xs text-chalk-300">CueSports coaching rule: complete one clear action before reviewing extra metrics.</p>
         </div>
         {lastSessionRecommendation ? (
           <div className="mt-3 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">

@@ -6,7 +6,7 @@ const navItems = [
   { to: '/session/today', label: 'Today', icon: Timer },
   { to: '/navigate', label: 'Navigate', icon: Compass },
   { to: '/progress', label: 'Progress', icon: ChartLine },
-  { to: '/more', label: 'More', icon: Grid3x3 },
+  { to: '/more', label: 'Settings', icon: Grid3x3 },
 ];
 
 export function BottomNav() {

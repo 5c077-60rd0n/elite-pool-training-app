@@ -15,6 +15,7 @@ import { opponentPrepCardSeed } from '../data/opponentPrepCards';
 import { buildCoachReviewExport } from '../utils/coachExport';
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import type { TelemetryEventPayload } from '../utils/telemetry';
+import { clearPwaMetrics, getPwaMetricsSnapshot, type PwaMetricsSnapshot } from '../utils/pwaMetrics';
 
 type BackupPayload = {
   version?: string;
@@ -97,6 +98,7 @@ export default function Settings() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [status, setStatus] = useState('');
   const [devTelemetryEvents, setDevTelemetryEvents] = useState<TelemetryEventPayload[]>([]);
+  const [pwaMetrics, setPwaMetrics] = useState<PwaMetricsSnapshot>(() => getPwaMetricsSnapshot());
 
   useEffect(() => {
     if (typeof window === 'undefined' || !import.meta.env.DEV) return;
@@ -109,6 +111,31 @@ export default function Settings() {
 
     window.addEventListener('elite-telemetry', onTelemetry);
     return () => window.removeEventListener('elite-telemetry', onTelemetry);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const refreshPwaMetrics = () => {
+      setPwaMetrics(getPwaMetricsSnapshot());
+    };
+
+    const onTelemetry = (event: Event) => {
+      const customEvent = event as CustomEvent<TelemetryEventPayload>;
+      if (customEvent.detail?.event === 'pwa_metric_recorded' || customEvent.detail?.event === 'pwa_metric_cleared') {
+        refreshPwaMetrics();
+      }
+    };
+
+    window.addEventListener('elite-telemetry', onTelemetry);
+    window.addEventListener('focus', refreshPwaMetrics);
+    window.addEventListener('storage', refreshPwaMetrics);
+
+    return () => {
+      window.removeEventListener('elite-telemetry', onTelemetry);
+      window.removeEventListener('focus', refreshPwaMetrics);
+      window.removeEventListener('storage', refreshPwaMetrics);
+    };
   }, []);
 
   const trackerSummary = useMemo(
@@ -657,6 +684,38 @@ export default function Settings() {
         ) : null}
         <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={(event) => void importData(event)} />
         {status ? <p className="mt-3 text-sm text-chalk-300">{status}</p> : null}
+      </Card>
+
+      <Card className="mt-4" title="PWA Install & Update Health">
+        <div className="grid grid-cols-2 gap-2 text-sm text-ivory-200 sm:grid-cols-3">
+          <p>Install Prompts: {pwaMetrics.installPromptShown}</p>
+          <p>Installs Accepted: {pwaMetrics.installAccepted}</p>
+          <p>Install Dismissed: {pwaMetrics.installDismissed}</p>
+          <p>Update Prompts: {pwaMetrics.updatePromptShown}</p>
+          <p>Updates Applied: {pwaMetrics.updateApplied}</p>
+          <p>Updates Deferred: {pwaMetrics.updateDeferred}</p>
+          <p>Offline Ready Notices: {pwaMetrics.offlineReadyShown}</p>
+          <p>iOS Tips Shown: {pwaMetrics.iosInstallTipShown}</p>
+          <p>iOS Tips Dismissed: {pwaMetrics.iosInstallTipDismissed}</p>
+        </div>
+        <div className="mt-3 rounded-lg border border-felt-600 bg-felt-800/60 p-3 text-sm text-chalk-200">
+          <p>Install acceptance: {pwaMetrics.installAcceptanceRatePct}%</p>
+          <p>Update adoption: {pwaMetrics.updateAdoptionRatePct}%</p>
+          <p>Last PWA event: {pwaMetrics.lastEventAt ? new Date(pwaMetrics.lastEventAt).toLocaleString() : 'No events yet'}</p>
+        </div>
+        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Button variant="secondary" onClick={() => setPwaMetrics(getPwaMetricsSnapshot())}>Refresh PWA Metrics</Button>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              clearPwaMetrics();
+              setPwaMetrics(getPwaMetricsSnapshot());
+              setStatus('PWA metrics reset.');
+            }}
+          >
+            Reset PWA Metrics
+          </Button>
+        </div>
       </Card>
 
       {import.meta.env.DEV ? (
