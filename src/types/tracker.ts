@@ -46,6 +46,27 @@ export type WpbCategory =
   | 'Defense'
   | 'Jump Shots';
 
+export interface SessionAppStatsCapture {
+  drillRoom?: {
+    attempts?: number;
+    score?: number;
+    pocketingPct?: number;
+    positioningPct?: number;
+  };
+  bullseye?: {
+    successfulAttempts?: number;
+    totalAttempts?: number;
+    shortRangePct?: number;
+    midRangePct?: number;
+    longRangePct?: number;
+  };
+  wpb?: {
+    highestScore?: number;
+    currentAvgScore?: number;
+    avgPracticeMinutes?: number;
+  };
+}
+
 export interface DailySessionLog {
   id: string;
   date: string;
@@ -67,6 +88,7 @@ export interface DailySessionLog {
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
   notes: string;
+  appStats?: SessionAppStatsCapture;
   coachTags?: string[];
   videoClipRefs?: string[];
   createdAt: string;

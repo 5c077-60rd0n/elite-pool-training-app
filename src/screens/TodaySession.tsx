@@ -113,6 +113,18 @@ export default function TodaySession() {
   const wpbKeyTakeaway = '';
   const [ghostDrillPlayed, setGhostDrillPlayed] = useState<YesNo>('Yes');
   const [ghostDrillWinRatePct, setGhostDrillWinRatePct] = useState(50);
+  const [drillRoomAttempts, setDrillRoomAttempts] = useState(0);
+  const [drillRoomScore, setDrillRoomScore] = useState(0);
+  const [drillRoomPocketingPct, setDrillRoomPocketingPct] = useState(0);
+  const [drillRoomPositioningPct, setDrillRoomPositioningPct] = useState(0);
+  const [bullseyeSuccessfulAttempts, setBullseyeSuccessfulAttempts] = useState(0);
+  const [bullseyeTotalAttempts, setBullseyeTotalAttempts] = useState(0);
+  const [bullseyeShortRangePct, setBullseyeShortRangePct] = useState(0);
+  const [bullseyeMidRangePct, setBullseyeMidRangePct] = useState(0);
+  const [bullseyeLongRangePct, setBullseyeLongRangePct] = useState(0);
+  const [wpbHighestScore, setWpbHighestScore] = useState(0);
+  const [wpbCurrentAvgScore, setWpbCurrentAvgScore] = useState(0);
+  const [wpbAvgPracticeMinutes, setWpbAvgPracticeMinutes] = useState(0);
   const [notes, setNotes] = useState('');
   const [coachTagsInput, setCoachTagsInput] = useState('');
   const [videoClipRefsInput, setVideoClipRefsInput] = useState('');
@@ -705,6 +717,40 @@ export default function TodaySession() {
       lineUpShotCount: derivedLineUpShotCount,
       safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
       notes,
+      appStats:
+        drillRoomAttempts > 0
+        || drillRoomScore > 0
+        || drillRoomPocketingPct > 0
+        || drillRoomPositioningPct > 0
+        || bullseyeSuccessfulAttempts > 0
+        || bullseyeTotalAttempts > 0
+        || bullseyeShortRangePct > 0
+        || bullseyeMidRangePct > 0
+        || bullseyeLongRangePct > 0
+        || wpbHighestScore > 0
+        || wpbCurrentAvgScore > 0
+        || wpbAvgPracticeMinutes > 0
+          ? {
+              drillRoom: {
+                attempts: Math.max(0, Math.round(drillRoomAttempts)),
+                score: Math.max(0, Number(drillRoomScore.toFixed(2))),
+                pocketingPct: clampPct(drillRoomPocketingPct),
+                positioningPct: clampPct(drillRoomPositioningPct),
+              },
+              bullseye: {
+                successfulAttempts: Math.max(0, Math.round(bullseyeSuccessfulAttempts)),
+                totalAttempts: Math.max(0, Math.round(bullseyeTotalAttempts)),
+                shortRangePct: clampPct(bullseyeShortRangePct),
+                midRangePct: clampPct(bullseyeMidRangePct),
+                longRangePct: clampPct(bullseyeLongRangePct),
+              },
+              wpb: {
+                highestScore: Math.max(0, Math.round(wpbHighestScore)),
+                currentAvgScore: Math.max(0, Number(wpbCurrentAvgScore.toFixed(2))),
+                avgPracticeMinutes: Math.max(0, Number(wpbAvgPracticeMinutes.toFixed(1))),
+              },
+            }
+          : undefined,
       coachTags: coachTagsInput
         .split(',')
         .map((item) => item.trim())
@@ -1191,6 +1237,120 @@ export default function TodaySession() {
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Hidden until advanced tools</p>
           <p className="mt-1 text-xs text-chalk-300">Bullseye, WPB details, notes, coach tags, and clips stay out of the way unless you intentionally open them.</p>
         </div>
+      </Card>
+
+      <Card className="mb-4" title="4. App Stats Capture">
+        {showExtraLogFields ? (
+          <>
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">DrillRoom</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Attempts"
+                value={drillRoomAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Session Score"
+                value={drillRoomScore}
+                min={0}
+                step={0.1}
+                decimals={1}
+                onChange={(next) => setDrillRoomScore(Math.max(0, next))}
+              />
+              <NumberStepperField
+                label="Pocketing %"
+                value={drillRoomPocketingPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setDrillRoomPocketingPct(clampPct(next))}
+              />
+              <NumberStepperField
+                label="Positioning %"
+                value={drillRoomPositioningPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setDrillRoomPositioningPct(clampPct(next))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">Bullseye</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Successful Attempts"
+                value={bullseyeSuccessfulAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setBullseyeSuccessfulAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Total Attempts"
+                value={bullseyeTotalAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setBullseyeTotalAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Short Range %"
+                value={bullseyeShortRangePct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setBullseyeShortRangePct(clampPct(next))}
+              />
+              <NumberStepperField
+                label="Mid Range %"
+                value={bullseyeMidRangePct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setBullseyeMidRangePct(clampPct(next))}
+              />
+              <NumberStepperField
+                label="Long Range %"
+                value={bullseyeLongRangePct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setBullseyeLongRangePct(clampPct(next))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">WPB</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Highest Score"
+                value={wpbHighestScore}
+                min={0}
+                step={1}
+                onChange={(next) => setWpbHighestScore(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Current Avg Score"
+                value={wpbCurrentAvgScore}
+                min={0}
+                step={0.1}
+                decimals={1}
+                onChange={(next) => setWpbCurrentAvgScore(Math.max(0, next))}
+              />
+              <NumberStepperField
+                label="Avg Practice Minutes"
+                value={wpbAvgPracticeMinutes}
+                min={0}
+                step={0.1}
+                decimals={1}
+                onChange={(next) => setWpbAvgPracticeMinutes(Math.max(0, next))}
+              />
+            </div>
+          </>
+        ) : (
+          <p className="rounded-2xl border border-felt-600 bg-felt-800/55 p-3 text-xs text-chalk-300">
+            App-level stat capture is hidden in ADHD mode. Use Show Full Logging Options to enter DrillRoom, Bullseye, and WPB stats.
+          </p>
+        )}
       </Card>
 
       <Card className="border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Session Notes & Save">
