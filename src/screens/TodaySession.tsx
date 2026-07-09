@@ -8,6 +8,7 @@ import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
   getWpbTierOptionsForCategory,
+  wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
 import { useProgramStore } from '../store/useProgramStore';
@@ -106,7 +107,7 @@ export default function TodaySession() {
   const [drillRoomShotmakingPct, setDrillRoomShotmakingPct] = useState(0);
   const [drillRoomDrillName, setDrillRoomDrillName] = useState('');
   const [bullseyeProximity, setBullseyeProximity] = useState(0);
-  const bullseyeCategory: BullseyeCategory = 'Mixed';
+  const [bullseyeCategory, setBullseyeCategory] = useState<BullseyeCategory>('Mixed');
   const [wpbLesson, setWpbLesson] = useState<YesNo>('No');
   const [wpbCategory, setWpbCategory] = useState<WpbCategory>('Fundamentals');
   const [wpbModuleName, setWpbModuleName] = useState('');
@@ -303,6 +304,39 @@ export default function TodaySession() {
 
   const recommendationLimit = getAdhdRecommendationLimit(adhdModeEnabled);
   const showExtraLogFields = !adhdModeEnabled || showAdvancedPanels;
+
+  useEffect(() => {
+    const drillroomAssigned = todaysExactDrills.find((item) => item.app === 'DrillRoom');
+    const bullseyeAssigned = todaysExactDrills.find((item) => item.app === 'Bullseye');
+    const wpbAssigned = todaysExactDrills.find((item) => item.app === 'WPB');
+
+    if (!drillRoomDrillName.trim() && drillroomAssigned?.label) {
+      setDrillRoomDrillName(drillroomAssigned.label);
+    }
+
+    if (bullseyeCategory === 'Mixed' && bullseyeAssigned?.category && bullseyeAssigned.category !== 'General') {
+      const match = bullseyeCategoryOptions.find((option) => option.toLowerCase() === bullseyeAssigned.category.toLowerCase());
+      if (match) setBullseyeCategory(match);
+    }
+
+    if (!wpbModuleName.trim() && wpbAssigned?.label) {
+      setWpbModuleName(wpbAssigned.label);
+    }
+
+    if (wpbAssigned?.category) {
+      const normalized = wpbAssigned.category.toLowerCase();
+      const matchedCategory = wpbCategoryOptions.find((category) => {
+        const head = category.toLowerCase().replace('&', 'and');
+        const source = normalized.replace('&', 'and');
+        return source.includes(head.split(' / ')[0].trim());
+      });
+      if (matchedCategory && wpbCategory === 'Fundamentals') {
+        setWpbCategory(matchedCategory);
+      }
+      if (wpbLesson !== 'Yes') setWpbLesson('Yes');
+    }
+  }, [bullseyeCategory, drillRoomDrillName, todaysExactDrills, wpbCategory, wpbLesson, wpbModuleName]);
+
   const linearSessionSteps = useMemo(() => {
     if (!adhdModeEnabled) return [];
 
@@ -1175,7 +1209,7 @@ export default function TodaySession() {
 
       <Card className="mb-4" title="3. Quick Log">
         <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Log only the essentials</p>
-        <p className="mt-2 text-sm text-chalk-300">In ADHD mode, fill these four fields and move on. Everything else stays hidden unless advanced tools are opened.</p>
+        <p className="mt-2 text-sm text-chalk-300">In ADHD mode, fill essentials first, then confirm each app drill below before saving.</p>
 
         <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
           <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
@@ -1237,8 +1271,81 @@ export default function TodaySession() {
         </div>
 
         <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Session drills by app</p>
+          <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className="text-sm text-chalk-300">
+              DrillRoom Drill
+              <input
+                value={drillRoomDrillName}
+                onChange={(event) => setDrillRoomDrillName(event.target.value)}
+                list="quicklog-drillroom-suggestions"
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              />
+              <datalist id="quicklog-drillroom-suggestions">
+                {drillRoomDrillSuggestions.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </label>
+            <label className="text-sm text-chalk-300">
+              Bullseye Category
+              <select
+                value={bullseyeCategory}
+                onChange={(event) => setBullseyeCategory(event.target.value as BullseyeCategory)}
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              >
+                {bullseyeCategoryOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm text-chalk-300">
+              WPB Lesson?
+              <select
+                value={wpbLesson}
+                onChange={(event) => setWpbLesson(event.target.value as YesNo)}
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              >
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+            </label>
+            <label className="text-sm text-chalk-300">
+              WPB Category
+              <select
+                value={wpbCategory}
+                onChange={(event) => setWpbCategory(event.target.value as WpbCategory)}
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              >
+                {wpbCategoryOptions.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm text-chalk-300 sm:col-span-2">
+              WPB Module / Drill
+              <input
+                value={wpbModuleName}
+                onChange={(event) => {
+                  const next = event.target.value;
+                  setWpbModuleName(next);
+                  if (next.trim() && wpbLesson !== 'Yes') setWpbLesson('Yes');
+                }}
+                list="quicklog-wpb-suggestions"
+                className="mt-1 min-h-11 w-full rounded-xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
+              />
+              <datalist id="quicklog-wpb-suggestions">
+                {wpbModuleSuggestions.map((option) => (
+                  <option key={option} value={option} />
+                ))}
+              </datalist>
+            </label>
+          </div>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
           <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Hidden until advanced tools</p>
-          <p className="mt-1 text-xs text-chalk-300">Bullseye, WPB details, notes, coach tags, and clips stay out of the way unless you intentionally open them.</p>
+          <p className="mt-1 text-xs text-chalk-300">Notes, coach tags, and clips stay out of the way unless you intentionally open full logging options.</p>
         </div>
       </Card>
 
