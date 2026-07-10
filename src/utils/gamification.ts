@@ -1,5 +1,6 @@
-import { drills } from '../data/drills';
 import type { DrillSessionLog } from '../types/models';
+
+// Note: drills.ts removed - using sensible defaults in lookup functions instead
 import { isoDate } from './date';
 import { getTrainingStreak } from './streak';
 
@@ -97,16 +98,19 @@ function levelFromXp(totalXp: number): { level: number; floorXp: number; nextXp:
   };
 }
 
-function getDrillDifficulty(drillId: string): number {
-  return drills.find((drill) => drill.id === drillId)?.difficulty ?? 3;
+function getDrillDifficulty(_drillId: string): number {
+  // Old drills database removed - return sensible default
+  return 3;
 }
 
-function getDrillCategory(drillId: string): string {
-  return drills.find((drill) => drill.id === drillId)?.category ?? 'integration';
+function getDrillCategory(_drillId: string): string {
+  // Old drills database removed - return sensible default
+  return 'integration';
 }
 
-function getDrillSkill(drillId: string): string {
-  return drills.find((drill) => drill.id === drillId)?.skillDomain ?? 'accuracy';
+function getDrillSkill(_drillId: string): string {
+  // Old drills database removed - return sensible default
+  return 'accuracy';
 }
 
 export function evaluateSessionReward(log: DrillSessionLog, historicalLogs: DrillSessionLog[]): SessionReward {

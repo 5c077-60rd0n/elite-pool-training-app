@@ -10,7 +10,6 @@ import {
   wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
-import { drills } from '../data/drills';
 import { useProgramStore } from '../store/useProgramStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
@@ -184,81 +183,53 @@ export default function TodaySession() {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = dayNames[new Date().getDay()];
     const todaysTemplate = weeklyScheduleTemplate.find((t) => t.day === today);
-    const todaysFocusArea = todaysTemplate?.focusArea?.toLowerCase() ?? '';
 
-    // Map focus area to skill domain (one elite skill per day)
-    const focusDaysSkillMap: Record<string, string> = {
-      'elite accuracy': 'accuracy',
-      'stroke mechanics': 'accuracy',
-      'shotmaking': 'accuracy',
-      'elite position play': 'position-play',
-      'cue ball control': 'position-play',
-      'follow': 'position-play',
-      'stun': 'position-play',
-      'draw': 'position-play',
-      'sidespin': 'position-play',
-      'elite pattern mastery': 'pattern-mastery',
-      'pattern recognition': 'pattern-mastery',
-      'pattern': 'pattern-mastery',
-      'run-out': 'pattern-mastery',
-      'runout': 'pattern-mastery',
-      'elite defense': 'defense',
-      'safety play': 'defense',
-      'containment': 'defense',
-      'elite pressure': 'pressure',
-      'tournament': 'pressure',
-      'match play': 'pressure',
-      'competitive': 'pressure',
-      'elite banks': 'banks-kicks',
-      'banks and kicks': 'banks-kicks',
-      'specialty': 'banks-kicks',
-      'elite jumping': 'jumping',
-      'jump shot': 'jumping',
-      'integration': 'jumping',
+    if (!todaysTemplate) return [];
+
+    // Map skill domain based on day
+    const dayToSkillDomainMap: Record<string, string> = {
+      'Monday': 'accuracy',
+      'Tuesday': 'position-play',
+      'Wednesday': 'pattern-mastery',
+      'Thursday': 'defense',
+      'Friday': 'pressure',
+      'Saturday': 'banks-kicks',
+      'Sunday': 'jumping',
     };
 
-    // Find what skill domain today's focus maps to
-    let todaysSkillDomain = '';
-    for (const [focusKeyword, skillDomain] of Object.entries(focusDaysSkillMap)) {
-      if (todaysFocusArea.includes(focusKeyword)) {
-        todaysSkillDomain = skillDomain;
-        break;
-      }
-    }
+    const todaysSkillDomain = dayToSkillDomainMap[today] ?? '';
 
-    // Select drills from database that match today's skill domain
-    if (todaysSkillDomain) {
-      // Find drills that match today's skill domain
-      const matchingDrills = drills.filter((d) => d.skillDomain === todaysSkillDomain);
-      
-      if (matchingDrills.length >= 3) {
-        // Map skill domain to apps: accuracy→DrillRoom, position-play→Bullseye, pattern-mastery→WPB, defense→WPB, etc.
-        const skillToAppMap: Record<string, 'DrillRoom' | 'Bullseye' | 'WPB'> = {
-          accuracy: 'DrillRoom',
-          'position-play': 'Bullseye',
-          'pattern-mastery': 'WPB',
-          defense: 'WPB',
-          pressure: 'DrillRoom',
-          'banks-kicks': 'WPB',
-          jumping: 'DrillRoom',
-        };
+    // Return suggested drills based on app and skill domain
+    type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
+    
+    const appDrillSuggestions: Record<DrillApp, { category: string; label: string }[]> = {
+      DrillRoom: [
+        { category: 'Shotmaking', label: 'Shotmaking Progressions' },
+        { category: 'Speed Control', label: 'Speed Control Drills' },
+        { category: 'Challenge', label: '2 BALLS INFINITE / GOLF POOL' },
+      ],
+      Bullseye: [
+        { category: 'Follow', label: 'Follow Drills (20-38)' },
+        { category: 'Stun', label: 'Stun Mastery (45-60)' },
+        { category: 'Draw / Sidespin', label: 'Draw & Sidespin Control' },
+      ],
+      WPB: [
+        { category: 'Position Play & Runouts', label: 'L-Drills / Progressive Rotation' },
+        { category: 'Defense', label: 'Containing Safes / Build-A-Wall' },
+        { category: 'Jump Shots', label: 'Jump Shot Accuracy Training' },
+      ],
+    };
 
-        // Use matching drills
-        return matchingDrills.slice(0, 3).map((drill, index) => {
-          const app = skillToAppMap[todaysSkillDomain] || 'WPB';
-          return {
-            step: index + 1,
-            app,
-            category: drill.category || 'General',
-            label: drill.name,
-            skillDomain: drill.skillDomain,
-          };
-        });
-      }
-    }
+    const app = todaysTemplate.primaryApp as DrillApp;
+    const suggestions = appDrillSuggestions[app] ?? [];
 
-    // Fallback: return empty array if no drills found (shouldn't happen)
-    return [];
+    return suggestions.map((suggestion, index) => ({
+      step: index + 1,
+      app,
+      category: suggestion.category,
+      label: suggestion.label,
+      skillDomain: todaysSkillDomain,
+    }));
   }, []);
 
   const adhdSessionMode = useMemo(
