@@ -136,17 +136,21 @@ export function useKPICalc() {
     return kpiScores.filter((kpi) => kpi.tier === 'primary');
   }, [kpiScores]);
 
-  const advancedKpiScores = useMemo(() => {
-    return kpiScores.filter((kpi) => kpi.tier === 'advanced');
+  const supportingKpiScores = useMemo(() => {
+    return kpiScores.filter((kpi) => kpi.tier === 'supporting');
   }, [kpiScores]);
 
-  const kpisByApp = useMemo(() => {
+  const kpisBySkill = useMemo(() => {
     const map = new Map();
-    ['shotmaking', 'position-play', 'pattern-mastery'].forEach((app) => {
-      map.set(app, advancedKpiScores.filter((kpi) => kpi.app === app));
+    ['accuracy', 'position-play', 'pattern-mastery'].forEach((skill) => {
+      const primary = kpiScores.find((kpi) => kpi.tier === 'primary' && kpi.skill === skill);
+      const supporting = kpiScores.filter((kpi) => kpi.tier === 'supporting' && kpi.skill === skill);
+      if (primary) {
+        map.set(skill, { primary, supporting });
+      }
     });
     return map;
-  }, [advancedKpiScores]);
+  }, [kpiScores]);
 
   const trends = useMemo(() => {
     return kpiScores.map((entry) => {
@@ -170,8 +174,8 @@ export function useKPICalc() {
   return {
     kpiScores,
     primaryKpiScores,
-    advancedKpiScores,
-    kpisByApp,
+    supportingKpiScores,
+    kpisBySkill,
     radarData,
     trends,
     weeklyHistory: sourceWeeklyKpis,
