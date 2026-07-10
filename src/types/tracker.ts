@@ -86,6 +86,13 @@ export interface DailySessionLog {
   ghostDrillPlayed: YesNo;
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
+  pressureAttempts: number;
+  pressureSuccessPct: number;
+  bankKickAttempts: number;
+  bankKickSuccessPct: number;
+  jumpShotAttempts: number;
+  jumpShotSuccessPct: number;
+  safetyAttempts: number;
   notes: string;
   appStats?: SessionAppStatsCapture;
   coachTags?: string[];

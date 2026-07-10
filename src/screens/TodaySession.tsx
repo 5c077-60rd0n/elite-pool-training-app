@@ -218,6 +218,13 @@ export default function TodaySession() {
   const [wpbHighestScore, setWpbHighestScore] = useState(0);
   const [wpbCurrentAvgScore, setWpbCurrentAvgScore] = useState(0);
   const [wpbAvgPracticeMinutes, setWpbAvgPracticeMinutes] = useState(0);
+  const [pressureAttempts, setPressureAttempts] = useState(0);
+  const [pressureSuccessPct, setPressureSuccessPct] = useState(0);
+  const [bankKickAttempts, setBankKickAttempts] = useState(0);
+  const [bankKickSuccessPct, setBankKickSuccessPct] = useState(0);
+  const [jumpShotAttempts, setJumpShotAttempts] = useState(0);
+  const [jumpShotSuccessPct, setJumpShotSuccessPct] = useState(0);
+  const [safetyAttempts, setSafetyAttempts] = useState(0);
   const [drillRoomCompleted, setDrillRoomCompleted] = useState(false);
   const [bullseyeCompleted, setBullseyeCompleted] = useState(false);
   const [wpbCompleted, setWpbCompleted] = useState(false);
@@ -879,6 +886,13 @@ export default function TodaySession() {
       ghostDrillPlayed,
       lineUpShotCount: derivedLineUpShotCount,
       safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
+      pressureAttempts: Math.max(0, Math.round(pressureAttempts)),
+      pressureSuccessPct: clampPct(pressureSuccessPct),
+      bankKickAttempts: Math.max(0, Math.round(bankKickAttempts)),
+      bankKickSuccessPct: clampPct(bankKickSuccessPct),
+      jumpShotAttempts: Math.max(0, Math.round(jumpShotAttempts)),
+      jumpShotSuccessPct: clampPct(jumpShotSuccessPct),
+      safetyAttempts: Math.max(0, Math.round(safetyAttempts)),
       notes,
       appStats:
         drillRoomAttempts > 0
@@ -1686,6 +1700,74 @@ export default function TodaySession() {
             <p className="mt-2 text-xs text-chalk-300">
               WPB Estimated Fargo: <span className="text-cue-300">{wpbEstimatedFargo ?? '\u2014'}</span>
             </p>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">🛡️ Defense (Safes)</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Safety Attempts"
+                value={safetyAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setSafetyAttempts(Math.max(0, Math.round(next)))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">⏱️ Pressure (Mental Game)</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Pressure Attempts"
+                value={pressureAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setPressureAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Success %"
+                value={pressureSuccessPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setPressureSuccessPct(clampPct(next))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">🎱 Banks & Kicks</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Attempts"
+                value={bankKickAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setBankKickAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Success %"
+                value={bankKickSuccessPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setBankKickSuccessPct(clampPct(next))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">🚀 Jump Shots</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Attempts"
+                value={jumpShotAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setJumpShotAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Success %"
+                value={jumpShotSuccessPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setJumpShotSuccessPct(clampPct(next))}
+              />
+            </div>
           </>
         ) : (
           <>
