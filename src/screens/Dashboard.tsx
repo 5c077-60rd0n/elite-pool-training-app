@@ -32,6 +32,8 @@ export default function Dashboard() {
   const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const lastSessionRecommendation = useTrackerStore((s) => s.lastSessionRecommendation);
+  const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
+  const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
   const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
   const personalRecords = useTrackerStore((s) => s.personalRecords);
   const confidenceIndexHistory = useTrackerStore((s) => s.confidenceIndexHistory);
@@ -139,9 +141,15 @@ export default function Dashboard() {
   }, [currentWeekStats, logs, profile.currentWeek]);
 
   const deepInsightsVisible = !profile.adhdModeEnabled || showDeepInsights;
+  const safeLastSessionRecommendation = useMemo(() => {
+    if (!lastSessionRecommendation) return null;
+    const combined = `${lastSessionRecommendation.title} ${lastSessionRecommendation.nextStep} ${lastSessionRecommendation.rationale}`;
+    return /ghost/i.test(combined) ? null : lastSessionRecommendation;
+  }, [lastSessionRecommendation]);
+
   const nextAction = useMemo(() => {
-    if (lastSessionRecommendation?.nextStep) {
-      return lastSessionRecommendation.nextStep;
+    if (safeLastSessionRecommendation?.nextStep) {
+      return safeLastSessionRecommendation.nextStep;
     }
     if (recoveryRecommendationPlan?.actions?.length) {
       return recoveryRecommendationPlan.actions[0];
@@ -150,7 +158,18 @@ export default function Dashboard() {
       return adaptiveDailyPlan.actionChecklist[0];
     }
     return 'Run one focused session and save the log before opening analytics.';
-  }, [adaptiveDailyPlan, lastSessionRecommendation, recoveryRecommendationPlan]);
+  }, [adaptiveDailyPlan, recoveryRecommendationPlan, safeLastSessionRecommendation]);
+
+  useEffect(() => {
+    refreshAdaptiveDailyPlan(activeTrainingFargo, profile.currentWeek);
+    refreshRecoveryRecommendationPlan();
+  }, [
+    activeTrainingFargo,
+    logs.length,
+    profile.currentWeek,
+    refreshAdaptiveDailyPlan,
+    refreshRecoveryRecommendationPlan,
+  ]);
 
   useEffect(() => {
     if (!notificationsEnabled) return;
@@ -197,8 +216,8 @@ export default function Dashboard() {
           {profile.adhdModeEnabled ? (
             <span className="rounded-full border border-cue-600/60 bg-cue-900/20 px-2 py-1 text-cue-200">ADHD Focus Surface</span>
           ) : null}
-          {lastSessionRecommendation ? (
-            <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Next mode: {lastSessionRecommendation.nextMode.toUpperCase()}</span>
+          {safeLastSessionRecommendation ? (
+            <span className="rounded-full border border-felt-600 bg-felt-800/80 px-2 py-1 text-chalk-200">Next mode: {safeLastSessionRecommendation.nextMode.toUpperCase()}</span>
           ) : null}
         </div>
         <div className="mt-3 rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
@@ -206,11 +225,11 @@ export default function Dashboard() {
           <p className="mt-2 text-2xl font-semibold leading-tight text-ivory-100 sm:text-3xl">{nextAction}</p>
           <p className="mt-2 text-xs text-chalk-300">CueSports coaching rule: complete one clear action before reviewing extra metrics.</p>
         </div>
-        {lastSessionRecommendation ? (
+        {safeLastSessionRecommendation ? (
           <div className="mt-3 rounded-2xl border border-felt-600/60 bg-felt-800/55 p-4 shadow-[0_12px_24px_rgba(0,0,0,0.18)]">
             <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Session carryover</p>
-            <p className="text-sm text-ivory-100">{lastSessionRecommendation.title}</p>
-            <p className="mt-1 text-sm text-chalk-300">{lastSessionRecommendation.rationale}</p>
+            <p className="text-sm text-ivory-100">{safeLastSessionRecommendation.title}</p>
+            <p className="mt-1 text-sm text-chalk-300">{safeLastSessionRecommendation.rationale}</p>
           </div>
         ) : null}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
