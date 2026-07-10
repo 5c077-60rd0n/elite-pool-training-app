@@ -295,9 +295,16 @@ export default function TodaySession() {
       ],
     ]);
 
-    const trackerAppByName = new Map(
+    const trackerAppByName = new Map<string, DrillApp>(
       trackerDrills.map((drill) => [normalize(drill.name), drill.app as DrillApp] as const),
     );
+    // Ensure known drills are app-mapped even when not in trackerDrills
+    trackerAppByName.set(normalize('Progressive Rotation Runs'), 'WPB');
+    trackerAppByName.set(normalize('Consecutive Containing Safes'), 'WPB');
+    trackerAppByName.set(normalize('Center-Ball Straight Shots'), 'DrillRoom');
+    trackerAppByName.set(normalize('Follow Hard Set'), 'Bullseye');
+    trackerAppByName.set(normalize('Draw Hard Set'), 'Bullseye');
+    trackerAppByName.set(normalize('Stun Hard Set'), 'Bullseye');
 
     function parseDrillroomFromLabel(rawLabel: string): { category: string; label: string } | null {
       const fromCatalog = drillRoomDrillSuggestions.find((option) => {
@@ -436,10 +443,18 @@ export default function TodaySession() {
       return true;
     }
 
-    const adaptiveCandidates: DrillCandidate[] = (adaptiveDailyPlan?.prescribedDrills ?? []).map((label, index) => ({
-      label,
-      app: trackerAppByName.get(normalize(label)) ?? adaptiveFallbackApps[index] ?? 'DrillRoom',
-    }));
+    const adaptiveCandidates: DrillCandidate[] = (adaptiveDailyPlan?.prescribedDrills ?? []).map((label, index) => {
+      // Support "App > category > drill" prefix format in prescribed drills
+      const appPrefixes: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
+      const prefixMatch = appPrefixes.find((prefix) => label.startsWith(`${prefix} > `));
+      if (prefixMatch) {
+        return { label: label.slice(prefixMatch.length + 3), app: prefixMatch };
+      }
+      return {
+        label,
+        app: trackerAppByName.get(normalize(label)) ?? adaptiveFallbackApps[index] ?? 'DrillRoom',
+      };
+    });
 
     const roiCandidates: DrillCandidate[] = roiPlanner.prescription.map((item) => ({
       app: item.app,

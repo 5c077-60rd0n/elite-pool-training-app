@@ -79,9 +79,9 @@ function defaultPlan(currentWeek: number, forDate: string): AdaptiveDailyPlan {
       'Log one objective adjustment note for tomorrow.',
     ],
     prescribedDrills: [
-      'Center-Ball Straight Shots',
-      'Progressive Rotation Runs',
-      'Consecutive Containing Safes',
+      'DrillRoom > Shotmaking > Center-Ball Straight Shots',
+      'Bullseye > Follow > Follow Hard Set',
+      'WPB > Position Play & Runouts > Progressive Rotation Runs > Progressive Rotation Runs',
     ],
   };
 }
