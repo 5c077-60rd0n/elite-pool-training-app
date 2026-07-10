@@ -7,7 +7,6 @@ import { weeklyScheduleTemplate } from '../data/trackerPlan';
 import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
-  getWpbTierOptionsForCategory,
   wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
@@ -19,7 +18,7 @@ import { useTrackerStore } from '../store/useTrackerStore';
 import { useGamificationStore } from '../store/useGamificationStore';
 import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
-import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
+
 import { getTrackerGamificationSnapshot } from '../utils/trackerGamification';
 import { getActiveTrainingFargo } from '../utils/fargoProfile';
 import { createPostSessionCoachVerdict, type PostSessionCoachVerdict } from '../utils/appStatsIntelligence';
@@ -45,80 +44,6 @@ const skillDomainLabels: Record<string, { emoji: string; name: string; color: st
   'banks-kicks': { emoji: '🎱', name: 'Banks & Kicks', color: 'text-green-400' },
   jumping: { emoji: '🚀', name: 'Jumping', color: 'text-cyan-400' },
 };
-
-function getSkillDomainForDrillLabel(label: string, app?: string): string {
-  // First try exact match against defined drills
-  const drillMatch = drills.find(
-    (drill) =>
-      label.toLowerCase().includes(drill.name.toLowerCase()) ||
-      drill.name.toLowerCase().includes(label.toLowerCase())
-  );
-  if (drillMatch?.skillDomain) {
-    return drillMatch.skillDomain;
-  }
-
-  // Use app-based heuristics if no exact match found
-  const normalizedLabel = label.toLowerCase();
-
-  // DrillRoom = Accuracy (shotmaking/stroke mechanics)
-  if (app === 'DrillRoom') {
-    return 'accuracy';
-  }
-
-  // Bullseye = Position Play (cue ball control)
-  if (app === 'Bullseye') {
-    return 'position-play';
-  }
-
-  // WPB = Pattern Mastery + Defense + Banks/Kicks + Jumping + Pressure (context-dependent)
-  if (app === 'WPB') {
-    // Defense/Safes - highest priority
-    if (normalizedLabel.includes('defense') || normalizedLabel.includes('safe') || normalizedLabel.includes('containing') || normalizedLabel.includes('wall')) {
-      return 'defense';
-    }
-    // Banks & Kicks
-    if (normalizedLabel.includes('bank') || normalizedLabel.includes('kick') || normalizedLabel.includes('rail-first')) {
-      return 'banks-kicks';
-    }
-    // Jumping
-    if (normalizedLabel.includes('jump')) {
-      return 'jumping';
-    }
-    // Pressure/Competitive
-    if (normalizedLabel.includes('pressure') || normalizedLabel.includes('competitive') || normalizedLabel.includes('tournament') || normalizedLabel.includes('clock')) {
-      return 'pressure';
-    }
-    // Pattern Mastery / Runouts (match position, rotation, runout, strategic, pattern, l-drill, buffet, queue, etc)
-    if (
-      normalizedLabel.includes('position') ||
-      normalizedLabel.includes('rotation') ||
-      normalizedLabel.includes('runout') ||
-      normalizedLabel.includes('run') ||  // catches "runs" and "runouts"
-      normalizedLabel.includes('strategic') ||
-      normalizedLabel.includes('pattern') ||
-      normalizedLabel.includes('roadmap') ||
-      normalizedLabel.includes('shape') ||
-      normalizedLabel.includes('key ball') ||
-      normalizedLabel.includes('9-ball') ||
-      normalizedLabel.includes('8-ball') ||
-      normalizedLabel.includes('progressive') ||
-      normalizedLabel.includes('l-drill') ||
-      normalizedLabel.includes('buffet') ||
-      normalizedLabel.includes('queue') ||
-      normalizedLabel.includes('divergence') ||
-      normalizedLabel.includes('dash') ||
-      normalizedLabel.includes('line')
-    ) {
-      return 'pattern-mastery';
-    }
-    // Default WPB drills to pattern mastery (runouts/strategic play)
-    return 'pattern-mastery';
-  }
-
-  // If app is not recognized, try to infer from label
-  // Fallback for unknown cases
-  return 'accuracy';
-}
 
 function isoDate(value = new Date()): string {
   return value.toISOString().slice(0, 10);
@@ -254,210 +179,14 @@ export default function TodaySession() {
     [competitionLog, logs, recoveryRecommendationPlan],
   );
 
-  const roiPlanner = useMemo(
-    () =>
-      buildRoiPlannerSnapshot({
-        logs,
-        adaptiveDailyPlan: null,
-        competitionLog,
-        drillRoomSuggestions: drillRoomDrillSuggestions,
-        wpbSuggestions: wpbModuleSuggestions,
-        bullseyeCategories: bullseyeCategoryOptions,
-      }),
-    [competitionLog, logs],
-  );
-
   const todaysExactDrills = useMemo(() => {
-    type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
-    const normalize = (value: string) => value.trim().toLowerCase();
-    const normalizeLoose = (value: string) =>
-      value
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim();
-    const wpbLegacyAliases = new Map<string, { category: string; label: string }>([
-      [
-        normalizeLoose('Ghost Drill Race-to-10'),
-        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
-      ],
-      [
-        normalizeLoose('Ghost Ball race to 10'),
-        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
-      ],
-      [
-        normalizeLoose('9-Ball Ghost Drill (race to 10)'),
-        { category: 'Position Play & Runouts / Progressive Rotation Runs', label: 'Progressive Rotation Runs' },
-      ],
-      [
-        normalizeLoose('2-Ball Safety Exchange'),
-        { category: 'Defense / Containing Safes', label: 'Consecutive Containing Safes' },
-      ],
-    ]);
-
-    function parseDrillroomFromLabel(rawLabel: string): { category: string; label: string } | null {
-      const fromCatalog = drillRoomDrillSuggestions.find((option) => {
-        const parts = option.split('>').map((item) => item.trim());
-        const name = parts[parts.length - 1] ?? '';
-        return normalize(name) === normalize(rawLabel);
-      });
-      if (!fromCatalog) return null;
-      const parts = fromCatalog.split('>').map((item) => item.trim());
-      const category = parts[0] ?? 'General';
-      const label = parts.slice(1).join(' > ') || rawLabel;
-      return { category, label };
-    }
-
-    function parseWpbFromLabel(rawLabel: string): { category: string; label: string } | null {
-      const alias = wpbLegacyAliases.get(normalizeLoose(rawLabel));
-      if (alias) return alias;
-
-      const direct = rawLabel.split('>').map((item) => item.trim()).filter(Boolean);
-      if (direct.length >= 3) {
-        return {
-          category: `${direct[0]} / ${direct[1]}`,
-          label: direct.slice(2).join(' > '),
-        };
-      }
-
-      const fromCatalog = wpbModuleSuggestions.find((option) => {
-        const parts = option.split('>').map((item) => item.trim());
-        const name = parts[parts.length - 1] ?? '';
-        return normalizeLoose(name) === normalizeLoose(rawLabel);
-      });
-      if (!fromCatalog) return null;
-
-      const parts = fromCatalog.split('>').map((item) => item.trim());
-      const topCategory = parts[0] ?? 'General';
-      const series = parts[1] ?? 'General';
-      return {
-        category: `${topCategory} / ${series}`,
-        label: parts.slice(2).join(' > ') || rawLabel,
-      };
-    }
-
-    function parseBullseyeFromLabel(rawLabel: string): { category: string; label: string } | null {
-      const normalized = normalize(rawLabel);
-      const match = bullseyeCategoryOptions.find((category) => normalized.includes(normalize(category)));
-      if (!match) return null;
-      return {
-        category: match,
-        label: rawLabel,
-      };
-    }
-
-    function resolveForApp(rawLabel: string, app: DrillApp): { app: DrillApp; category: string; label: string } {
-      if (app === 'WPB') {
-        const parsed = parseWpbFromLabel(rawLabel);
-        return { app, category: parsed?.category ?? 'Fundamentals / Core', label: parsed?.label ?? rawLabel };
-      }
-
-      if (app === 'DrillRoom') {
-        const parsed = parseDrillroomFromLabel(rawLabel);
-        return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
-      }
-
-      const parsed = parseBullseyeFromLabel(rawLabel);
-      return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
-    }
-
-    // Determine today's focus from FIXED weekly schedule template (not ROI planner's dynamic rotation)
+    // Determine today's focus from FIXED weekly schedule template
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const today = dayNames[new Date().getDay()];
     const todaysTemplate = weeklyScheduleTemplate.find((t) => t.day === today);
     const todaysFocusArea = todaysTemplate?.focusArea?.toLowerCase() ?? '';
 
-    // Map focus area keywords to slot priorities
-    const focusTypeMap: Record<string, string[]> = {
-      'stroke mechanics': ['weakness'], // Fundamentals → accuracy/weakness work
-      'cue ball control': ['pressure'], // Cue control → precision under pressure
-      'follow & stun': ['pressure'], // Cue control → precision
-      'draw & sidespin': ['tournament'], // Complex multi-shot work
-      'pattern recognition': ['tournament'], // Pattern/runout work
-      'run-out': ['tournament'], // Runout work
-      'safety play': ['tournament'], // Safety/defensive work → complex scenarios
-      'kicking': ['tournament'], // Kicking work → complex scenarios
-      'cue ball precision': ['tournament'], // Precision shots
-      'pressure shots': ['tournament'], // Pressure work → tournament
-      'match play': ['pressure'], // Match play → competitive pressure
-      'mental reset': ['weakness'], // Recovery/mental → reset/weakness review
-    };
-
-    // Find which focus keywords match today's schedule
-    let prioritySlot = 'weakness'; // Default
-    for (const [keyword, slots] of Object.entries(focusTypeMap)) {
-      if (todaysFocusArea.includes(keyword)) {
-        prioritySlot = slots[0] ?? 'weakness';
-        break;
-      }
-    }
-
-    // Reorder prescription to prioritize today's focus, then fill remaining slots with different apps
-    const prescription = roiPlanner.prescription;
-    const priorityDrill = prescription.find((p) => p.slot === prioritySlot);
-    const otherDrills = prescription.filter((p) => p.slot !== prioritySlot);
-
-    // Sort other drills to use different apps
-    const usedApps = new Set<string>();
-    if (priorityDrill) {
-      usedApps.add(priorityDrill.app);
-    }
-
-    const reorderedPrescription = priorityDrill ? [priorityDrill] : [];
-    const sortedOthers = otherDrills.sort((a, b) => {
-      const aUsed = usedApps.has(a.app) ? 1 : 0;
-      const bUsed = usedApps.has(b.app) ? 1 : 0;
-      return aUsed - bUsed; // Prioritize unused apps
-    });
-
-    for (const drill of sortedOthers) {
-      reorderedPrescription.push(drill);
-      usedApps.add(drill.app);
-    }
-
-    const finalDrills = reorderedPrescription.map((prescription, index) => {
-      const resolved = resolveForApp(prescription.label, prescription.app);
-      
-      // Map skill domain based on today's focus area
-      let skillDomain = getSkillDomainForDrillLabel(resolved.label, resolved.app);
-      
-      // Use focus area to guide skill assignment
-      if (todaysFocusArea.includes('safety') || todaysFocusArea.includes('kick')) {
-        // Safety & Kicking day → defense skills
-        skillDomain = 'defense';
-      } else if (todaysFocusArea.includes('stroke mechanics') || todaysFocusArea.includes('fundamentals')) {
-        // Stroke mechanics day → accuracy
-        skillDomain = 'accuracy';
-      } else if (todaysFocusArea.includes('draw') || todaysFocusArea.includes('sidespin') || todaysFocusArea.includes('spin')) {
-        // Spin work → position-play
-        skillDomain = 'position-play';
-      } else if (todaysFocusArea.includes('pattern') || todaysFocusArea.includes('run-out')) {
-        // Pattern/runout day → pattern-mastery
-        skillDomain = 'pattern-mastery';
-      } else if (todaysFocusArea.includes('cue ball')) {
-        // Cue ball control → position-play
-        skillDomain = 'position-play';
-      } else if (todaysFocusArea.includes('pressure') || todaysFocusArea.includes('match play')) {
-        // Pressure/match play → depends on the drill
-        if (resolved.label.toLowerCase().includes('safety')) {
-          skillDomain = 'defense';
-        } else {
-          skillDomain = 'pressure';
-        }
-      }
-
-      const result = {
-        step: index + 1,
-        app: resolved.app,
-        category: resolved.category,
-        label: resolved.label,
-        skillDomain,
-      };
-      return result;
-    });
-
-    // If today's focus requires a specific skill domain, filter drills to match that focus
+    // Map focus area to skill domain
     const focusDaysSkillMap: Record<string, string> = {
       'stroke mechanics': 'accuracy',
       'fundamentals': 'accuracy',
@@ -484,24 +213,24 @@ export default function TodaySession() {
       }
     }
 
-    // If we have a specific skill domain for today, find matching drills and reorder
+    // Select drills from database that match today's skill domain
     if (todaysSkillDomain) {
       // Find drills that match today's skill domain
       const matchingDrills = drills.filter((d) => d.skillDomain === todaysSkillDomain);
       
       if (matchingDrills.length >= 3) {
-        // Map skill domain to apps: accuracy→DrillRoom, position-play→Bullseye, pattern-mastery→WPB, defense→WPB/DrillRoom, etc.
+        // Map skill domain to apps: accuracy→DrillRoom, position-play→Bullseye, pattern-mastery→WPB, defense→WPB, etc.
         const skillToAppMap: Record<string, 'DrillRoom' | 'Bullseye' | 'WPB'> = {
           accuracy: 'DrillRoom',
           'position-play': 'Bullseye',
           'pattern-mastery': 'WPB',
-          defense: 'WPB', // Default to WPB for safety drills
+          defense: 'WPB',
           pressure: 'DrillRoom',
           'banks-kicks': 'WPB',
           jumping: 'DrillRoom',
         };
 
-        // Use matching drills instead of ROI prescription if they exist
+        // Use matching drills
         return matchingDrills.slice(0, 3).map((drill, index) => {
           const app = skillToAppMap[todaysSkillDomain] || 'WPB';
           return {
@@ -515,8 +244,9 @@ export default function TodaySession() {
       }
     }
 
-    return finalDrills;
-  }, [roiPlanner.prescription, roiPlanner.weeklyRotation]);
+    // Fallback: return empty array if no drills found (shouldn't happen)
+    return [];
+  }, []);
 
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
@@ -553,7 +283,7 @@ export default function TodaySession() {
       setDrillRoomDrillName(drillroomAssigned.label);
     }
 
-    if (bullseyeCategory === 'Mixed' && bullseyeAssigned?.category && bullseyeAssigned.category !== 'General') {
+    if (bullseyeCategory === 'Mixed' && bullseyeAssigned?.category && (bullseyeAssigned.category as string) !== 'General') {
       const match = bullseyeCategoryOptions.find((option) => option.toLowerCase() === bullseyeAssigned.category.toLowerCase());
       if (match) setBullseyeCategory(match);
     }
@@ -860,7 +590,7 @@ export default function TodaySession() {
       setDrillRoomCompleted(true);
     }
 
-    if (bullseyeAssigned?.category && bullseyeAssigned.category !== 'General') {
+    if (bullseyeAssigned?.category && (bullseyeAssigned.category as string) !== 'General') {
       const match = bullseyeCategoryOptions.find((option) => option.toLowerCase() === bullseyeAssigned.category.toLowerCase());
       if (match) {
         setBullseyeCategory(match);
@@ -894,57 +624,6 @@ export default function TodaySession() {
     setBullseyeCompleted(lastLoggedSession.bullseyeCategory !== 'Mixed');
     setWpbCompleted(Boolean(lastLoggedSession.wpbLesson === 'Yes' && lastLoggedSession.wpbModuleName?.trim()));
     setSaveMessage('Copied app fields from your last logged session.');
-  }
-
-  function applyRoiPrescription(): void {
-    setFocusTouched(true);
-    setLengthTouched(true);
-    setFocusArea(`ROI Focus: ${roiPlanner.focusBucket}`);
-    setLengthMinutes(Math.max(1, roiPlanner.recommendedMinutes));
-
-    const drillroomPick = roiPlanner.prescription.find((item) => item.app === 'DrillRoom');
-    if (drillroomPick) {
-      const parts = drillroomPick.label.split('>').map((item) => item.trim());
-      setDrillRoomDrillName(parts[parts.length - 1] ?? drillroomPick.label);
-    }
-
-    const wpbPick = roiPlanner.prescription.find((item) => item.app === 'WPB');
-    if (wpbPick) {
-      setWpbLesson('Yes');
-      setWpbModuleName(wpbPick.label);
-      const nextTiers = getWpbTierOptionsForCategory(wpbCategory);
-      setWpbTierAchieved(nextTiers[0] ?? '');
-    }
-
-    setNotes((prev) => {
-      const prefix = prev ? `${prev}\n` : '';
-      return `${prefix}ROI prescription: ${roiPlanner.prescription
-        .map((item) => `${item.slot.toUpperCase()} - ${item.app} - ${item.label}`)
-        .join(' | ')}`;
-    });
-  }
-
-  function applyRoadMode(minutes: number): void {
-    setLengthTouched(true);
-    setLengthMinutes(minutes);
-    setNotes((prev) => `${prev ? `${prev}\n` : ''}Road mode applied: ${minutes} minutes.`);
-  }
-
-  function applyWeeklyAutoFocus(): void {
-    const primary = roiPlanner.weeklyAutoFocus.weakestTwo[0] ?? roiPlanner.focusBucket;
-    setFocusTouched(true);
-    setFocusArea(`Weekly Auto-Focus: ${primary}`);
-    setNotes((prev) => {
-      const prefix = prev ? `${prev}\n` : '';
-      return `${prefix}Next-week rotation: ${roiPlanner.weeklyAutoFocus.nextWeekRotation.join(' | ')}`;
-    });
-  }
-
-  function injectCoachBriefToNotes(): void {
-    setNotes((prev) => {
-      const prefix = prev ? `${prev}\n` : '';
-      return `${prefix}Coach brief: ${roiPlanner.coachBrief.join(' ')}`;
-    });
   }
 
   function applyRecoveryProtocol(): void {
@@ -1484,65 +1163,6 @@ export default function TodaySession() {
         <Button className="mt-3 w-full" type="button" variant="secondary" onClick={applySmartAutofill}>
           Apply Smart Autofill
         </Button>
-      </Card>
-      ) : null}
-
-      {showAdvancedPanels ? (
-      <Card className="mb-4" title="Auto Prescribe Today (ROI Engine)">
-        <p className="text-sm text-ivory-100">Weakest KPI bucket: {roiPlanner.focusBucket}</p>
-        <p className="mt-1 text-xs text-chalk-300">Three-drill prescription to remove guesswork and force transfer.</p>
-        <div className="mt-2 space-y-1 text-xs text-ivory-200">
-          {roiPlanner.prescription.map((item) => (
-            <p key={item.slot}>
-              {item.slot.toUpperCase()} · {item.app} · {item.label} ({item.rationale})
-            </p>
-          ))}
-        </div>
-        <div className="mt-3 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.checklist.slice(0, recommendationLimit).map((item) => (
-            <p key={item}>- {item}</p>
-          ))}
-        </div>
-        <Button className="mt-3 w-full" type="button" onClick={applyRoiPrescription}>
-          Apply ROI Prescription
-        </Button>
-      </Card>
-      ) : null}
-
-      {showAdvancedPanels ? (
-      <Card className="mb-4" title="Advanced Coaching Tools">
-        <p className="text-sm text-ivory-100">Weakest two categories: {roiPlanner.weeklyAutoFocus.weakestTwo.join(' · ')}</p>
-        <p className="mt-1 text-xs text-chalk-300">Tournament phase: {roiPlanner.tournamentMode.phaseLabel}</p>
-        {roiPlanner.tournamentMode.active ? (
-          <p className="mt-1 text-xs text-cue-300">{roiPlanner.tournamentMode.eventName} in {roiPlanner.tournamentMode.daysOut} days.</p>
-        ) : null}
-        <p className="mt-1 text-xs text-ivory-200">{roiPlanner.tournamentMode.emphasis}</p>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
-          {roiPlanner.travelTemplates.map((templateOption) => (
-            <Button key={templateOption.id} type="button" variant="secondary" onClick={() => applyRoadMode(templateOption.minutes)}>
-              {templateOption.label} ({templateOption.minutes}m)
-            </Button>
-          ))}
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
-          <p>Prescription Adherence: {roiPlanner.conversion.prescriptionAdherencePct}%</p>
-          <p>Target Hit Rate: {roiPlanner.conversion.targetHitRatePct}%</p>
-          <p>Improvement Rate: {roiPlanner.conversion.improvementRatePct}%</p>
-          <p>Match Transfer Score: {roiPlanner.conversion.matchTransferScore}/100</p>
-        </div>
-
-        <div className="mt-3 space-y-1 text-xs text-chalk-300">
-          {roiPlanner.coachBrief.slice(0, recommendationLimit).map((item) => (
-            <p key={item}>- {item}</p>
-          ))}
-        </div>
-
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button type="button" variant="secondary" onClick={applyWeeklyAutoFocus}>Apply Next-Week Focus</Button>
-          <Button type="button" variant="secondary" onClick={injectCoachBriefToNotes}>Add Coach Brief To Notes</Button>
-        </div>
       </Card>
       ) : null}
 
