@@ -385,8 +385,16 @@ export default function TodaySession() {
         };
       }
 
-      const category = bullseyeCategoryOptions.find((item) => item !== 'Mixed') ?? 'Follow';
-      return { app, category, label: `${category} Hard Set` };
+      // Bullseye: pick from specific categories instead of generic "Hard Set"
+      const bullseyeCategory = bullseyeCategoryOptions.find((item) => item !== 'Mixed' && item !== 'Safety') ?? 'Follow';
+      const bullseyeDrill = bullseyeCategory === 'Follow' 
+        ? 'Follow Hard Set'
+        : bullseyeCategory === 'Draw'
+        ? 'Draw Hard Set'
+        : bullseyeCategory === 'Stun'
+        ? 'Stun Hard Set'
+        : `${bullseyeCategory} Hard Set`;
+      return { app, category: bullseyeCategory, label: bullseyeDrill };
     }
 
     const desiredOrder: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
