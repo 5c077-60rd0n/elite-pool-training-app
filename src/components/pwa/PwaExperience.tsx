@@ -53,6 +53,8 @@ export function PwaExperience() {
       immediate: true,
       onNeedRefresh() {
         recordPwaMetric('update_prompt_shown');
+        // Apply updates immediately so stale cached screens are replaced without manual intervention.
+        void update(true);
         setNeedRefresh(true);
       },
       onOfflineReady() {
