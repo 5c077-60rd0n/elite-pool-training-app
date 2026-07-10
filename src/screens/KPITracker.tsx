@@ -10,6 +10,10 @@ const SKILL_LABELS = {
   'accuracy': '🎯 Elite Accuracy',
   'position-play': '📍 Elite Position Play',
   'pattern-mastery': '🔄 Elite Pattern Mastery',
+  'defense': '🛡️ Elite Defense',
+  'pressure': '⏱️ Elite Pressure',
+  'banks-kicks': '🎱 Elite Banks & Kicks',
+  'jumping': '🚀 Elite Jumping',
 };
 
 export default function KPITracker() {

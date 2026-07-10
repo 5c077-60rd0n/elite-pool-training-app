@@ -21,11 +21,19 @@ export type WeeklyMetrics = {
   wpbHighestScore: number;
   wpbCurrentAvgScore: number;
   wpbAvgPracticeMinutes: number;
+  safetyAttempts: number;
+  safetySuccessPct: number;
+  pressureAttempts: number;
+  pressureSuccessPct: number;
+  bankKickAttempts: number;
+  bankKickSuccessPct: number;
+  jumpShotAttempts: number;
+  jumpShotSuccessPct: number;
 };
 
 export type TrackerKpiDirection = 'higher' | 'lower';
 export type TrackerKpiTier = 'primary' | 'supporting';
-export type SkillDomain = 'accuracy' | 'position-play' | 'pattern-mastery';
+export type SkillDomain = 'accuracy' | 'position-play' | 'pattern-mastery' | 'defense' | 'pressure' | 'banks-kicks' | 'jumping';
 export type AppSpecialization = 'shotmaking' | 'position-play' | 'pattern-mastery';
 
 export type TrackerKpiDefinition = {
@@ -240,6 +248,122 @@ export const trackerKpis: TrackerKpiDefinition[] = [
     description: 'Shooting difficulty feedback — how complex shots are practiced.',
     benchmarks: { fargo550: 3.5, fargo600: 4, fargo650: 4.5, fargo700: 5, fargo750: 5.5, fargo800: 6 },
     getValue: (metrics) => metrics.drillRoomSessionScore,
+  },
+
+  // ===== ELITE DEFENSE =====
+  // What: Defensive shot execution — making safe, leaving opponent in difficult positions
+  // Why: Wins through survival — can't score if you're out of position or allow run-outs
+  // Pro Metric: Safety success rate
+  {
+    id: 'elite-defense',
+    name: 'Elite Defense',
+    measurementUnit: '%',
+    direction: 'higher',
+    tier: 'primary',
+    skill: 'defense',
+    app: 'pattern-mastery',
+    description: 'Defensive shot success — safe execution and opponent constraint.',
+    benchmarks: { fargo550: 40, fargo600: 50, fargo650: 60, fargo700: 70, fargo750: 80, fargo800: 88 },
+    getValue: (metrics) => metrics.safetySuccessPct,
+  },
+  {
+    id: 'defense-attempts',
+    name: 'Defense Practice Volume',
+    measurementUnit: 'count',
+    direction: 'higher',
+    tier: 'supporting',
+    skill: 'defense',
+    app: 'pattern-mastery',
+    description: 'Defensive drill frequency — comfort with safety execution.',
+    benchmarks: { fargo550: 5, fargo600: 8, fargo650: 12, fargo700: 15, fargo750: 18, fargo800: 22 },
+    getValue: (metrics) => metrics.safetyAttempts,
+  },
+
+  // ===== ELITE PRESSURE =====
+  // What: Execution in high-stakes, time-constrained conditions
+  // Why: Tournaments have pressure — can you execute when it matters?
+  // Pro Metric: Pressure drill success rate
+  {
+    id: 'elite-pressure',
+    name: 'Elite Pressure',
+    measurementUnit: '%',
+    direction: 'higher',
+    tier: 'primary',
+    skill: 'pressure',
+    app: 'shotmaking',
+    description: 'Pressure execution — shot-making accuracy under time constraint.',
+    benchmarks: { fargo550: 50, fargo600: 58, fargo650: 66, fargo700: 74, fargo750: 81, fargo800: 87 },
+    getValue: (metrics) => metrics.pressureSuccessPct,
+  },
+  {
+    id: 'pressure-attempts',
+    name: 'Pressure Practice Volume',
+    measurementUnit: 'count',
+    direction: 'higher',
+    tier: 'supporting',
+    skill: 'pressure',
+    app: 'shotmaking',
+    description: 'Pressure drill frequency — mental game under constraints.',
+    benchmarks: { fargo550: 5, fargo600: 8, fargo650: 12, fargo700: 15, fargo750: 18, fargo800: 22 },
+    getValue: (metrics) => metrics.pressureAttempts,
+  },
+
+  // ===== ELITE BANKS & KICKS =====
+  // What: Indirect shot execution — banks and kicks for shape or clearance
+  // Why: Essential for runouts and escaping ball-in-hand positions
+  // Pro Metric: Bank/Kick success rate
+  {
+    id: 'elite-banks-kicks',
+    name: 'Elite Banks & Kicks',
+    measurementUnit: '%',
+    direction: 'higher',
+    tier: 'primary',
+    skill: 'banks-kicks',
+    app: 'shotmaking',
+    description: 'Banking and kicking accuracy — indirect shot execution.',
+    benchmarks: { fargo550: 35, fargo600: 45, fargo650: 55, fargo700: 65, fargo750: 75, fargo800: 83 },
+    getValue: (metrics) => metrics.bankKickSuccessPct,
+  },
+  {
+    id: 'banks-kicks-attempts',
+    name: 'Banks & Kicks Practice Volume',
+    measurementUnit: 'count',
+    direction: 'higher',
+    tier: 'supporting',
+    skill: 'banks-kicks',
+    app: 'shotmaking',
+    description: 'Bank/kick drill frequency — mastery through repetition.',
+    benchmarks: { fargo550: 5, fargo600: 8, fargo650: 12, fargo700: 15, fargo750: 18, fargo800: 22 },
+    getValue: (metrics) => metrics.bankKickAttempts,
+  },
+
+  // ===== ELITE JUMPING =====
+  // What: Jump shot execution — for break-outs and clearing congested areas
+  // Why: Tournament differentiator — not every player has this skill
+  // Pro Metric: Jump shot success rate
+  {
+    id: 'elite-jumping',
+    name: 'Elite Jumping',
+    measurementUnit: '%',
+    direction: 'higher',
+    tier: 'primary',
+    skill: 'jumping',
+    app: 'shotmaking',
+    description: 'Jump shot accuracy — technique and ball control.',
+    benchmarks: { fargo550: 30, fargo600: 40, fargo650: 50, fargo700: 60, fargo750: 70, fargo800: 78 },
+    getValue: (metrics) => metrics.jumpShotSuccessPct,
+  },
+  {
+    id: 'jumping-attempts',
+    name: 'Jump Shot Practice Volume',
+    measurementUnit: 'count',
+    direction: 'higher',
+    tier: 'supporting',
+    skill: 'jumping',
+    app: 'shotmaking',
+    description: 'Jump shot drill frequency — consistency building.',
+    benchmarks: { fargo550: 3, fargo600: 5, fargo650: 8, fargo700: 10, fargo750: 12, fargo800: 15 },
+    getValue: (metrics) => metrics.jumpShotAttempts,
   },
 ];
 

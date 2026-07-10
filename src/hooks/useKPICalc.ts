@@ -86,6 +86,14 @@ function weeklyMetricsFromDailyLogs(
         wpbHighestScore: Math.round(average(wpbStats.map((item) => item?.highestScore ?? 0).filter((v) => v > 0))),
         wpbCurrentAvgScore: Number(average(wpbStats.map((item) => item?.currentAvgScore ?? 0).filter((v) => v > 0)).toFixed(1)),
         wpbAvgPracticeMinutes: Number(average(wpbStats.map((item) => item?.avgPracticeMinutes ?? 0).filter((v) => v > 0)).toFixed(1)),
+        safetyAttempts: 0,
+        safetySuccessPct: 0,
+        pressureAttempts: 0,
+        pressureSuccessPct: 0,
+        bankKickAttempts: 0,
+        bankKickSuccessPct: 0,
+        jumpShotAttempts: 0,
+        jumpShotSuccessPct: 0,
       };
     });
 }
@@ -142,7 +150,7 @@ export function useKPICalc() {
 
   const kpisBySkill = useMemo(() => {
     const map = new Map();
-    ['accuracy', 'position-play', 'pattern-mastery'].forEach((skill) => {
+    ['accuracy', 'position-play', 'pattern-mastery', 'defense', 'pressure', 'banks-kicks', 'jumping'].forEach((skill) => {
       const primary = kpiScores.find((kpi) => kpi.tier === 'primary' && kpi.skill === skill);
       const supporting = kpiScores.filter((kpi) => kpi.tier === 'supporting' && kpi.skill === skill);
       if (primary) {
