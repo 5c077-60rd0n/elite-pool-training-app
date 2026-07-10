@@ -16,6 +16,7 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { useGamificationStore } from '../store/useGamificationStore';
+import { useKPICalc } from '../hooks/useKPICalc';
 import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
@@ -91,6 +92,7 @@ export default function TodaySession() {
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
   const activeTrainingFargo = getActiveTrainingFargo(profile);
+  const { kpiScores } = useKPICalc();
 
   const today = isoDate();
   const day = dayName();
@@ -344,6 +346,10 @@ export default function TodaySession() {
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
     [logs, today],
+  );
+  const focusKpiScore = useMemo(
+    () => kpiScores.find((item) => item.name === adaptiveDailyPlan?.focusKpiName),
+    [adaptiveDailyPlan?.focusKpiName, kpiScores],
   );
   const effectiveAdhdSessionMode = adhdSessionModeOverride ?? adhdSessionMode;
   const activeAdhdPreset = useMemo(
@@ -1248,14 +1254,11 @@ export default function TodaySession() {
           <p className="text-sm text-ivory-100">Focus KPI: {adaptiveDailyPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
           <p className="mt-2 text-sm text-chalk-300">Recommended Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
-
-          <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Line-Up Best Run Target: {'>= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">WPB Lessons: {adaptiveDailyPlan.targetMetrics.wpbLessonsThisWeek}/week</p>
-          </div>
+          {focusKpiScore ? (
+            <p className="mt-2 rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1 text-xs text-ivory-200">
+              Focus KPI benchmark: {focusKpiScore.score} vs {focusKpiScore.benchmarkTarget.toFixed(1)}
+            </p>
+          ) : null}
 
           <div className="mt-2 space-y-1 text-xs text-chalk-300">
             {adaptiveDailyPlan.actionChecklist.slice(0, recommendationLimit).map((item) => (

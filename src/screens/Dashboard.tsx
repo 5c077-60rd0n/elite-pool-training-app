@@ -15,6 +15,7 @@ import { PageWrapper } from '../components/layout/PageWrapper';
 import { useNotificationStore } from '../store/useNotificationStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
+import { useKPICalc } from '../hooks/useKPICalc';
 import { calculateDrillReadinessScore } from '../utils/matchSimulator';
 import { getNotificationInsights } from '../utils/notificationIntelligence';
 import { buildPauseUntilIso, isPaused, shouldPauseSmartAlerts } from '../utils/notificationThrottle';
@@ -49,6 +50,7 @@ export default function Dashboard() {
   const setSmartAlertsPausedUntil = useNotificationStore((s) => s.setSmartAlertsPausedUntil);
   const [showDeepInsights, setShowDeepInsights] = useState(false);
   const activeTrainingFargo = getActiveTrainingFargo(profile);
+  const { kpiScores } = useKPICalc();
 
   const estimatedFargo = useMemo(
     () => estimateFargo(activeTrainingFargo, logs, fargoLog),
@@ -62,9 +64,9 @@ export default function Dashboard() {
   const weeksLogged = new Set(logs.map((item) => item.weekNumber)).size;
 
   const currentWeekStats = weeklySummaries.at(-1);
-  const currentWeekWpbLessons = useMemo(
-    () => logs.filter((item) => item.weekNumber === profile.currentWeek && item.wpbLesson === 'Yes').length,
-    [logs, profile.currentWeek],
+  const appStatsKpis = useMemo(
+    () => kpiScores.filter((item) => item.score > 0).slice(0, 6),
+    [kpiScores],
   );
 
   const fargoLineData = useMemo(
@@ -159,6 +161,10 @@ export default function Dashboard() {
     }
     return 'Run one focused session and save the log before opening analytics.';
   }, [adaptiveDailyPlan, recoveryRecommendationPlan, safeLastSessionRecommendation]);
+  const focusKpiScore = useMemo(
+    () => kpiScores.find((item) => item.name === adaptiveDailyPlan?.focusKpiName),
+    [adaptiveDailyPlan?.focusKpiName, kpiScores],
+  );
 
   useEffect(() => {
     refreshAdaptiveDailyPlan(activeTrainingFargo, profile.currentWeek);
@@ -297,12 +303,17 @@ export default function Dashboard() {
 
           <Card className="mb-4" title="Current Week KPIs">
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <p className="text-chalk-300">DrillRoom Shotmaking % (Avg)</p>
-              <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
-              <p className="text-chalk-300">Bullseye Proximity Score (Avg)</p>
-              <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
-              <p className="text-chalk-300">WPB Lessons This Week</p>
-              <p className="text-right text-ivory-100">{currentWeekWpbLessons}</p>
+              {appStatsKpis.length ? appStatsKpis.map((kpi) => (
+                <>
+                  <p key={`${kpi.id}-label`} className="text-chalk-300">{kpi.name}</p>
+                  <p key={`${kpi.id}-value`} className="text-right text-ivory-100">{kpi.score}</p>
+                </>
+              )) : (
+                <>
+                  <p className="text-chalk-300">App Stats KPIs</p>
+                  <p className="text-right text-ivory-100">Log App Stats Capture values to populate.</p>
+                </>
+              )}
               <p className="text-chalk-300">Weeks Logged</p>
               <p className="text-right text-ivory-100">{weeksLogged}</p>
               <p className="text-chalk-300">Milestones Met</p>
@@ -387,9 +398,11 @@ export default function Dashboard() {
           <p className="text-sm text-ivory-100">Focus: {adaptiveDailyPlan.focusKpiName}</p>
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
           <p className="mt-2 text-xs text-ivory-200">Session length: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
-          <p className="mt-1 text-xs text-ivory-200">
-            Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
-          </p>
+          {focusKpiScore ? (
+            <p className="mt-1 text-xs text-ivory-200">
+              Focus KPI benchmark: {focusKpiScore.score} vs {focusKpiScore.benchmarkTarget.toFixed(1)}
+            </p>
+          ) : null}
         </Card>
       ) : null}
 

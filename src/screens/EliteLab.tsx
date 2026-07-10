@@ -85,17 +85,18 @@ export default function EliteLab() {
   const [bridgeMessage, setBridgeMessage] = useState('');
 
   const benchmarks = useMemo(() => {
+    const appStatLogs = logs.filter((item) => Boolean(item.appStats));
     const current = {
-      drillRoom: logs.length
-        ? Math.round(logs.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / logs.length)
+      drillRoomPocketing: appStatLogs.length
+        ? Math.round(appStatLogs.reduce((sum, item) => sum + (item.appStats?.drillRoom?.pocketingPct ?? 0), 0) / appStatLogs.length)
         : 0,
-      safety: logs.length
-        ? Math.round(logs.reduce((sum, item) => sum + item.safetyExchangeSuccessPct, 0) / logs.length)
+      bullseyeMidRange: appStatLogs.length
+        ? Math.round(appStatLogs.reduce((sum, item) => sum + (item.appStats?.bullseye?.midRangePct ?? 0), 0) / appStatLogs.length)
         : 0,
     };
 
-    const target750 = trackerKpis.find((kpi) => kpi.id === 'drillroom-shotmaking')?.benchmarks.fargo750 ?? 0;
-    const target800 = trackerKpis.find((kpi) => kpi.id === 'safety-exchange-success')?.benchmarks.fargo800 ?? 0;
+    const target750 = trackerKpis.find((kpi) => kpi.id === 'drillroom-pocketing-pct')?.benchmarks.fargo750 ?? 0;
+    const target800 = trackerKpis.find((kpi) => kpi.id === 'bullseye-mid-range-pct')?.benchmarks.fargo800 ?? 0;
 
     return {
       current,
@@ -442,13 +443,13 @@ export default function EliteLab() {
 
       <Card className="mb-4" title="9) Elite Benchmark Mode">
         <div className="grid grid-cols-2 gap-2 text-sm">
-          <p className="text-chalk-300">Current DrillRoom Avg</p><p className="text-right text-ivory-100">{benchmarks.current.drillRoom}%</p>
-          <p className="text-chalk-300">Current Safety Avg</p><p className="text-right text-ivory-100">{benchmarks.current.safety}%</p>
-          <p className="text-chalk-300">750 Bench (DrillRoom)</p><p className="text-right text-ivory-100">{benchmarks.target750}%</p>
-          <p className="text-chalk-300">800 Bench (Safety)</p><p className="text-right text-ivory-100">{benchmarks.target800}%</p>
+          <p className="text-chalk-300">Current DrillRoom Pocketing %</p><p className="text-right text-ivory-100">{benchmarks.current.drillRoomPocketing}%</p>
+          <p className="text-chalk-300">Current Bullseye Mid Range %</p><p className="text-right text-ivory-100">{benchmarks.current.bullseyeMidRange}%</p>
+          <p className="text-chalk-300">750 Bench (DrillRoom Pocketing)</p><p className="text-right text-ivory-100">{benchmarks.target750}%</p>
+          <p className="text-chalk-300">800 Bench (Bullseye Mid Range)</p><p className="text-right text-ivory-100">{benchmarks.target800}%</p>
         </div>
-        <p className="mt-2 text-xs text-chalk-300">Delta to 750 DrillRoom benchmark: {benchmarks.current.drillRoom - benchmarks.target750 >= 0 ? '+' : ''}{benchmarks.current.drillRoom - benchmarks.target750}</p>
-        <p className="text-xs text-chalk-300">Delta to 800 Safety benchmark: {benchmarks.current.safety - benchmarks.target800 >= 0 ? '+' : ''}{benchmarks.current.safety - benchmarks.target800}</p>
+        <p className="mt-2 text-xs text-chalk-300">Delta to 750 DrillRoom Pocketing benchmark: {benchmarks.current.drillRoomPocketing - benchmarks.target750 >= 0 ? '+' : ''}{benchmarks.current.drillRoomPocketing - benchmarks.target750}</p>
+        <p className="text-xs text-chalk-300">Delta to 800 Bullseye Mid Range benchmark: {benchmarks.current.bullseyeMidRange - benchmarks.target800 >= 0 ? '+' : ''}{benchmarks.current.bullseyeMidRange - benchmarks.target800}</p>
       </Card>
 
       <Card title="10) Fatigue + Readiness Layer">
