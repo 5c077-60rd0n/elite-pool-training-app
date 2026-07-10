@@ -122,13 +122,31 @@ export function useKPICalc() {
 
   const radarData = useMemo(
     () =>
-      kpiScores.map((entry) => ({
-        subject: entry.name,
-        value: entry.normalizedScore,
-        fullMark: 130,
-      })),
+      kpiScores
+        .filter((kpi) => kpi.tier === 'primary')
+        .map((entry) => ({
+          subject: entry.name,
+          value: entry.normalizedScore,
+          fullMark: 130,
+        })),
     [kpiScores],
   );
+
+  const primaryKpiScores = useMemo(() => {
+    return kpiScores.filter((kpi) => kpi.tier === 'primary');
+  }, [kpiScores]);
+
+  const advancedKpiScores = useMemo(() => {
+    return kpiScores.filter((kpi) => kpi.tier === 'advanced');
+  }, [kpiScores]);
+
+  const kpisByApp = useMemo(() => {
+    const map = new Map();
+    ['shotmaking', 'position-play', 'pattern-mastery'].forEach((app) => {
+      map.set(app, advancedKpiScores.filter((kpi) => kpi.app === app));
+    });
+    return map;
+  }, [advancedKpiScores]);
 
   const trends = useMemo(() => {
     return kpiScores.map((entry) => {
@@ -151,6 +169,9 @@ export function useKPICalc() {
 
   return {
     kpiScores,
+    primaryKpiScores,
+    advancedKpiScores,
+    kpisByApp,
     radarData,
     trends,
     weeklyHistory: sourceWeeklyKpis,
