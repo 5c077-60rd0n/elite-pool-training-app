@@ -98,55 +98,68 @@ function selectWeaknessDrill(
   wpb: DrillOption[],
   bullseyeCategories: string[],
 ): DrillOption {
-  const fallback = drillroom[0] ?? { app: 'DrillRoom', category: 'Shotmaking', name: 'Straight Shot Level II' };
   const normalized = focusBucket.toLowerCase();
 
-  if (normalized.includes('safety')) {
-    return pickFirst(drillroom, (option) => option.category.toLowerCase().includes('safety'), fallback);
+  // Map metrics to drill apps per specifications:
+  // DrillRoom = Accuracy & Shotmaking (foundational potting consistency)
+  // Bullseye = Position Play (cue ball control & landing zones)
+  // WPB = Runouts & Multiple Shot Drills (decision-making & pattern play)
+
+  if (normalized.includes('shotmaking')) {
+    return pickFirst(drillroom, (option) => option.category.toLowerCase().includes('shotmaking'), 
+      drillroom[0] ?? { app: 'DrillRoom', category: 'Shotmaking', name: 'Straight Shot Level II' }
+    );
   }
-  if (normalized.includes('ghost') || normalized.includes('line-up')) {
-    return pickFirst(wpb, (option) => option.category.toLowerCase().includes('position'), {
-      app: 'WPB',
-      category: 'Position Play & Runouts / The Line',
-      name: 'The Queue',
-    });
-  }
-  if (normalized.includes('bullseye')) {
+
+  if (normalized.includes('proximity') || normalized.includes('bullseye')) {
     const category = bullseyeCategories.find((item) => item !== 'Mixed') ?? 'Follow';
     return { app: 'Bullseye', category, name: `${category} Hard Set` };
   }
-  if (normalized.includes('wpb')) {
-    return pickFirst(wpb, (option) => option.category.toLowerCase().includes('aiming'), {
-      app: 'WPB',
-      category: 'Aiming & Shot Making / Aim Training',
-      name: 'Aim Training - Level II',
-    });
+
+  if (normalized.includes('safety')) {
+    return pickFirst(wpb, (option) => option.category.toLowerCase().includes('defense'), 
+      { app: 'WPB', category: 'Defense / Containing Safes', name: 'Consecutive Containing Safes' }
+    );
   }
 
-  return pickFirst(drillroom, (option) => option.category.toLowerCase().includes('shotmaking'), fallback);
+  if (normalized.includes('line-up') || normalized.includes('ghost')) {
+    return pickFirst(wpb, (option) => option.category.toLowerCase().includes('position'), 
+      { app: 'WPB', category: 'Position Play & Runouts / Progressive Rotation Runs', name: 'Progressive Rotation Runs' }
+    );
+  }
+
+  // Default: route to WPB for multi-shot pattern work
+  return pickFirst(wpb, (option) => option.category.toLowerCase().includes('position'),
+    { app: 'WPB', category: 'Position Play & Runouts / Progressive Rotation Runs', name: 'Progressive Rotation Runs' }
+  );
 }
 
 function selectPressureDrill(drillroom: DrillOption[], wpb: DrillOption[]): DrillOption {
+  // Pressure work = challenges to shotmaking accuracy + safety execution
+  // DrillRoom for speed/challenge components, WPB for defensive pressure
   return (
     drillroom.find((option) => option.category.toLowerCase().includes('challenge'))
-    ?? drillroom.find((option) => option.category.toLowerCase().includes('safety'))
     ?? wpb.find((option) => option.category.toLowerCase().includes('defense'))
+    ?? wpb.find((option) => option.category.toLowerCase().includes('safety'))
     ?? { app: 'WPB', category: 'Defense / Containing Safes', name: 'Consecutive Containing Safes' }
   );
 }
 
 function selectTournamentDrill(daysOut: number | undefined, wpb: DrillOption[], drillroom: DrillOption[]): DrillOption {
   if (typeof daysOut === 'number' && daysOut <= 2) {
+    // D-2 to D-1: Focus on accuracy/shotmaking consistency (DrillRoom)
     return (
       drillroom.find((option) => option.category.toLowerCase().includes('speed'))
+      ?? drillroom.find((option) => option.category.toLowerCase().includes('shotmaking'))
       ?? { app: 'DrillRoom', category: 'Speed Control', name: 'LAG SHOT' }
     );
   }
 
+  // Default tournament prep: Runouts and multi-shot pattern play (WPB)
   return (
     wpb.find((option) => option.category.toLowerCase().includes('position'))
-    ?? drillroom.find((option) => option.category.toLowerCase().includes('positional'))
-    ?? { app: 'WPB', category: 'Position Play & Runouts / Progressive Rotation Runs', name: 'Progressive Rotation Runouts' }
+    ?? wpb.find((option) => option.category.toLowerCase().includes('runout'))
+    ?? { app: 'WPB', category: 'Position Play & Runouts / Progressive Rotation Runs', name: 'Progressive Rotation Runs' }
   );
 }
 
