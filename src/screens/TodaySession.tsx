@@ -3,7 +3,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
 import { PageWrapper } from '../components/layout/PageWrapper';
-import { trackerDrills, weeklyScheduleTemplate } from '../data/trackerPlan';
+import { weeklyScheduleTemplate } from '../data/trackerPlan';
 import {
   bullseyeCategoryOptions,
   drillRoomDrillSuggestions,
@@ -17,7 +17,6 @@ import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { useGamificationStore } from '../store/useGamificationStore';
-import { useKPICalc } from '../hooks/useKPICalc';
 import { triggerRewardCue } from '../utils/rewardEffects';
 import { generateSmartSessionAutofill } from '../utils/sessionIntelligence';
 import { buildRoiPlannerSnapshot } from '../utils/roiPlanner';
@@ -167,8 +166,6 @@ export default function TodaySession() {
   const stopTimer = useSessionStore((s) => s.stopTimer);
   const resetTimer = useSessionStore((s) => s.resetTimer);
   const addDailySessionLog = useTrackerStore((s) => s.addDailySessionLog);
-  const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
-  const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
   const setLastSessionRecommendation = useTrackerStore((s) => s.setLastSessionRecommendation);
@@ -177,7 +174,6 @@ export default function TodaySession() {
   const soundEnabled = useGamificationStore((s) => s.soundEnabled);
   const hapticsEnabled = useGamificationStore((s) => s.hapticsEnabled);
   const activeTrainingFargo = getActiveTrainingFargo(profile);
-  const { kpiScores } = useKPICalc();
 
   const today = isoDate();
   const day = dayName();
@@ -247,27 +243,25 @@ export default function TodaySession() {
   const saveSectionRef = useRef<HTMLDivElement | null>(null);
 
   const smartAutofill = useMemo(
-    () => generateSmartSessionAutofill(logs, adaptiveDailyPlan, recoveryRecommendationPlan, competitionLog),
-    [adaptiveDailyPlan, competitionLog, logs, recoveryRecommendationPlan],
+    () => generateSmartSessionAutofill(logs, null, recoveryRecommendationPlan, competitionLog),
+    [competitionLog, logs, recoveryRecommendationPlan],
   );
 
   const roiPlanner = useMemo(
     () =>
       buildRoiPlannerSnapshot({
         logs,
-        adaptiveDailyPlan,
+        adaptiveDailyPlan: null,
         competitionLog,
         drillRoomSuggestions: drillRoomDrillSuggestions,
         wpbSuggestions: wpbModuleSuggestions,
         bullseyeCategories: bullseyeCategoryOptions,
       }),
-    [adaptiveDailyPlan, competitionLog, logs],
+    [competitionLog, logs],
   );
 
   const todaysExactDrills = useMemo(() => {
     type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
-    type ResolvedDrill = { app: DrillApp; category: string; label: string };
-    type DrillCandidate = { app: DrillApp; label: string };
     const normalize = (value: string) => value.trim().toLowerCase();
     const normalizeLoose = (value: string) =>
       value
@@ -294,17 +288,6 @@ export default function TodaySession() {
         { category: 'Defense / Containing Safes', label: 'Consecutive Containing Safes' },
       ],
     ]);
-
-    const trackerAppByName = new Map<string, DrillApp>(
-      trackerDrills.map((drill) => [normalize(drill.name), drill.app as DrillApp] as const),
-    );
-    // Ensure known drills are app-mapped even when not in trackerDrills
-    trackerAppByName.set(normalize('Progressive Rotation Runs'), 'WPB');
-    trackerAppByName.set(normalize('Consecutive Containing Safes'), 'WPB');
-    trackerAppByName.set(normalize('Center-Ball Straight Shots'), 'DrillRoom');
-    trackerAppByName.set(normalize('Follow Hard Set'), 'Bullseye');
-    trackerAppByName.set(normalize('Draw Hard Set'), 'Bullseye');
-    trackerAppByName.set(normalize('Stun Hard Set'), 'Bullseye');
 
     function parseDrillroomFromLabel(rawLabel: string): { category: string; label: string } | null {
       const fromCatalog = drillRoomDrillSuggestions.find((option) => {
@@ -372,130 +355,22 @@ export default function TodaySession() {
       return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
     }
 
-    function fallbackForApp(app: DrillApp): ResolvedDrill {
-      if (app === 'DrillRoom') {
-        const candidate = drillRoomDrillSuggestions[0] ?? 'Shotmaking > Center-Ball Straight Shots';
-        const parsed = parseDrillroomFromLabel(candidate.split('>').map((item) => item.trim()).slice(1).join(' > ') || candidate);
-        return { app, category: parsed?.category ?? 'Shotmaking', label: parsed?.label ?? candidate };
-      }
-
-      if (app === 'WPB') {
-        const candidate =
-          wpbModuleSuggestions.find((option) => option.toLowerCase().includes('progressive rotation runs'))
-          ?? wpbModuleSuggestions[0]
-          ?? 'Position Play & Runouts > Progressive Rotation Runs > Progressive Rotation Runs';
-        const parsed = parseWpbFromLabel(candidate);
-        return {
-          app,
-          category: parsed?.category ?? 'Position Play & Runouts / Progressive Rotation Runs',
-          label: parsed?.label ?? candidate,
-        };
-      }
-
-      // Bullseye: pick from specific categories instead of generic "Hard Set"
-      const bullseyeCategory = bullseyeCategoryOptions.find((item) => item !== 'Mixed' && item !== 'Safety') ?? 'Follow';
-      const bullseyeDrill = bullseyeCategory === 'Follow' 
-        ? 'Follow Hard Set'
-        : bullseyeCategory === 'Draw'
-        ? 'Draw Hard Set'
-        : bullseyeCategory === 'Stun'
-        ? 'Stun Hard Set'
-        : `${bullseyeCategory} Hard Set`;
-      return { app, category: bullseyeCategory, label: bullseyeDrill };
-    }
-
-    const desiredOrder: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
-    const adaptiveFallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
-
-    // Helper to validate that a drill label belongs to the specified app
-    function isDrillValidForApp(label: string, app: DrillApp): boolean {
-      const normalizedLabel = label.toLowerCase();
-      
-      // WPB-specific drills that must stay in WPB
-      if (normalizedLabel.includes('progressive rotation') || 
-          normalizedLabel.includes('position play') ||
-          normalizedLabel.includes('runout') ||
-          normalizedLabel.includes('l-drill') ||
-          normalizedLabel.includes('buffet') ||
-          normalizedLabel.includes('queue') ||
-          normalizedLabel.includes('defense') ||
-          normalizedLabel.includes('jump shot') ||
-          normalizedLabel.includes('safety') ||
-          normalizedLabel.includes('pressure')) {
-        return app === 'WPB';
-      }
-      
-      // Bullseye position play categories must stay in Bullseye
-      const bullseyeKeywords = ['follow', 'draw', 'stun', 'sidespin', 'finesse', 'hard set', 'cheating', 'rail-first', 'thin cut'];
-      if (bullseyeKeywords.some(kw => normalizedLabel.includes(kw))) {
-        return app === 'Bullseye';
-      }
-      
-      // DrillRoom shotmaking/speed control must stay in DrillRoom
-      if (normalizedLabel.includes('shotmaking') ||
-          normalizedLabel.includes('speed control') ||
-          normalizedLabel.includes('center-ball') ||
-          normalizedLabel.includes('straight shot')) {
-        return app === 'DrillRoom';
-      }
-      
-      // Default: accept for any app
-      return true;
-    }
-
-    const adaptiveCandidates: DrillCandidate[] = (adaptiveDailyPlan?.prescribedDrills ?? []).map((label, index) => {
-      // Support "App > category > drill" prefix format in prescribed drills
-      const appPrefixes: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
-      const prefixMatch = appPrefixes.find((prefix) => label.startsWith(`${prefix} > `));
-      if (prefixMatch) {
-        return { label: label.slice(prefixMatch.length + 3), app: prefixMatch };
-      }
-      return {
-        label,
-        app: trackerAppByName.get(normalize(label)) ?? adaptiveFallbackApps[index] ?? 'DrillRoom',
-      };
-    });
-
-    const roiCandidates: DrillCandidate[] = roiPlanner.prescription.map((item) => ({
-      app: item.app,
-      label: item.label,
-    }));
-
-    const candidatePool: DrillCandidate[] = [...adaptiveCandidates, ...roiCandidates];
-    const usedLabels = new Set<string>();
-
-    return desiredOrder.map((app, index) => {
-      const picked = candidatePool.find((candidate) => candidate.app === app && isDrillValidForApp(candidate.label, app) && !usedLabels.has(normalize(candidate.label)));
-      if (picked) {
-        usedLabels.add(normalize(picked.label));
-        const resolved = resolveForApp(picked.label, app);
-        return {
-          step: index + 1,
-          app: resolved.app,
-          category: resolved.category,
-          label: resolved.label,
-          skillDomain: getSkillDomainForDrillLabel(resolved.label, resolved.app),
-        };
-      }
-
-      const fallback = fallbackForApp(app);
+    // Use ROI planner prescription directly - no adaptive layer
+    return roiPlanner.prescription.map((prescription, index) => {
+      const resolved = resolveForApp(prescription.label, prescription.app);
       return {
         step: index + 1,
-        app: fallback.app,
-        category: fallback.category,
-        label: fallback.label,
-        skillDomain: getSkillDomainForDrillLabel(fallback.label, fallback.app),
+        app: resolved.app,
+        category: resolved.category,
+        label: resolved.label,
+        skillDomain: getSkillDomainForDrillLabel(resolved.label, resolved.app),
       };
     });
-  }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
+  }, [roiPlanner.prescription]);
 
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
     [logs, today],
-  );
-  const focusKpiScore = useMemo(
-    () => kpiScores.find((item) => item.name === adaptiveDailyPlan?.focusKpiName),
-    [adaptiveDailyPlan?.focusKpiName, kpiScores],
   );
   const effectiveAdhdSessionMode = adhdSessionModeOverride ?? adhdSessionMode;
   const activeAdhdPreset = useMemo(
@@ -597,32 +472,11 @@ export default function TodaySession() {
   }, [celebration]);
 
   useEffect(() => {
-    refreshAdaptiveDailyPlan(activeTrainingFargo, currentWeek);
     refreshRecoveryRecommendationPlan();
   }, [
-    activeTrainingFargo,
     currentWeek,
-    refreshAdaptiveDailyPlan,
     refreshRecoveryRecommendationPlan,
     logs.length,
-  ]);
-
-  useEffect(() => {
-    if (alreadyLogged || !adaptiveDailyPlan) return;
-
-    if (!focusTouched) {
-      setFocusArea(adaptiveDailyPlan.focusKpiName || template.focusArea);
-    }
-
-    if (!lengthTouched && adaptiveDailyPlan.recommendedMinutes > 0) {
-      setLengthMinutes(adaptiveDailyPlan.recommendedMinutes);
-    }
-  }, [
-    adaptiveDailyPlan,
-    alreadyLogged,
-    focusTouched,
-    lengthTouched,
-    template.focusArea,
   ]);
 
   const upsertModePresetNote = useCallback((mode: AdhdSessionMode): void => {
@@ -973,15 +827,13 @@ export default function TodaySession() {
     const derivedLineUpShotCount = Math.max(
       0,
       Math.round(
-        adaptiveDailyPlan?.targetMetrics.lineUpShotCount
-        ?? smartAutofill.lineUpShotCount
+        smartAutofill.lineUpShotCount
         ?? lastLoggedSession?.lineUpShotCount
         ?? 20,
       ),
     );
     const derivedSafetyExchangeSuccessPct = Math.round(
-      adaptiveDailyPlan?.targetMetrics.safetyExchangeSuccessPct
-      ?? smartAutofill.safetyExchangeSuccessPct
+      smartAutofill.safetyExchangeSuccessPct
       ?? lastLoggedSession?.safetyExchangeSuccessPct
       ?? 55,
     );
@@ -1461,36 +1313,6 @@ export default function TodaySession() {
           <Button variant="secondary" onClick={handleResetTimer} disabled={timerRunning || liveElapsedSeconds === 0 || adhdBreakLockActive}>Reset</Button>
         </div>
       </Card>
-
-      {showAdvancedPanels && adaptiveDailyPlan ? (
-        <Card className="mb-4" title="Adaptive Daily Plan">
-          {adaptiveDailyPlan.eliteOverride?.lockedForDate === today && !alreadyLogged ? (
-            <p className="mb-2 text-xs text-cue-300">Elite override active for today. Promoted priorities are locked until you save today's session.</p>
-          ) : null}
-          <p className="text-sm text-ivory-100">Focus KPI: {adaptiveDailyPlan.focusKpiName}</p>
-          <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
-          <p className="mt-2 text-sm text-chalk-300">Recommended Length: {adaptiveDailyPlan.recommendedMinutes} min</p>
-          {focusKpiScore ? (
-            <p className="mt-2 rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1 text-xs text-ivory-200">
-              Focus KPI benchmark: {focusKpiScore.score} vs {focusKpiScore.benchmarkTarget.toFixed(1)}
-            </p>
-          ) : null}
-
-          <div className="mt-2 space-y-1 text-xs text-chalk-300">
-            {adaptiveDailyPlan.actionChecklist.slice(0, recommendationLimit).map((item) => (
-              <p key={item}>- {item}</p>
-            ))}
-          </div>
-          {adaptiveDailyPlan.prescribedDrills?.length ? (
-            <div className="mt-2 rounded-lg border border-felt-600 bg-felt-800/70 p-2 text-xs text-ivory-200">
-              <p className="text-chalk-300">Prescribed drills</p>
-              {adaptiveDailyPlan.prescribedDrills.map((item) => (
-                <p key={item}>- {item}</p>
-              ))}
-            </div>
-          ) : null}
-        </Card>
-      ) : null}
 
       {showAdvancedPanels ? (
       <Card className="mb-4" title="Smart Session Autofill">
