@@ -5,7 +5,7 @@ import {
   type TrackerKpiDirection,
   type WeeklyMetrics,
 } from '../data/trackerKpis';
-import type { DailySessionLog, WeeklySummary } from '../types/tracker';
+import type { DailySessionLog } from '../types/tracker';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useTrackerStore } from '../store/useTrackerStore';
 import { getActiveTrainingFargo } from '../utils/fargoProfile';
@@ -67,50 +67,36 @@ function weeklyMetricsFromDailyLogs(
 
   return Array.from(grouped.entries())
     .sort((a, b) => a[0] - b[0])
-    .map(([week, weekLogs]) => ({
-      week,
-      drillRoomShotmakingPct: Math.round(average(weekLogs.map((item) => item.drillRoomShotmakingPct).filter((v) => v > 0))),
-      bullseyeProximity: Number(average(weekLogs.map((item) => item.bullseyeProximity).filter((v) => v > 0)).toFixed(1)),
-      lineUpShotCount: Math.round(Math.max(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0))),
-      safetyExchangeSuccessPct: Math.round(average(weekLogs.map((item) => item.safetyExchangeSuccessPct).filter((v) => v > 0))),
-      wpbLessonsCompleted: weekLogs.filter((item) => item.wpbLesson === 'Yes').length,
-    }));
-}
+    .map(([week, weekLogs]) => {
+      const drillRoomStats = weekLogs.map((item) => item.appStats?.drillRoom).filter(Boolean);
+      const bullseyeStats = weekLogs.map((item) => item.appStats?.bullseye).filter(Boolean);
+      const wpbStats = weekLogs.map((item) => item.appStats?.wpb).filter(Boolean);
 
-function mergeWeeklyMetrics(
-  weeklySummaries: WeeklySummary[],
-  derivedFromLogs: WeeklyMetrics[],
-): WeeklyMetrics[] {
-  const merged = new Map<number, WeeklyMetrics>();
-
-  derivedFromLogs.forEach((metrics) => {
-    merged.set(metrics.week, metrics);
-  });
-
-  weeklySummaries.forEach((summary) => {
-    const fromLogs = merged.get(summary.weekNumber);
-    merged.set(summary.weekNumber, {
-      week: summary.weekNumber,
-      drillRoomShotmakingPct: summary.avgDrillRoomShotmakingPct,
-      bullseyeProximity: summary.avgBullseyeProximityScore,
-      lineUpShotCount: summary.lineUpBestScore,
-      safetyExchangeSuccessPct: fromLogs?.safetyExchangeSuccessPct ?? 0,
-      wpbLessonsCompleted: summary.wpbLessonsCompleted,
+      return {
+        week,
+        drillRoomAttempts: Math.round(average(drillRoomStats.map((item) => item?.attempts ?? 0).filter((v) => v > 0))),
+        drillRoomSessionScore: Number(average(drillRoomStats.map((item) => item?.score ?? 0).filter((v) => v > 0)).toFixed(1)),
+        drillRoomPocketingPct: Math.round(average(drillRoomStats.map((item) => item?.pocketingPct ?? 0).filter((v) => v > 0))),
+        drillRoomPositioningPct: Math.round(average(drillRoomStats.map((item) => item?.positioningPct ?? 0).filter((v) => v > 0))),
+        bullseyeSuccessfulAttempts: Math.round(average(bullseyeStats.map((item) => item?.successfulAttempts ?? 0).filter((v) => v > 0))),
+        bullseyeTotalAttempts: Math.round(average(bullseyeStats.map((item) => item?.totalAttempts ?? 0).filter((v) => v > 0))),
+        bullseyeShortRangePct: Math.round(average(bullseyeStats.map((item) => item?.shortRangePct ?? 0).filter((v) => v > 0))),
+        bullseyeMidRangePct: Math.round(average(bullseyeStats.map((item) => item?.midRangePct ?? 0).filter((v) => v > 0))),
+        bullseyeLongRangePct: Math.round(average(bullseyeStats.map((item) => item?.longRangePct ?? 0).filter((v) => v > 0))),
+        wpbHighestScore: Math.round(average(wpbStats.map((item) => item?.highestScore ?? 0).filter((v) => v > 0))),
+        wpbCurrentAvgScore: Number(average(wpbStats.map((item) => item?.currentAvgScore ?? 0).filter((v) => v > 0)).toFixed(1)),
+        wpbAvgPracticeMinutes: Number(average(wpbStats.map((item) => item?.avgPracticeMinutes ?? 0).filter((v) => v > 0)).toFixed(1)),
+      };
     });
-  });
-
-  return Array.from(merged.values()).sort((a, b) => a.week - b.week);
 }
 
 export function useKPICalc() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
-  const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const profile = useSettingsStore((s) => s.profile);
   const rating = getActiveTrainingFargo(profile);
 
   const sourceWeeklyKpis = useMemo(() => {
-    const derived = weeklyMetricsFromDailyLogs(logs);
-    const merged = mergeWeeklyMetrics(weeklySummaries, derived);
+    const merged = weeklyMetricsFromDailyLogs(logs);
     return trackerKpis.flatMap((kpi) =>
       merged
         .map((metrics) => ({
@@ -120,7 +106,7 @@ export function useKPICalc() {
         }))
         .filter((entry) => entry.value > 0),
     );
-  }, [logs, weeklySummaries]);
+  }, [logs]);
 
   const kpiScores = useMemo(() => {
     return trackerKpis.map((kpi) => {
