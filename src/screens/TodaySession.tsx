@@ -390,6 +390,11 @@ export default function TodaySession() {
     [wpbAvgPracticeMinutes, wpbCurrentAvgScore, wpbHighestScore],
   );
 
+  const gamificationStatus = useMemo(
+    () => getTrackerGamificationSnapshot(logs),
+    [logs],
+  );
+
   useEffect(() => {
     const drillroomAssigned = todaysExactDrills.find((item) => item.app === 'DrillRoom');
     const bullseyeAssigned = todaysExactDrills.find((item) => item.app === 'Bullseye');
@@ -1159,6 +1164,43 @@ export default function TodaySession() {
             </div>
           </div>
         ) : null}
+      </Card>
+
+      <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Your Elite Status">
+        <div className="space-y-3">
+          <div className="rounded-2xl border border-cue-600/30 bg-cue-950/15 p-4">
+            <p className="text-xs uppercase tracking-[0.12em] text-cue-300">Current title</p>
+            <p className="mt-2 text-2xl font-semibold text-ivory-100">{gamificationStatus.title}</p>
+            <p className="mt-2 text-sm text-chalk-300">Level {gamificationStatus.level} · {gamificationStatus.totalXp} XP earned</p>
+            <p className="mt-2 text-xs text-cue-300">Streak: {gamificationStatus.streakDays} days</p>
+          </div>
+
+          {gamificationStatus.weeklyQuests.length > 0 ? (
+            <div>
+              <p className="text-xs uppercase tracking-[0.08em] text-cue-300">This week's quests</p>
+              <div className="mt-2 space-y-2">
+                {gamificationStatus.weeklyQuests.map((quest) => (
+                  <div
+                    key={quest.id}
+                    className={`flex gap-2 rounded-lg border px-2 py-2 text-xs ${
+                      quest.completed
+                        ? 'border-flash-500/40 bg-flash-950/15 text-flash-200'
+                        : 'border-felt-600/60 bg-felt-800/30 text-chalk-300'
+                    }`}
+                  >
+                    <span className="text-sm">{quest.completed ? '✓' : '○'}</span>
+                    <div className="flex-1">
+                      <p className="font-semibold">{quest.name}</p>
+                      <p className="mt-0.5 text-xs opacity-75">
+                        {quest.progress}/{quest.target}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
       </Card>
 
       {todaysExactDrills.length ? (
