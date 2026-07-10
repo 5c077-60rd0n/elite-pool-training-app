@@ -419,7 +419,7 @@ export default function TodaySession() {
     const finalDrills = reorderedPrescription.map((prescription, index) => {
       const resolved = resolveForApp(prescription.label, prescription.app);
       
-      // Map skill domain based on the prescription slot + today's focus area
+      // Map skill domain based on today's focus area
       let skillDomain = getSkillDomainForDrillLabel(resolved.label, resolved.app);
       
       // Use focus area to guide skill assignment
@@ -456,6 +456,64 @@ export default function TodaySession() {
       };
       return result;
     });
+
+    // If today's focus requires a specific skill domain, filter drills to match that focus
+    const focusDaysSkillMap: Record<string, string> = {
+      'stroke mechanics': 'accuracy',
+      'fundamentals': 'accuracy',
+      'cue ball control': 'position-play',
+      'follow': 'position-play',
+      'stun': 'position-play',
+      'draw': 'position-play',
+      'sidespin': 'position-play',
+      'pattern': 'pattern-mastery',
+      'run-out': 'pattern-mastery',
+      'safety': 'defense',
+      'kick': 'defense',
+      'precision': 'accuracy',
+      'pressure': 'pressure',
+      'match play': 'pressure',
+    };
+
+    // Find what skill domain today's focus maps to
+    let todaysSkillDomain = '';
+    for (const [focusKeyword, skillDomain] of Object.entries(focusDaysSkillMap)) {
+      if (todaysFocusArea.includes(focusKeyword)) {
+        todaysSkillDomain = skillDomain;
+        break;
+      }
+    }
+
+    // If we have a specific skill domain for today, find matching drills and reorder
+    if (todaysSkillDomain) {
+      // Find drills that match today's skill domain
+      const matchingDrills = drills.filter((d) => d.skillDomain === todaysSkillDomain);
+      
+      if (matchingDrills.length >= 3) {
+        // Map skill domain to apps: accuracy→DrillRoom, position-play→Bullseye, pattern-mastery→WPB, defense→WPB/DrillRoom, etc.
+        const skillToAppMap: Record<string, 'DrillRoom' | 'Bullseye' | 'WPB'> = {
+          accuracy: 'DrillRoom',
+          'position-play': 'Bullseye',
+          'pattern-mastery': 'WPB',
+          defense: 'WPB', // Default to WPB for safety drills
+          pressure: 'DrillRoom',
+          'banks-kicks': 'WPB',
+          jumping: 'DrillRoom',
+        };
+
+        // Use matching drills instead of ROI prescription if they exist
+        return matchingDrills.slice(0, 3).map((drill, index) => {
+          const app = skillToAppMap[todaysSkillDomain] || 'WPB';
+          return {
+            step: index + 1,
+            app,
+            category: drill.category || 'General',
+            label: drill.name,
+            skillDomain: drill.skillDomain,
+          };
+        });
+      }
+    }
 
     return finalDrills;
   }, [roiPlanner.prescription, roiPlanner.weeklyRotation]);
