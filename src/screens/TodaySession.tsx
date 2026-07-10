@@ -580,7 +580,6 @@ export default function TodaySession() {
   const dataConfidenceNudges = useMemo(() => {
     const nudges: string[] = [];
     if (!allAppsCompleted) nudges.push('3-app completion strip');
-    if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom shotmaking %');
     if (wpbLesson === 'Yes' && !wpbModuleName.trim()) nudges.push('WPB module name');
     if (bullseyeCategory === 'Mixed') nudges.push('Bullseye category');
     if (!notes.trim()) nudges.push('Session notes');
@@ -588,7 +587,6 @@ export default function TodaySession() {
   }, [
     allAppsCompleted,
     bullseyeCategory,
-    drillRoomShotmakingPct,
     notes,
     wpbLesson,
     wpbModuleName,
@@ -831,6 +829,15 @@ export default function TodaySession() {
       ?? lastLoggedSession?.safetyExchangeSuccessPct
       ?? 55,
     );
+    const derivedDrillRoomShotmakingPct = Math.round(
+      drillRoomShotmakingPct > 0
+        ? clampPct(drillRoomShotmakingPct)
+        : clampPct(
+          drillRoomPocketingPct > 0
+            ? drillRoomPocketingPct
+            : (drillRoomScore > 0 ? drillRoomScore * 100 : smartAutofill.drillRoomShotmakingPct),
+        ),
+    );
 
     if (timerRunning && liveElapsedSeconds > 0) {
       const suggestedMinutes = Math.max(1, Math.round(liveElapsedSeconds / 60));
@@ -852,7 +859,7 @@ export default function TodaySession() {
       weekNumber: currentWeek,
       focusArea,
       lengthMinutes: effectiveLengthMinutes,
-      drillRoomShotmakingPct: clampPct(drillRoomShotmakingPct),
+      drillRoomShotmakingPct: derivedDrillRoomShotmakingPct,
       drillRoomDrillName,
       bullseyeProximity: Math.max(0, bullseyeProximity),
       bullseyeCategory,
@@ -1450,27 +1457,6 @@ export default function TodaySession() {
                 setLengthMinutes(next);
               }}
             />
-          </div>
-          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
-            <NumberStepperField
-              label="3. DrillRoom %"
-              value={drillRoomShotmakingPct}
-              min={0}
-              max={100}
-              step={1}
-              onChange={(next) => setDrillRoomShotmakingPct(clampPct(next))}
-            />
-          </div>
-          <div className="rounded-2xl border border-felt-600/60 bg-felt-800/55 p-3">
-            <label className="text-xs uppercase tracking-[0.08em] text-cue-300">4. Ghost Drill</label>
-            <select
-              value={ghostDrillPlayed}
-              onChange={(event) => setGhostDrillPlayed(event.target.value as YesNo)}
-              className="mt-2 min-h-11 w-full rounded-2xl border border-felt-600 bg-felt-800 px-3 text-ivory-100"
-            >
-              <option value="Yes">Yes</option>
-              <option value="No">No</option>
-            </select>
           </div>
         </div>
 
