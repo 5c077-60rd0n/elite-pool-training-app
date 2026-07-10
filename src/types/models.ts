@@ -19,6 +19,7 @@ export type DrillCategory =
   | 'banking-kicking'
   | 'mental-game'
   | 'straight-pool'
+  | 'jump-shot'
   | 'integration';
 
 export interface UserProfile {
@@ -95,6 +96,7 @@ export interface Drill {
   id: string;
   name: string;
   category: DrillCategory;
+  skillDomain: 'accuracy' | 'position-play' | 'pattern-mastery' | 'defense' | 'pressure' | 'banks-kicks' | 'jumping';
   difficulty: 1 | 2 | 3 | 4 | 5;
   durationMinutes: number;
   applicablePhases: number[];
