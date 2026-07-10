@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { NumberStepperField } from '../components/ui/NumberStepperField';
@@ -123,7 +123,7 @@ export default function TodaySession() {
   const [wpbCategory, setWpbCategory] = useState<WpbCategory>('Fundamentals');
   const [wpbModuleName, setWpbModuleName] = useState('');
   const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
-  const wpbKeyTakeaway = '';
+  const [wpbKeyTakeaway, _setWpbKeyTakeaway] = useState('');
   const [ghostDrillPlayed, setGhostDrillPlayed] = useState<YesNo>('Yes');
   const [drillRoomAttempts, setDrillRoomAttempts] = useState(0);
   const [drillRoomScore, setDrillRoomScore] = useState(0);
@@ -341,7 +341,7 @@ export default function TodaySession() {
         label: fallback.label,
       };
     });
-  }, [adaptiveDailyPlan?.prescribedDrills, bullseyeCategoryOptions, drillRoomDrillSuggestions, roiPlanner.prescription, wpbModuleSuggestions]);
+  }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
 
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
@@ -474,7 +474,7 @@ export default function TodaySession() {
     template.focusArea,
   ]);
 
-  function upsertModePresetNote(mode: AdhdSessionMode): void {
+  const upsertModePresetNote = useCallback((mode: AdhdSessionMode): void => {
     const modeLabel = mode[0].toUpperCase() + mode.slice(1);
     setNotes((prev) => {
       const stripped = prev
@@ -482,13 +482,13 @@ export default function TodaySession() {
         .trimEnd();
       return `${stripped ? `${stripped}\n` : ''}[Mode Preset: ${modeLabel}]`;
     });
-  }
+  }, []);
 
-  function applyAdhdModePreset(
+  const applyAdhdModePreset = useCallback((
     mode: AdhdSessionMode,
     source: 'manual_override' | 'auto_recommendation',
     persistOverride: boolean,
-  ): void {
+  ): void => {
     const preset = getAdhdModePreset(mode);
 
     if (persistOverride) {
@@ -535,7 +535,7 @@ export default function TodaySession() {
       source,
       presetApplied: true,
     });
-  }
+  }, [focusTouched, recoveryRecommendationPlan?.recommendedFocusArea, template.focusArea, upsertModePresetNote]);
 
   useEffect(() => {
     if (!adhdModeEnabled || alreadyLogged || autoModePresetAppliedRef.current || focusTouched || lengthTouched) return;
@@ -544,11 +544,10 @@ export default function TodaySession() {
   }, [
     adhdModeEnabled,
     alreadyLogged,
+    applyAdhdModePreset,
     effectiveAdhdSessionMode,
     focusTouched,
     lengthTouched,
-    recoveryRecommendationPlan?.recommendedFocusArea,
-    template.focusArea,
   ]);
 
   useEffect(() => {

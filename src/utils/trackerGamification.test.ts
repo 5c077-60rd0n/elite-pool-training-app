@@ -43,11 +43,11 @@ describe('getTrackerGamificationSnapshot seasonal data', () => {
 
   it('marks challenge progress based on quality and variety', () => {
     const logs = [
-      session('a', '2026-07-01', 'Pattern Play', 20),
-      session('b', '2026-07-02', 'Safety', 20),
-      session('c', '2026-07-03', 'Break', 20),
-      session('d', '2026-07-04', 'Mental Game', 20),
-      session('e', '2026-07-05', 'Pattern Play', 20),
+      session('a', '2026-07-01', 'Pattern Play', 24),
+      session('b', '2026-07-02', 'Safety', 24),
+      session('c', '2026-07-03', 'Break', 24),
+      session('d', '2026-07-04', 'Mental Game', 24),
+      session('e', '2026-07-05', 'Pattern Play', 24),
     ];
 
     const snapshot = getTrackerGamificationSnapshot(logs, new Date('2026-07-05T00:00:00.000Z'));
