@@ -47,13 +47,53 @@ const skillDomainLabels: Record<string, { emoji: string; name: string; color: st
   jumping: { emoji: '🚀', name: 'Jumping', color: 'text-cyan-400' },
 };
 
-function getSkillDomainForDrillLabel(label: string): string {
+function getSkillDomainForDrillLabel(label: string, app?: string): string {
+  // First try exact match against defined drills
   const drillMatch = drills.find(
     (drill) =>
       label.toLowerCase().includes(drill.name.toLowerCase()) ||
       drill.name.toLowerCase().includes(label.toLowerCase())
   );
-  return drillMatch?.skillDomain ?? 'accuracy';
+  if (drillMatch?.skillDomain) {
+    return drillMatch.skillDomain;
+  }
+
+  // Use app-based heuristics if no exact match found
+  const normalizedLabel = label.toLowerCase();
+
+  // DrillRoom = Accuracy (shotmaking/stroke mechanics)
+  if (app === 'DrillRoom') {
+    return 'accuracy';
+  }
+
+  // Bullseye = Position Play (cue ball control)
+  if (app === 'Bullseye') {
+    return 'position-play';
+  }
+
+  // WPB = Pattern Mastery + Defense + Banks/Kicks + Pressure (context-dependent)
+  if (app === 'WPB') {
+    if (normalizedLabel.includes('defense') || normalizedLabel.includes('safe')) {
+      return 'defense';
+    }
+    if (normalizedLabel.includes('bank') || normalizedLabel.includes('kick')) {
+      return 'banks-kicks';
+    }
+    if (normalizedLabel.includes('jump')) {
+      return 'jumping';
+    }
+    if (normalizedLabel.includes('position') || normalizedLabel.includes('rotation')) {
+      return 'pattern-mastery';
+    }
+    if (normalizedLabel.includes('pressure') || normalizedLabel.includes('competitive')) {
+      return 'pressure';
+    }
+    // Default WPB drills to pattern mastery (runouts/strategic play)
+    return 'pattern-mastery';
+  }
+
+  // Fallback
+  return 'accuracy';
 }
 
 function isoDate(value = new Date()): string {
@@ -350,7 +390,7 @@ export default function TodaySession() {
           app: resolved.app,
           category: resolved.category,
           label: resolved.label,
-          skillDomain: getSkillDomainForDrillLabel(resolved.label),
+          skillDomain: getSkillDomainForDrillLabel(resolved.label, resolved.app),
         };
       }
 
@@ -360,7 +400,7 @@ export default function TodaySession() {
         app: fallback.app,
         category: fallback.category,
         label: fallback.label,
-        skillDomain: getSkillDomainForDrillLabel(fallback.label),
+        skillDomain: getSkillDomainForDrillLabel(fallback.label, fallback.app),
       };
     });
   }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
