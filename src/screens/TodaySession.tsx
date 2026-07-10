@@ -11,6 +11,7 @@ import {
   wpbCategoryOptions,
   wpbModuleSuggestions,
 } from '../data/catalogs';
+import { drills } from '../data/drills';
 import { useProgramStore } from '../store/useProgramStore';
 import { useSettingsStore } from '../store/useSettingsStore';
 import { useSessionStore } from '../store/useSessionStore';
@@ -35,6 +36,25 @@ import { estimateWpbFargo } from '../utils/wpbFargo';
 import type { BullseyeCategory, DailySessionLog, SessionRecommendation, WpbCategory, WpbRatingTier, YesNo } from '../types/tracker';
 
 const celebrationBursts = [6, 18, 31, 43, 56, 68, 81, 93];
+
+const skillDomainLabels: Record<string, { emoji: string; name: string; color: string }> = {
+  accuracy: { emoji: '🎯', name: 'Accuracy', color: 'text-red-400' },
+  'position-play': { emoji: '📍', name: 'Position Play', color: 'text-blue-400' },
+  'pattern-mastery': { emoji: '🔄', name: 'Pattern Mastery', color: 'text-purple-400' },
+  defense: { emoji: '🛡️', name: 'Defense', color: 'text-orange-400' },
+  pressure: { emoji: '⏱️', name: 'Pressure', color: 'text-yellow-400' },
+  'banks-kicks': { emoji: '🎱', name: 'Banks & Kicks', color: 'text-green-400' },
+  jumping: { emoji: '🚀', name: 'Jumping', color: 'text-cyan-400' },
+};
+
+function getSkillDomainForDrillLabel(label: string): string {
+  const drillMatch = drills.find(
+    (drill) =>
+      label.toLowerCase().includes(drill.name.toLowerCase()) ||
+      drill.name.toLowerCase().includes(label.toLowerCase())
+  );
+  return drillMatch?.skillDomain ?? 'accuracy';
+}
 
 function isoDate(value = new Date()): string {
   return value.toISOString().slice(0, 10);
@@ -330,6 +350,7 @@ export default function TodaySession() {
           app: resolved.app,
           category: resolved.category,
           label: resolved.label,
+          skillDomain: getSkillDomainForDrillLabel(resolved.label),
         };
       }
 
@@ -339,6 +360,7 @@ export default function TodaySession() {
         app: fallback.app,
         category: fallback.category,
         label: fallback.label,
+        skillDomain: getSkillDomainForDrillLabel(fallback.label),
       };
     });
   }, [adaptiveDailyPlan?.prescribedDrills, roiPlanner.prescription]);
@@ -1140,24 +1162,53 @@ export default function TodaySession() {
       </Card>
 
       {todaysExactDrills.length ? (
-        <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Assigned Drills (Do In Order)">
-          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Exact work list</p>
-          <p className="mt-1 text-xs text-chalk-300">Run these in sequence. Do not add extras before finishing all three.</p>
-          <div className="mt-3 space-y-2">
-            {todaysExactDrills.map((item) => (
-              <div key={`${item.step}-${item.app}-${item.label}`} className="flex gap-3 rounded-2xl border border-felt-600/60 bg-felt-900/30 p-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cue-600/50 bg-cue-900/20 text-sm text-cue-200">
-                  {item.step}
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-ivory-100">{item.app}</p>
-                  <p className="mt-1 text-xs text-cue-300">Category: {item.category}</p>
-                  <p className="mt-1 text-xs text-chalk-300">{item.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <>
+          <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Today's Elite Skills Focus">
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Training these skills</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {Array.from(new Set(todaysExactDrills.map((d) => d.skillDomain))).map((skill) => {
+                const info = skillDomainLabels[skill];
+                return (
+                  <div
+                    key={skill}
+                    className="flex items-center gap-2 rounded-full border border-felt-600/60 bg-felt-800/40 px-3 py-1.5"
+                  >
+                    <span className="text-lg">{info?.emoji}</span>
+                    <span className={`text-xs font-semibold ${info?.color}`}>{info?.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          <Card className="mb-4 border-cue-500/25 bg-gradient-to-br from-cue-950/18 via-felt-800/90 to-felt-900/95 p-4 sm:p-5" title="Assigned Drills (Do In Order)">
+            <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Exact work list</p>
+            <p className="mt-1 text-xs text-chalk-300">Run these in sequence. Do not add extras before finishing all three.</p>
+            <div className="mt-3 space-y-2">
+              {todaysExactDrills.map((item) => {
+                const skillInfo = skillDomainLabels[item.skillDomain];
+                return (
+                  <div key={`${item.step}-${item.app}-${item.label}`} className="flex gap-3 rounded-2xl border border-felt-600/60 bg-felt-900/30 p-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cue-600/50 bg-cue-900/20 text-sm text-cue-200">
+                      {item.step}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-ivory-100">{item.app}</p>
+                        <div className="flex items-center gap-1 rounded-full bg-felt-800/60 px-2 py-1">
+                          <span className="text-sm">{skillInfo?.emoji}</span>
+                          <span className={`text-xs font-semibold ${skillInfo?.color}`}>{skillInfo?.name}</span>
+                        </div>
+                      </div>
+                      <p className="mt-1 text-xs text-cue-300">Category: {item.category}</p>
+                      <p className="mt-1 text-xs text-chalk-300">{item.label}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+        </>
       ) : null}
 
       {adhdModeEnabled ? (
