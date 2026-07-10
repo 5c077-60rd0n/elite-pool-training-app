@@ -30,10 +30,8 @@ export default function Dashboard() {
   const logs = useTrackerStore((s) => s.dailySessionLogs);
   const weeklySummaries = useTrackerStore((s) => s.weeklySummaries);
   const fargoLog = useTrackerStore((s) => s.fargoRatingLog);
-  const adaptiveDailyPlan = useTrackerStore((s) => s.adaptiveDailyPlan);
   const recoveryRecommendationPlan = useTrackerStore((s) => s.recoveryRecommendationPlan);
   const lastSessionRecommendation = useTrackerStore((s) => s.lastSessionRecommendation);
-  const refreshAdaptiveDailyPlan = useTrackerStore((s) => s.refreshAdaptiveDailyPlan);
   const refreshRecoveryRecommendationPlan = useTrackerStore((s) => s.refreshRecoveryRecommendationPlan);
   const matchSimSessions = useTrackerStore((s) => s.matchSimSessions);
   const personalRecords = useTrackerStore((s) => s.personalRecords);
@@ -103,8 +101,8 @@ export default function Dashboard() {
     [confidenceIndexHistory, logs, matchSimSessions, recoveryRecommendationPlan],
   );
   const notificationInsights = useMemo(
-    () => getNotificationInsights(logs, gamification, adaptiveDailyPlan, recoveryRecommendationPlan),
-    [adaptiveDailyPlan, gamification, logs, recoveryRecommendationPlan],
+    () => getNotificationInsights(logs, gamification, null, recoveryRecommendationPlan),
+    [gamification, logs, recoveryRecommendationPlan],
   );
   const levelProgressPct =
     gamification.nextLevelXp > gamification.levelFloorXp
@@ -156,24 +154,13 @@ export default function Dashboard() {
     if (recoveryRecommendationPlan?.actions?.length) {
       return recoveryRecommendationPlan.actions[0];
     }
-    if (adaptiveDailyPlan?.actionChecklist?.length) {
-      return adaptiveDailyPlan.actionChecklist[0];
-    }
     return 'Run one focused session and save the log before opening analytics.';
-  }, [adaptiveDailyPlan, recoveryRecommendationPlan, safeLastSessionRecommendation]);
-  const focusKpiScore = useMemo(
-    () => kpiScores.find((item) => item.name === adaptiveDailyPlan?.focusKpiName),
-    [adaptiveDailyPlan?.focusKpiName, kpiScores],
-  );
+  }, [recoveryRecommendationPlan, safeLastSessionRecommendation]);
 
   useEffect(() => {
-    refreshAdaptiveDailyPlan(activeTrainingFargo, profile.currentWeek);
     refreshRecoveryRecommendationPlan();
   }, [
-    activeTrainingFargo,
     logs.length,
-    profile.currentWeek,
-    refreshAdaptiveDailyPlan,
     refreshRecoveryRecommendationPlan,
   ]);
 
@@ -390,19 +377,6 @@ export default function Dashboard() {
               </div>
             ))}
           </div>
-        </Card>
-      ) : null}
-
-      {adaptiveDailyPlan ? (
-        <Card className="mb-4" title="Adaptive Plan">
-          <p className="text-sm text-ivory-100">Focus: {adaptiveDailyPlan.focusKpiName}</p>
-          <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
-          <p className="mt-2 text-xs text-ivory-200">Session length: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
-          {focusKpiScore ? (
-            <p className="mt-1 text-xs text-ivory-200">
-              Focus KPI benchmark: {focusKpiScore.score} vs {focusKpiScore.benchmarkTarget.toFixed(1)}
-            </p>
-          ) : null}
         </Card>
       ) : null}
 
