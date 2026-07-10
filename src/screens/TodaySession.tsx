@@ -71,28 +71,53 @@ function getSkillDomainForDrillLabel(label: string, app?: string): string {
     return 'position-play';
   }
 
-  // WPB = Pattern Mastery + Defense + Banks/Kicks + Pressure (context-dependent)
+  // WPB = Pattern Mastery + Defense + Banks/Kicks + Jumping + Pressure (context-dependent)
   if (app === 'WPB') {
-    if (normalizedLabel.includes('defense') || normalizedLabel.includes('safe')) {
+    // Defense/Safes - highest priority
+    if (normalizedLabel.includes('defense') || normalizedLabel.includes('safe') || normalizedLabel.includes('containing') || normalizedLabel.includes('wall')) {
       return 'defense';
     }
-    if (normalizedLabel.includes('bank') || normalizedLabel.includes('kick')) {
+    // Banks & Kicks
+    if (normalizedLabel.includes('bank') || normalizedLabel.includes('kick') || normalizedLabel.includes('rail-first')) {
       return 'banks-kicks';
     }
+    // Jumping
     if (normalizedLabel.includes('jump')) {
       return 'jumping';
     }
-    if (normalizedLabel.includes('position') || normalizedLabel.includes('rotation')) {
-      return 'pattern-mastery';
-    }
-    if (normalizedLabel.includes('pressure') || normalizedLabel.includes('competitive')) {
+    // Pressure/Competitive
+    if (normalizedLabel.includes('pressure') || normalizedLabel.includes('competitive') || normalizedLabel.includes('tournament') || normalizedLabel.includes('clock')) {
       return 'pressure';
+    }
+    // Pattern Mastery / Runouts (match position, rotation, runout, strategic, pattern, l-drill, buffet, queue, etc)
+    if (
+      normalizedLabel.includes('position') ||
+      normalizedLabel.includes('rotation') ||
+      normalizedLabel.includes('runout') ||
+      normalizedLabel.includes('run') ||  // catches "runs" and "runouts"
+      normalizedLabel.includes('strategic') ||
+      normalizedLabel.includes('pattern') ||
+      normalizedLabel.includes('roadmap') ||
+      normalizedLabel.includes('shape') ||
+      normalizedLabel.includes('key ball') ||
+      normalizedLabel.includes('9-ball') ||
+      normalizedLabel.includes('8-ball') ||
+      normalizedLabel.includes('progressive') ||
+      normalizedLabel.includes('l-drill') ||
+      normalizedLabel.includes('buffet') ||
+      normalizedLabel.includes('queue') ||
+      normalizedLabel.includes('divergence') ||
+      normalizedLabel.includes('dash') ||
+      normalizedLabel.includes('line')
+    ) {
+      return 'pattern-mastery';
     }
     // Default WPB drills to pattern mastery (runouts/strategic play)
     return 'pattern-mastery';
   }
 
-  // Fallback
+  // If app is not recognized, try to infer from label
+  // Fallback for unknown cases
   return 'accuracy';
 }
 
