@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -79,16 +77,6 @@ export default function Dashboard() {
     [fargoLog],
   );
 
-  const ghostBarData = useMemo(
-    () =>
-      [...weeklySummaries]
-        .sort((a, b) => a.weekNumber - b.weekNumber)
-        .map((item) => ({
-          week: item.weekNumber,
-          ghost: item.ghostDrillBestWinRatePct,
-        })),
-    [weeklySummaries],
-  );
   const confidenceLineData = useMemo(
     () =>
       [...confidenceIndexHistory]
@@ -128,7 +116,6 @@ export default function Dashboard() {
         sessions: currentWeekStats.sessionsCompleted,
         minutes: currentWeekStats.totalTrainingMinutes,
         drillRoomAvg: currentWeekStats.avgDrillRoomShotmakingPct,
-        ghostBest: currentWeekStats.ghostDrillBestWinRatePct,
         lineUpBest: currentWeekStats.lineUpBestScore,
       };
     }
@@ -139,7 +126,6 @@ export default function Dashboard() {
         sessions: 0,
         minutes: 0,
         drillRoomAvg: 0,
-        ghostBest: 0,
         lineUpBest: 0,
       };
     }
@@ -148,7 +134,6 @@ export default function Dashboard() {
       sessions: thisWeekLogs.length,
       minutes: thisWeekLogs.reduce((sum, item) => sum + item.lengthMinutes, 0),
       drillRoomAvg: Math.round(thisWeekLogs.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / thisWeekLogs.length),
-      ghostBest: Math.max(...thisWeekLogs.map((item) => item.ghostDrillWinRatePct)),
       lineUpBest: Math.max(...thisWeekLogs.map((item) => item.lineUpShotCount).filter((value) => value > 0), 0),
     };
   }, [currentWeekStats, logs, profile.currentWeek]);
@@ -297,8 +282,6 @@ export default function Dashboard() {
               <p className="text-right text-ivory-100">{currentWeekStats?.avgDrillRoomShotmakingPct ?? 0}</p>
               <p className="text-chalk-300">Bullseye Proximity Score (Avg)</p>
               <p className="text-right text-ivory-100">{currentWeekStats?.avgBullseyeProximityScore ?? 0}</p>
-              <p className="text-chalk-300">Ghost Drill Win Rate % (Best)</p>
-              <p className="text-right text-ivory-100">{currentWeekStats?.ghostDrillBestWinRatePct ?? 0}</p>
               <p className="text-chalk-300">WPB Lessons This Week</p>
               <p className="text-right text-ivory-100">{currentWeekWpbLessons}</p>
               <p className="text-chalk-300">Weeks Logged</p>
@@ -339,8 +322,6 @@ export default function Dashboard() {
               <p className="text-right text-ivory-100">{weekIn60.minutes}</p>
               <p className="text-chalk-300">DrillRoom Avg</p>
               <p className="text-right text-ivory-100">{weekIn60.drillRoomAvg}%</p>
-              <p className="text-chalk-300">Ghost Best</p>
-              <p className="text-right text-ivory-100">{weekIn60.ghostBest}%</p>
               <p className="text-chalk-300">Line-Up Best Run</p>
               <p className="text-right text-ivory-100">{weekIn60.lineUpBest}</p>
               <p className="text-chalk-300">Confidence</p>
@@ -388,7 +369,7 @@ export default function Dashboard() {
           <p className="mt-1 text-xs text-chalk-300">{adaptiveDailyPlan.rationale}</p>
           <p className="mt-2 text-xs text-ivory-200">Session length: {adaptiveDailyPlan.recommendedMinutes} minutes</p>
           <p className="mt-1 text-xs text-ivory-200">
-            Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Ghost {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
+            Target metrics: DrillRoom {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}% · Safety {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%
           </p>
         </Card>
       ) : null}
@@ -557,20 +538,6 @@ export default function Dashboard() {
               <Tooltip />
               <Line type="monotone" dataKey="rating" stroke="#4CAF82" strokeWidth={2} dot={false} />
             </LineChart>
-          </ResponsiveContainer>
-        </div>
-      </Card>
-
-      <Card className="mb-4" title="Weekly Ghost Drill Win Rate Trend">
-        <div className="h-60">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={ghostBarData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#274033" />
-              <XAxis dataKey="week" stroke="#d0eaf5" />
-              <YAxis stroke="#d0eaf5" domain={[0, 100]} />
-              <Tooltip />
-              <Bar dataKey="ghost" fill="#C9A84C" />
-            </BarChart>
           </ResponsiveContainer>
         </div>
       </Card>

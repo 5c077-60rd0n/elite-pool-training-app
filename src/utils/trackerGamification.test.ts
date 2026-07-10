@@ -18,7 +18,6 @@ function session(id: string, date: string, focusArea: string, qualitySeed = 0): 
     wpbModuleName: 'Module',
     wpbTierAchieved: 'Intermediate',
     ghostDrillPlayed: 'Yes',
-    ghostDrillWinRatePct: 60 + qualitySeed,
     lineUpShotCount: 16,
     safetyExchangeSuccessPct: 68,
     notes: '',

@@ -153,7 +153,7 @@ function computeSeasonChallenges(
 
   const pressureEligible = recent.filter((item) => {
     const reward = rewardsById.get(item.id);
-    return (reward?.qualityScore ?? 0) >= 88 && item.ghostDrillWinRatePct >= 62;
+    return (reward?.qualityScore ?? 0) >= 88 && item.safetyExchangeSuccessPct >= 62;
   });
   const enduranceEligible = recent.filter((item) => {
     const reward = rewardsById.get(item.id);
@@ -164,7 +164,7 @@ function computeSeasonChallenges(
     {
       id: 'boss-pressure-crucible',
       title: 'Boss: Pressure Crucible',
-      description: 'One session with quality 88+ and ghost rate 62+.',
+      description: 'One session with quality 88+ and safety success 62+.',
       attempts: recent.length,
       completed: pressureEligible.length >= 1,
       lastScore: pressureEligible[0] ? rewardsById.get(pressureEligible[0].id)?.qualityScore : undefined,
@@ -192,7 +192,6 @@ export function evaluateTrackerSessionReward(
   historicalLogs: DailySessionLog[],
 ): TrackerSessionReward {
   const drillRoom = clamp(log.drillRoomShotmakingPct, 0, 100);
-  const ghost = clamp(log.ghostDrillWinRatePct, 0, 100);
   const safety = clamp(log.safetyExchangeSuccessPct, 0, 100);
   const bullseye = log.bullseyeProximity > 0
     ? clamp((5 - log.bullseyeProximity) * 20, 0, 100)
@@ -204,8 +203,7 @@ export function evaluateTrackerSessionReward(
 
   const qualityScore = Math.round(
     drillRoom * 0.3 +
-      ghost * 0.25 +
-      safety * 0.2 +
+      safety * 0.45 +
       bullseye * 0.15 +
       lineup * 0.1,
   );
@@ -218,7 +216,7 @@ export function evaluateTrackerSessionReward(
     xpEarned += 20;
     bonusTags.push('Elite quality');
   }
-  if (drillRoom >= 80 && ghost >= 60) {
+  if (drillRoom >= 80 && safety >= 60) {
     xpEarned += 12;
     bonusTags.push('Pressure conversion');
   }
@@ -305,14 +303,11 @@ function computeWeeklyQuests(
 function titleFromPerformance(logs: DailySessionLog[], rewards: Map<string, TrackerSessionReward>): string {
   if (!logs.length) return 'Table General';
 
-  const avgGhost =
-    logs.reduce((sum, item) => sum + item.ghostDrillWinRatePct, 0) / Math.max(1, logs.length);
   const avgSafety =
     logs.reduce((sum, item) => sum + item.safetyExchangeSuccessPct, 0) / Math.max(1, logs.length);
   const avgQuality =
     logs.reduce((sum, item) => sum + (rewards.get(item.id)?.qualityScore ?? 0), 0) / Math.max(1, logs.length);
 
-  if (avgGhost >= 60) return 'Ghost Tamer';
   if (avgSafety >= 60) return 'Safety Architect';
   if (avgQuality >= 75) return 'Shotmaker';
   return 'Table General';

@@ -89,16 +89,13 @@ export default function EliteLab() {
       drillRoom: logs.length
         ? Math.round(logs.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / logs.length)
         : 0,
-      ghost: logs.length
-        ? Math.round(logs.reduce((sum, item) => sum + item.ghostDrillWinRatePct, 0) / logs.length)
-        : 0,
       safety: logs.length
         ? Math.round(logs.reduce((sum, item) => sum + item.safetyExchangeSuccessPct, 0) / logs.length)
         : 0,
     };
 
-    const target750 = trackerKpis.find((kpi) => kpi.id === 'drillroom-shotmaking-pct')?.benchmarks.fargo750 ?? 0;
-    const target800 = trackerKpis.find((kpi) => kpi.id === 'ghost-drill-winrate-pct')?.benchmarks.fargo800 ?? 0;
+    const target750 = trackerKpis.find((kpi) => kpi.id === 'drillroom-shotmaking')?.benchmarks.fargo750 ?? 0;
+    const target800 = trackerKpis.find((kpi) => kpi.id === 'safety-exchange-success')?.benchmarks.fargo800 ?? 0;
 
     return {
       current,
@@ -446,13 +443,12 @@ export default function EliteLab() {
       <Card className="mb-4" title="9) Elite Benchmark Mode">
         <div className="grid grid-cols-2 gap-2 text-sm">
           <p className="text-chalk-300">Current DrillRoom Avg</p><p className="text-right text-ivory-100">{benchmarks.current.drillRoom}%</p>
-          <p className="text-chalk-300">Current Ghost Avg</p><p className="text-right text-ivory-100">{benchmarks.current.ghost}%</p>
           <p className="text-chalk-300">Current Safety Avg</p><p className="text-right text-ivory-100">{benchmarks.current.safety}%</p>
           <p className="text-chalk-300">750 Bench (DrillRoom)</p><p className="text-right text-ivory-100">{benchmarks.target750}%</p>
-          <p className="text-chalk-300">800 Bench (Ghost)</p><p className="text-right text-ivory-100">{benchmarks.target800}%</p>
+          <p className="text-chalk-300">800 Bench (Safety)</p><p className="text-right text-ivory-100">{benchmarks.target800}%</p>
         </div>
         <p className="mt-2 text-xs text-chalk-300">Delta to 750 DrillRoom benchmark: {benchmarks.current.drillRoom - benchmarks.target750 >= 0 ? '+' : ''}{benchmarks.current.drillRoom - benchmarks.target750}</p>
-        <p className="text-xs text-chalk-300">Delta to 800 Ghost benchmark: {benchmarks.current.ghost - benchmarks.target800 >= 0 ? '+' : ''}{benchmarks.current.ghost - benchmarks.target800}</p>
+        <p className="text-xs text-chalk-300">Delta to 800 Safety benchmark: {benchmarks.current.safety - benchmarks.target800 >= 0 ? '+' : ''}{benchmarks.current.safety - benchmarks.target800}</p>
       </Card>
 
       <Card title="10) Fatigue + Readiness Layer">

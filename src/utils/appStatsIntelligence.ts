@@ -86,7 +86,7 @@ export function scoreSessionApps(log: DailySessionLog): SessionAppScores {
       0,
       100,
     )
-    : clamp((log.wpbLesson === 'Yes' ? 65 : 35) + (log.ghostDrillWinRatePct * 0.2), 0, 100);
+    : clamp((log.wpbLesson === 'Yes' ? 65 : 35) + (log.safetyExchangeSuccessPct * 0.2), 0, 100);
 
   const rawTransfer = drillRoom * 0.4 + bullseye * 0.3 + wpb * 0.3;
   const spread = Math.max(drillRoom, bullseye, wpb) - Math.min(drillRoom, bullseye, wpb);

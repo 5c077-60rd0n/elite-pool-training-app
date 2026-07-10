@@ -48,11 +48,9 @@ export function estimateFargo(
   const recent = [...logs].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 21);
   const drillRoom = average(recent.map((item) => item.drillRoomShotmakingPct));
   const bullseye = average(recent.map((item) => item.bullseyeProximity));
-  const ghost = average(recent.map((item) => item.ghostDrillWinRatePct));
   const safety = average(recent.map((item) => item.safetyExchangeSuccessPct));
   const lineup = average(recent.map((item) => item.lineUpShotCount));
 
-  const ghostPoints = ghost >= 70 ? 50 : ghost >= 60 ? 35 : ghost >= 50 ? 20 : ghost >= 30 ? 10 : 0;
   const drillRoomPoints =
     drillRoom >= 85 ? 50 : drillRoom >= 75 ? 35 : drillRoom >= 65 ? 20 : drillRoom >= 50 ? 10 : 0;
   const weeks = new Set(logs.map((item) => item.weekNumber)).size;
@@ -61,7 +59,7 @@ export function estimateFargo(
   const bullseyeAdj = Math.round((3.5 - bullseye) * 4);
   const lineupAdj = lineup >= 24 ? 8 : lineup >= 18 ? 4 : 0;
   const safetyAdj = safety >= 60 ? 8 : safety >= 40 ? 4 : 0;
-  return clamp(baseline + ghostPoints + drillRoomPoints + weeksPoints + bullseyeAdj + lineupAdj + safetyAdj, 300, 850);
+  return clamp(baseline + drillRoomPoints + weeksPoints + bullseyeAdj + lineupAdj + safetyAdj, 300, 850);
 }
 
 export function calculateWeeklySummary(
@@ -75,7 +73,6 @@ export function calculateWeeklySummary(
   const sorted = [...weekLogs].sort((a, b) => Date.parse(a.date) - Date.parse(b.date));
   const avgDrillRoom = Math.round(average(weekLogs.map((item) => item.drillRoomShotmakingPct).filter((v) => v > 0)));
   const avgBullseye = Math.round(average(weekLogs.map((item) => item.bullseyeProximity).filter((v) => v > 0)));
-  const ghostBest = Math.max(...weekLogs.map((item) => item.ghostDrillWinRatePct));
   const lessons = weekLogs.filter((item) => item.wpbLesson === 'Yes').length;
   const lineupBest = Math.max(...weekLogs.map((item) => item.lineUpShotCount).filter((v) => v > 0));
 
@@ -88,11 +85,9 @@ export function calculateWeeklySummary(
     totalTrainingMinutes: 0,
     avgDrillRoomShotmakingPct: avgDrillRoom || 0,
     avgBullseyeProximityScore: avgBullseye || 0,
-    ghostDrillBestWinRatePct: ghostBest || 0,
     wpbLessonsCompleted: lessons,
     lineUpBestScore: Number.isFinite(lineupBest) ? lineupBest : 0,
     rolling4WeekAvgDrillRoomPct: 0,
-    rolling4WeekAvgGhostDrillPct: 0,
     notesAdjustments: '',
     generatedAt: '',
   }]
@@ -100,7 +95,6 @@ export function calculateWeeklySummary(
     .slice(-4);
 
   const rollingDrillRoom = Math.round(average(prior.map((item) => item.avgDrillRoomShotmakingPct).filter((v) => v > 0)));
-  const rollingGhost = Math.round(average(prior.map((item) => item.ghostDrillBestWinRatePct).filter((v) => v > 0)));
 
   return {
     id: `weekly-${weekNumber}`,
@@ -111,11 +105,9 @@ export function calculateWeeklySummary(
     totalTrainingMinutes: weekLogs.reduce((sum, item) => sum + item.lengthMinutes, 0),
     avgDrillRoomShotmakingPct: avgDrillRoom || 0,
     avgBullseyeProximityScore: avgBullseye || 0,
-    ghostDrillBestWinRatePct: ghostBest || 0,
     wpbLessonsCompleted: lessons,
     lineUpBestScore: Number.isFinite(lineupBest) ? lineupBest : 0,
     rolling4WeekAvgDrillRoomPct: rollingDrillRoom || 0,
-    rolling4WeekAvgGhostDrillPct: rollingGhost || 0,
     notesAdjustments: '',
     generatedAt: new Date().toISOString(),
   };

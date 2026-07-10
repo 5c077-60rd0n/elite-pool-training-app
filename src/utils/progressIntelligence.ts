@@ -98,8 +98,6 @@ export function buildWeeklyReviewAssistant(
 
   const thisDrill = average(thisWeek.map((item) => item.drillRoomShotmakingPct));
   const prevDrill = average(prevWeek.map((item) => item.drillRoomShotmakingPct));
-  const thisGhost = average(thisWeek.map((item) => item.ghostDrillWinRatePct));
-  const prevGhost = average(prevWeek.map((item) => item.ghostDrillWinRatePct));
   const thisSafety = average(thisWeek.map((item) => item.safetyExchangeSuccessPct));
   const prevSafety = average(prevWeek.map((item) => item.safetyExchangeSuccessPct));
 
@@ -108,9 +106,6 @@ export function buildWeeklyReviewAssistant(
 
   if (thisDrill - prevDrill >= 2) improved.push(`DrillRoom accuracy +${Math.round(thisDrill - prevDrill)}% vs last week.`);
   else if (prevWeek.length && prevDrill - thisDrill >= 2) slipped.push(`DrillRoom accuracy down ${Math.round(prevDrill - thisDrill)}%.`);
-
-  if (thisGhost - prevGhost >= 3) improved.push(`Ghost win rate +${Math.round(thisGhost - prevGhost)}%.`);
-  else if (prevWeek.length && prevGhost - thisGhost >= 3) slipped.push(`Ghost win rate slipped ${Math.round(prevGhost - thisGhost)}%.`);
 
   if (thisSafety - prevSafety >= 3) improved.push(`Safety exchange success +${Math.round(thisSafety - prevSafety)}%.`);
   else if (prevWeek.length && prevSafety - thisSafety >= 3) slipped.push(`Safety exchange success dipped ${Math.round(prevSafety - thisSafety)}%.`);
@@ -127,7 +122,6 @@ export function buildWeeklyReviewAssistant(
   if (compLosses >= 2) slipped.push('Recent competition losses indicate tactical resets needed.');
 
   const nextFocus: string[] = [];
-  if (thisGhost < 45) nextFocus.push('Open sessions with ghost break-to-first-shot starts.');
   if (thisSafety < 50) nextFocus.push('Run 10 quality safety exchanges every session.');
   if (thisDrill < 70) nextFocus.push('Protect first 20 minutes for center-ball shotmaking quality.');
   if (!nextFocus.length) nextFocus.push('Maintain current load and add one high-pressure finish set.');
@@ -155,7 +149,7 @@ export function calculateTournamentReadinessScore(
   const confidence = confidenceHistory[0]?.score ?? 50;
 
   const drillScore = recentLogs.length
-    ? average(recentLogs.map((item) => item.drillRoomShotmakingPct * 0.45 + item.ghostDrillWinRatePct * 0.35 + item.safetyExchangeSuccessPct * 0.2))
+    ? average(recentLogs.map((item) => item.drillRoomShotmakingPct * 0.65 + item.safetyExchangeSuccessPct * 0.35))
     : 0;
   const simScore = recentSims.length
     ? average(recentSims.map((item) => item.matchReadinessScore))

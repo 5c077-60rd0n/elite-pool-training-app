@@ -61,10 +61,9 @@ export function calculateDrillReadinessScore(logs: DailySessionLog[]): number {
   if (!recent.length) return 0;
 
   const avgDrillRoom = recent.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / recent.length;
-  const avgGhost = recent.reduce((sum, item) => sum + item.ghostDrillWinRatePct, 0) / recent.length;
   const avgSafety = recent.reduce((sum, item) => sum + item.safetyExchangeSuccessPct, 0) / recent.length;
   const avgLineUp = recent.reduce((sum, item) => sum + item.lineUpShotCount, 0) / recent.length;
   const lineUpNormalized = Math.min(100, (avgLineUp / 30) * 100);
 
-  return clampScore(avgDrillRoom * 0.35 + avgGhost * 0.35 + avgSafety * 0.2 + lineUpNormalized * 0.1);
+  return clampScore(avgDrillRoom * 0.55 + avgSafety * 0.3 + lineUpNormalized * 0.15);
 }

@@ -117,7 +117,6 @@ export default function Progress() {
                   <th className="px-2 py-2">Minutes</th>
                   <th className="px-2 py-2">DrillRoom %</th>
                   <th className="px-2 py-2">Bullseye Avg</th>
-                  <th className="px-2 py-2">Ghost Best %</th>
                   <th className="px-2 py-2">WPB Lessons</th>
                   <th className="px-2 py-2">Line-Up Best Run</th>
                 </tr>
@@ -130,7 +129,6 @@ export default function Progress() {
                     <td className="px-2 py-2">{item.totalTrainingMinutes}</td>
                     <td className="px-2 py-2">{item.avgDrillRoomShotmakingPct}</td>
                     <td className="px-2 py-2">{item.avgBullseyeProximityScore}</td>
-                    <td className="px-2 py-2">{item.ghostDrillBestWinRatePct}</td>
                     <td className="px-2 py-2">{item.wpbLessonsCompleted}</td>
                     <td className="px-2 py-2">{item.lineUpBestScore}</td>
                   </tr>

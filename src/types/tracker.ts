@@ -84,7 +84,6 @@ export interface DailySessionLog {
   wpbTierAchieved?: WpbRatingTier;
   wpbKeyTakeaway?: string;
   ghostDrillPlayed: YesNo;
-  ghostDrillWinRatePct: number;
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
   notes: string;
@@ -105,11 +104,9 @@ export interface WeeklySummary {
   totalTrainingMinutes: number;
   avgDrillRoomShotmakingPct: number;
   avgBullseyeProximityScore: number;
-  ghostDrillBestWinRatePct: number;
   wpbLessonsCompleted: number;
   lineUpBestScore: number;
   rolling4WeekAvgDrillRoomPct: number;
-  rolling4WeekAvgGhostDrillPct: number;
   notesAdjustments: string;
   generatedAt: string;
 }
@@ -282,7 +279,6 @@ export interface CoachReviewExportPayload {
   weeklySummary?: WeeklySummary;
   recentKpis: {
     drillRoomShotmakingPct: number;
-    ghostDrillWinRatePct: number;
     safetyExchangeSuccessPct: number;
     lineUpShotCount: number;
     wpbLessonsCompleted: number;
@@ -472,7 +468,6 @@ export interface TrackerDrillDefinition {
   metricField:
     | 'drillRoomShotmakingPct'
     | 'bullseyeProximity'
-    | 'ghostDrillWinRatePct'
     | 'lineUpShotCount'
     | 'safetyExchangeSuccessPct'
     | 'wpbLesson';
@@ -503,7 +498,6 @@ export interface TrackerSyncConflict {
 
 export interface AdaptiveTargetMetrics {
   drillRoomShotmakingPct: number;
-  ghostDrillWinRatePct: number;
   safetyExchangeSuccessPct: number;
   lineUpShotCount: number;
   bullseyeProximity: number;
@@ -533,7 +527,6 @@ export interface AdaptiveDailyPlan {
 
 export interface RecoveryCheckpointMetrics {
   drillRoomShotmakingPct: number;
-  ghostDrillWinRatePct: number;
   safetyExchangeSuccessPct: number;
   lineUpShotCount: number;
 }

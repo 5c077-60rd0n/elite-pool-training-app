@@ -38,7 +38,6 @@ function personalRecordsFromLogs(logs: DailySessionLog[]): PersonalRecord[] {
   if (!logs.length) return [];
 
   const bestDrillRoom = findBestLog(logs, (log) => log.drillRoomShotmakingPct);
-  const bestGhost = findBestLog(logs, (log) => log.ghostDrillWinRatePct);
   const bestSafety = findBestLog(logs, (log) => log.safetyExchangeSuccessPct);
   const bestLineUp = findBestLog(logs, (log) => log.lineUpShotCount);
 
@@ -50,16 +49,6 @@ function personalRecordsFromLogs(logs: DailySessionLog[]): PersonalRecord[] {
       value: bestDrillRoom.drillRoomShotmakingPct,
       unit: '%',
       achievedAt: bestDrillRoom.date,
-      source: 'training',
-    });
-  }
-  if (bestGhost) {
-    records.push({
-      id: 'pr-ghost',
-      label: 'Best Ghost Drill Win Rate',
-      value: bestGhost.ghostDrillWinRatePct,
-      unit: '%',
-      achievedAt: bestGhost.date,
       source: 'training',
     });
   }

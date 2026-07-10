@@ -22,14 +22,6 @@ function containsLossSignal(result: string): boolean {
 }
 
 function defaultActionsForKpi(kpiId: string): string[] {
-  if (kpiId === 'ghost-drill-win-rate') {
-    return [
-      'Open with two short-race ghost sets focused on break-to-first-shot patterns.',
-      'Run one pressure set with score penalty for missed starter balls.',
-      'Finish with a 10-minute pattern recap and one tactical note.',
-    ];
-  }
-
   if (kpiId === 'safety-exchange-success') {
     return [
       'Start with 20 minutes of safety-to-kick response exchanges.',
@@ -72,7 +64,6 @@ function defaultActionsForKpi(kpiId: string): string[] {
 function weakSessionSignal(log: DailySessionLog): boolean {
   return (
     log.drillRoomShotmakingPct < 60 ||
-    log.ghostDrillWinRatePct < 40 ||
     log.safetyExchangeSuccessPct < 45 ||
     log.lineUpShotCount < 16
   );
@@ -96,8 +87,8 @@ export function generateRecoveryRecommendation(
   const trigger = weakSession && competitionLoss ? 'mixed' : weakSession ? 'weak-session' : 'competition-loss';
   const severity = trigger === 'mixed' ? 'high' : 'medium';
 
-  const focusKpiId = adaptivePlan?.focusKpiId ?? 'ghost-drill-win-rate';
-  const focusKpiName = adaptivePlan?.focusKpiName ?? 'Ghost Drill Win Rate';
+  const focusKpiId = adaptivePlan?.focusKpiId ?? 'drillroom-shotmaking';
+  const focusKpiName = adaptivePlan?.focusKpiName ?? 'DrillRoom Shotmaking';
 
   const tomorrowFocus = weeklyScheduleTemplate.find((item) => item.day === dayName())?.focusArea;
   const recommendedFocusArea = tomorrowFocus ?? focusKpiName;
@@ -126,7 +117,6 @@ export function generateRecoveryRecommendation(
     actions: defaultActionsForKpi(focusKpiId),
     checkpointMetrics: {
       drillRoomShotmakingPct: target?.drillRoomShotmakingPct ?? 65,
-      ghostDrillWinRatePct: target?.ghostDrillWinRatePct ?? 45,
       safetyExchangeSuccessPct: target?.safetyExchangeSuccessPct ?? 50,
       lineUpShotCount: target?.lineUpShotCount ?? 20,
     },

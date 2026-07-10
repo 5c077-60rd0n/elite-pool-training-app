@@ -64,12 +64,9 @@ export function getNotificationInsights(
     const recent = [...logs].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 3);
     const avgDrillRoom =
       recent.reduce((sum, item) => sum + item.drillRoomShotmakingPct, 0) / Math.max(1, recent.length);
-    const avgGhost =
-      recent.reduce((sum, item) => sum + item.ghostDrillWinRatePct, 0) / Math.max(1, recent.length);
 
     const kpiMiss =
-      avgDrillRoom < adaptivePlan.targetMetrics.drillRoomShotmakingPct - 8 ||
-      avgGhost < adaptivePlan.targetMetrics.ghostDrillWinRatePct - 8;
+      avgDrillRoom < adaptivePlan.targetMetrics.drillRoomShotmakingPct - 8;
 
     if (kpiMiss) {
       insights.push({

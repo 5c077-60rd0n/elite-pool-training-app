@@ -17,7 +17,6 @@ function log(id: string, date: string, lengthMinutes = 60): DailySessionLog {
     wpbCategory: 'Fundamentals',
     wpbModuleName: 'Module',
     ghostDrillPlayed: 'Yes',
-    ghostDrillWinRatePct: 55,
     lineUpShotCount: 15,
     safetyExchangeSuccessPct: 60,
     notes: '',

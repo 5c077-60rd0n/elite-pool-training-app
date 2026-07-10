@@ -81,7 +81,6 @@ function mergeSessionLogs(existing: DailySessionLog, incoming: DailySessionLog):
   mergeField('wpbTierAchieved');
   mergeField('wpbKeyTakeaway');
   mergeField('ghostDrillPlayed');
-  mergeField('ghostDrillWinRatePct');
   mergeField('lineUpShotCount');
   mergeField('safetyExchangeSuccessPct');
   mergeField('appStats');
@@ -429,7 +428,6 @@ export const useTrackerStore = create<TrackerState>()(
               recommendedMinutes: 75,
               targetMetrics: {
                 drillRoomShotmakingPct: 75,
-                ghostDrillWinRatePct: 55,
                 safetyExchangeSuccessPct: 60,
                 lineUpShotCount: 3,
                 bullseyeProximity: 3,

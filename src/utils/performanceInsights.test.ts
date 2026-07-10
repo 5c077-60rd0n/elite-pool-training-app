@@ -17,7 +17,6 @@ function sampleLog(id: string, date: string, focusArea: string, overrides: Parti
     wpbCategory: 'Fundamentals',
     wpbModuleName: 'Core Pattern',
     ghostDrillPlayed: 'Yes',
-    ghostDrillWinRatePct: 61,
     lineUpShotCount: 18,
     safetyExchangeSuccessPct: 66,
     notes: '',
@@ -65,7 +64,7 @@ describe('buildPerformanceInsights', () => {
   it('derives personal records across training and simulation data', () => {
     const logs: DailySessionLog[] = [
       sampleLog('l1', '2026-07-01', 'Pattern Play', { drillRoomShotmakingPct: 80 }),
-      sampleLog('l2', '2026-07-02', 'Safety', { ghostDrillWinRatePct: 65, lineUpShotCount: 14 }),
+      sampleLog('l2', '2026-07-02', 'Safety', { lineUpShotCount: 14 }),
     ];
     const competition: CompetitionLogEntry[] = [sampleCompetition('c1', '2026-07-02', 'Win')];
     const sims: MatchSimulatorSession[] = [sampleSim('s1', '2026-07-03', { matchReadinessScore: 90 })];

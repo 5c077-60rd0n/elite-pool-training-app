@@ -9,7 +9,6 @@ export interface SmartSessionAutofillSuggestion {
   focusArea: string;
   lengthMinutes: number;
   drillRoomShotmakingPct: number;
-  ghostDrillWinRatePct: number;
   safetyExchangeSuccessPct: number;
   lineUpShotCount: number;
   bullseyeProximity: number;
@@ -92,11 +91,6 @@ export function generateSmartSessionAutofill(
     0,
     100,
   );
-  const ghostDrillWinRatePct = clamp(
-    Math.round((target?.ghostDrillWinRatePct ?? latest?.ghostDrillWinRatePct ?? 35) + taperBoost),
-    0,
-    100,
-  );
   const safetyExchangeSuccessPct = clamp(
     Math.round((target?.safetyExchangeSuccessPct ?? latest?.safetyExchangeSuccessPct ?? 45) + taperBoost),
     0,
@@ -121,7 +115,6 @@ export function generateSmartSessionAutofill(
     focusArea: adaptiveDailyPlan?.focusKpiName ?? latest?.focusArea ?? 'Execution consistency',
     lengthMinutes: clamp(lengthMinutes, 40, 120),
     drillRoomShotmakingPct,
-    ghostDrillWinRatePct,
     safetyExchangeSuccessPct,
     lineUpShotCount,
     bullseyeProximity,

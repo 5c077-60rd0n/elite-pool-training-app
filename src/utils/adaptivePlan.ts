@@ -43,8 +43,6 @@ function valueForMetric(log: DailySessionLog, metricId: string): number {
   switch (metricId) {
     case 'drillroom-shotmaking':
       return log.drillRoomShotmakingPct;
-    case 'ghost-drill-win-rate':
-      return log.ghostDrillWinRatePct;
     case 'safety-exchange-success':
       return log.safetyExchangeSuccessPct;
     case 'lineup-efficiency':
@@ -70,7 +68,6 @@ function defaultPlan(currentWeek: number, forDate: string): AdaptiveDailyPlan {
     recommendedMinutes: 75,
     targetMetrics: {
       drillRoomShotmakingPct: 60,
-      ghostDrillWinRatePct: 30,
       safetyExchangeSuccessPct: 40,
       lineUpShotCount: 22,
       bullseyeProximity: 3.5,
@@ -92,7 +89,6 @@ function defaultPlan(currentWeek: number, forDate: string): AdaptiveDailyPlan {
 function prescribedDrillsForMetric(metricId: string): string[] {
   const metricMap: Record<string, string> = {
     'drillroom-shotmaking': 'drillRoomShotmakingPct',
-    'ghost-drill-win-rate': 'ghostDrillWinRatePct',
     'safety-exchange-success': 'safetyExchangeSuccessPct',
     'lineup-efficiency': 'lineUpShotCount',
     'bullseye-proximity': 'bullseyeProximity',
@@ -151,12 +147,17 @@ export function generateAdaptiveDailyPlan(
 
   const weakest = [...metricStatus].sort((a, b) => b.deficit - a.deficit)[0] ?? metricStatus[0];
 
-  const drillRoomTarget = Math.round(interpolateBenchmark(trackerKpis[0].benchmarks, currentFargoRating));
-  const ghostTarget = Math.round(interpolateBenchmark(trackerKpis[1].benchmarks, currentFargoRating));
-  const safetyTarget = Math.round(interpolateBenchmark(trackerKpis[2].benchmarks, currentFargoRating));
-  const lineUpTarget = Math.round(interpolateBenchmark(trackerKpis[3].benchmarks, currentFargoRating));
-  const bullseyeTarget = Number(interpolateBenchmark(trackerKpis[4].benchmarks, currentFargoRating).toFixed(1));
-  const wpbTarget = Math.round(interpolateBenchmark(trackerKpis[5].benchmarks, currentFargoRating));
+  const benchmarkForId = (id: string): number => {
+    const kpi = trackerKpis.find((item) => item.id === id);
+    if (!kpi) return 0;
+    return interpolateBenchmark(kpi.benchmarks, currentFargoRating);
+  };
+
+  const drillRoomTarget = Math.round(benchmarkForId('drillroom-shotmaking'));
+  const safetyTarget = Math.round(benchmarkForId('safety-exchange-success'));
+  const lineUpTarget = Math.round(benchmarkForId('lineup-efficiency'));
+  const bullseyeTarget = Number(benchmarkForId('bullseye-proximity').toFixed(1));
+  const wpbTarget = Math.round(benchmarkForId('wpb-lessons-weekly'));
 
   const rationale = `${weakest.name} is below target (${Math.round(weakest.current)} vs ${Math.round(
     weakest.benchmark,
@@ -173,7 +174,6 @@ export function generateAdaptiveDailyPlan(
     recommendedMinutes: clamp(75 + Math.round(Math.max(0, weakest.deficit) / 4), 60, 95),
     targetMetrics: {
       drillRoomShotmakingPct: drillRoomTarget,
-      ghostDrillWinRatePct: ghostTarget,
       safetyExchangeSuccessPct: safetyTarget,
       lineUpShotCount: lineUpTarget,
       bullseyeProximity: bullseyeTarget,

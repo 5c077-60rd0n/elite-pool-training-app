@@ -19,7 +19,6 @@ function log(id: string, date: string): DailySessionLog {
     wpbModuleName: 'Progressive Rotation Runouts',
     wpbTierAchieved: 'Intermediate',
     ghostDrillPlayed: 'Yes',
-    ghostDrillWinRatePct: 52,
     lineUpShotCount: 18,
     safetyExchangeSuccessPct: 57,
     notes: '',

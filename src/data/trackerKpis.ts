@@ -11,7 +11,6 @@ export type WeeklyMetrics = {
   week: number;
   drillRoomShotmakingPct: number;
   bullseyeProximity: number;
-  ghostDrillWinRatePct: number;
   lineUpShotCount: number;
   safetyExchangeSuccessPct: number;
   wpbLessonsCompleted: number;
@@ -36,14 +35,6 @@ export const trackerKpis: TrackerKpiDefinition[] = [
     direction: 'higher',
     benchmarks: { fargo550: 50, fargo600: 60, fargo650: 65, fargo700: 75, fargo750: 80, fargo800: 85 },
     getValue: (metrics) => metrics.drillRoomShotmakingPct,
-  },
-  {
-    id: 'ghost-drill-win-rate',
-    name: 'Ghost Drill Win Rate',
-    measurementUnit: '%',
-    direction: 'higher',
-    benchmarks: { fargo550: 30, fargo600: 30, fargo650: 50, fargo700: 60, fargo750: 65, fargo800: 70 },
-    getValue: (metrics) => metrics.ghostDrillWinRatePct,
   },
   {
     id: 'safety-exchange-success',

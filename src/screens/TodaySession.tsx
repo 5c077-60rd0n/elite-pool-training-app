@@ -123,7 +123,6 @@ export default function TodaySession() {
   const [wpbTierAchieved, setWpbTierAchieved] = useState<WpbRatingTier | ''>('');
   const wpbKeyTakeaway = '';
   const [ghostDrillPlayed, setGhostDrillPlayed] = useState<YesNo>('Yes');
-  const [ghostDrillWinRatePct, setGhostDrillWinRatePct] = useState(50);
   const [drillRoomAttempts, setDrillRoomAttempts] = useState(0);
   const [drillRoomScore, setDrillRoomScore] = useState(0);
   const [drillRoomPocketingPct, setDrillRoomPocketingPct] = useState(0);
@@ -517,7 +516,6 @@ export default function TodaySession() {
     if (mode === 'recovery') {
       setShowAdvancedPanels(false);
       setGhostDrillPlayed('No');
-      setGhostDrillWinRatePct(0);
       setWpbLesson('No');
       setWpbTierAchieved('');
       setFocusTouched(true);
@@ -583,7 +581,6 @@ export default function TodaySession() {
     const nudges: string[] = [];
     if (!allAppsCompleted) nudges.push('3-app completion strip');
     if (drillRoomShotmakingPct === 0) nudges.push('DrillRoom shotmaking %');
-    if (ghostDrillPlayed === 'Yes' && ghostDrillWinRatePct === 0) nudges.push('Ghost win %');
     if (wpbLesson === 'Yes' && !wpbModuleName.trim()) nudges.push('WPB module name');
     if (bullseyeCategory === 'Mixed') nudges.push('Bullseye category');
     if (!notes.trim()) nudges.push('Session notes');
@@ -592,8 +589,6 @@ export default function TodaySession() {
     allAppsCompleted,
     bullseyeCategory,
     drillRoomShotmakingPct,
-    ghostDrillPlayed,
-    ghostDrillWinRatePct,
     notes,
     wpbLesson,
     wpbModuleName,
@@ -821,11 +816,6 @@ export default function TodaySession() {
     }
 
     let effectiveLengthMinutes = Math.max(0, lengthMinutes);
-    const derivedGhostDrillWinRatePct = Math.round(
-      ghostDrillPlayed === 'Yes'
-        ? clampPct(ghostDrillWinRatePct)
-        : 0,
-    );
     const derivedLineUpShotCount = Math.max(
       0,
       Math.round(
@@ -872,7 +862,6 @@ export default function TodaySession() {
       wpbTierAchieved: wpbLesson === 'Yes' ? (wpbTierAchieved || undefined) : undefined,
       wpbKeyTakeaway,
       ghostDrillPlayed,
-      ghostDrillWinRatePct: derivedGhostDrillWinRatePct,
       lineUpShotCount: derivedLineUpShotCount,
       safetyExchangeSuccessPct: derivedSafetyExchangeSuccessPct,
       notes,
@@ -1279,7 +1268,6 @@ export default function TodaySession() {
 
           <div className="mt-2 grid grid-cols-1 gap-2 text-xs text-ivory-200 sm:grid-cols-2">
             <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">DrillRoom Target: {adaptiveDailyPlan.targetMetrics.drillRoomShotmakingPct}%</p>
-            <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Ghost Target: {adaptiveDailyPlan.targetMetrics.ghostDrillWinRatePct}%</p>
             <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Safety Target: {adaptiveDailyPlan.targetMetrics.safetyExchangeSuccessPct}%</p>
             <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Line-Up Best Run Target: {'>= '}{adaptiveDailyPlan.targetMetrics.lineUpShotCount}</p>
             <p className="rounded-lg border border-felt-600 bg-felt-800/60 px-2 py-1">Bullseye Target: {'<= '}{adaptiveDailyPlan.targetMetrics.bullseyeProximity}</p>
@@ -1483,18 +1471,6 @@ export default function TodaySession() {
               <option value="Yes">Yes</option>
               <option value="No">No</option>
             </select>
-            <NumberStepperField
-              label="Ghost Win %"
-              value={ghostDrillWinRatePct}
-              min={0}
-              max={100}
-              step={1}
-              onChange={(next) => {
-                if (ghostDrillPlayed !== 'Yes') return;
-                setGhostDrillWinRatePct(clampPct(next));
-              }}
-              className={ghostDrillPlayed !== 'Yes' ? 'opacity-60' : ''}
-            />
           </div>
         </div>
 

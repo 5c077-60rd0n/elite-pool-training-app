@@ -39,7 +39,6 @@ export function buildCoachReviewExport(input: CoachExportInput): CoachReviewExpo
 
   const recentKpis = {
     drillRoomShotmakingPct: avg(recentLogs.map((item) => item.drillRoomShotmakingPct)),
-    ghostDrillWinRatePct: avg(recentLogs.map((item) => item.ghostDrillWinRatePct)),
     safetyExchangeSuccessPct: avg(recentLogs.map((item) => item.safetyExchangeSuccessPct)),
     lineUpShotCount: avg(recentLogs.map((item) => item.lineUpShotCount)),
     wpbLessonsCompleted: recentLogs.filter((item) => item.wpbLesson === 'Yes').length,
@@ -47,7 +46,6 @@ export function buildCoachReviewExport(input: CoachExportInput): CoachReviewExpo
 
   const focusPriorities: string[] = [];
   if (recentKpis.drillRoomShotmakingPct < 72) focusPriorities.push('Raise DrillRoom shotmaking above 72% under timed sets.');
-  if (recentKpis.ghostDrillWinRatePct < 55) focusPriorities.push('Increase ghost drill conversion with cleaner pattern starts.');
   if (recentKpis.safetyExchangeSuccessPct < 60)
     focusPriorities.push('Prioritize first-safe quality and kick-distance management.');
   if (!focusPriorities.length)

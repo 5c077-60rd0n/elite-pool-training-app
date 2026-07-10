@@ -230,12 +230,6 @@ function computeWeakestTwo(logs: DailySessionLog[], plan: AdaptiveDailyPlan | nu
       lowerIsBetter: false,
     },
     {
-      name: 'Ghost Drill Win Rate',
-      value: avg(recent.map((item) => item.ghostDrillWinRatePct)),
-      target: targets.ghostDrillWinRatePct,
-      lowerIsBetter: false,
-    },
-    {
       name: 'Safety Exchange Success',
       value: avg(recent.map((item) => item.safetyExchangeSuccessPct)),
       target: targets.safetyExchangeSuccessPct,
@@ -282,13 +276,13 @@ function computeConversionMetrics(logs: DailySessionLog[], competitionLog: Compe
       && Boolean(item.wpbModuleName)
       && item.bullseyeProximity > 0,
   ).length / recent.length;
-  const targetHits = recent.filter((item) => item.drillRoomShotmakingPct >= 75 || item.ghostDrillWinRatePct >= 55 || item.safetyExchangeSuccessPct >= 60).length / recent.length;
+  const targetHits = recent.filter((item) => item.drillRoomShotmakingPct >= 75 || item.safetyExchangeSuccessPct >= 60).length / recent.length;
 
   const split = Math.max(1, Math.floor(recent.length / 2));
   const newer = recent.slice(0, split);
   const older = recent.slice(split);
-  const newerScore = avg(newer.map((item) => item.drillRoomShotmakingPct + item.ghostDrillWinRatePct + item.safetyExchangeSuccessPct));
-  const olderScore = avg(older.map((item) => item.drillRoomShotmakingPct + item.ghostDrillWinRatePct + item.safetyExchangeSuccessPct));
+  const newerScore = avg(newer.map((item) => item.drillRoomShotmakingPct + item.safetyExchangeSuccessPct));
+  const olderScore = avg(older.map((item) => item.drillRoomShotmakingPct + item.safetyExchangeSuccessPct));
   const improvementRatePct = clamp(Math.round(((newerScore - olderScore) / Math.max(1, olderScore)) * 100), -30, 40);
 
   const recentEvents = [...competitionLog].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 8);
