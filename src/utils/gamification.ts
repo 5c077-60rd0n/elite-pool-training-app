@@ -6,17 +6,14 @@ import { getTrainingStreak } from './streak';
 const DAY_MS = 24 * 60 * 60 * 1000;
 const SEASON_DAYS = 28;
 
-const categoryTitles: Record<string, string> = {
-  'stroke-mechanics': 'Stroke Artisan',
-  'aiming-systems': 'Sightline Sniper',
-  'cue-ball-control': 'Cue Ball Engineer',
-  'pattern-play': 'Pattern Surgeon',
-  safety: 'Safety Architect',
-  'break-optimization': 'Break Architect',
-  'banking-kicking': 'Kick Cartographer',
-  'mental-game': 'Ice Veins',
-  'straight-pool': 'Runout Accountant',
-  integration: 'Table General',
+const skillTitles: Record<string, string> = {
+  accuracy: 'Accuracy Marksman',
+  'position-play': 'Position Master',
+  'pattern-mastery': 'Pattern Surgeon',
+  defense: 'Safety Architect',
+  pressure: 'Clutch Performer',
+  'banks-kicks': 'Bank Shot Artist',
+  jumping: 'Jump Shot Specialist',
 };
 
 export interface SessionReward {
@@ -108,6 +105,10 @@ function getDrillCategory(drillId: string): string {
   return drills.find((drill) => drill.id === drillId)?.category ?? 'integration';
 }
 
+function getDrillSkill(drillId: string): string {
+  return drills.find((drill) => drill.id === drillId)?.skillDomain ?? 'accuracy';
+}
+
 export function evaluateSessionReward(log: DrillSessionLog, historicalLogs: DrillSessionLog[]): SessionReward {
   const results = log.drillResults;
   if (!results.length) {
@@ -189,11 +190,27 @@ function computeWeeklyQuests(
   rewardsById: Map<string, SessionReward>,
 ): QuestProgress[] {
   const qualitySessions = thisWeekLogs.filter((log) => (rewardsById.get(log.id)?.qualityScore ?? 0) >= 70).length;
-  const clutchSessions = thisWeekLogs.filter((log) => {
+
+  // Track skill domains trained
+  const skillsDomainsTrained = new Set<string>();
+  thisWeekLogs.forEach((log) => {
+    log.drillResults.forEach((result) => {
+      const skill = getDrillSkill(result.drillId);
+      skillsDomainsTrained.add(skill);
+    });
+  });
+
+  // Track high-quality sessions per skill
+  const skillQualitySessions: Record<string, number> = {};
+  thisWeekLogs.forEach((log) => {
     const reward = rewardsById.get(log.id);
-    return Boolean(reward && reward.qualityScore >= 75 && reward.metTargetRate >= 0.6);
-  }).length;
-  const uniqueDrills = new Set(thisWeekLogs.flatMap((log) => log.drillResults.map((result) => result.drillId))).size;
+    if (!reward || reward.qualityScore < 75) return;
+    log.drillResults.forEach((result) => {
+      const skill = getDrillSkill(result.drillId);
+      skillQualitySessions[skill] = (skillQualitySessions[skill] ?? 0) + 1;
+    });
+  });
+  const bestSkillQuality = Math.max(...Object.values(skillQualitySessions), 0);
 
   return [
     {
@@ -205,20 +222,20 @@ function computeWeeklyQuests(
       completed: qualitySessions >= 4,
     },
     {
-      id: 'clutch-3',
-      name: 'Pressure Week',
-      description: 'Record 3 clutch sessions (75+ quality)',
-      progress: clutchSessions,
-      target: 3,
-      completed: clutchSessions >= 3,
+      id: 'skill-balance',
+      name: 'Well-Rounded',
+      description: 'Train all 7 elite skills this week',
+      progress: skillsDomainsTrained.size,
+      target: 7,
+      completed: skillsDomainsTrained.size >= 7,
     },
     {
-      id: 'variety-8',
-      name: 'Variety Builder',
-      description: 'Train at least 8 unique drills this week',
-      progress: uniqueDrills,
-      target: 8,
-      completed: uniqueDrills >= 8,
+      id: 'skill-mastery',
+      name: 'Skill Specialist',
+      description: 'Record 3 elite-quality sessions in one skill',
+      progress: bestSkillQuality,
+      target: 3,
+      completed: bestSkillQuality >= 3,
     },
   ];
 }
@@ -260,23 +277,29 @@ export function getGamificationSnapshot(logs: DrillSessionLog[], now = new Date(
   );
   const tier = getSeasonTier(seasonScore);
 
-  const categoryWeights = seasonLogs.reduce<Record<string, number>>((acc, log) => {
+  // Track elite skill performance
+  const skillWeights = seasonLogs.reduce<Record<string, number>>((acc, log) => {
     const reward = rewardsById.get(log.id);
     const rewardWeight = reward?.qualityScore ?? 0;
     log.drillResults.forEach((result) => {
-      const category = getDrillCategory(result.drillId);
-      acc[category] = (acc[category] ?? 0) + rewardWeight;
+      const skill = getDrillSkill(result.drillId);
+      acc[skill] = (acc[skill] ?? 0) + rewardWeight;
     });
     return acc;
   }, {});
-  const strongestCategory = Object.entries(categoryWeights).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'integration';
+  const strongestSkill = Object.entries(skillWeights).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'accuracy';
 
   const streakDays = getTrainingStreak(ordered.map((log) => log.date), now);
+
+  // Skill-focused badges
+  const skillCounts = Object.values(skillWeights).filter((w) => w > 0).length;
   const badges = [
     streakDays >= 7 ? 'Week Streak' : '',
     northStarQualitySessions >= 4 ? 'Consistency Star' : '',
     ordered.length >= 50 ? 'Volume Grinder' : '',
     (rewardsById.get(ordered[ordered.length - 1]?.id)?.qualityScore ?? 0) >= 85 ? 'Elite Day' : '',
+    skillCounts >= 7 ? 'Skill Master' : '',
+    (skillWeights[strongestSkill] ?? 0) >= 300 ? `${skillTitles[strongestSkill] ?? 'Elite'} Level-Up` : '',
   ].filter(Boolean);
 
   const latestLog = ordered[ordered.length - 1];
@@ -291,7 +314,7 @@ export function getGamificationSnapshot(logs: DrillSessionLog[], now = new Date(
     seasonTier: tier.tier,
     seasonScore,
     promotionGap: Math.max(0, (tier.nextTarget ?? seasonScore) - seasonScore),
-    title: categoryTitles[strongestCategory] ?? 'Table General',
+    title: skillTitles[strongestSkill] ?? 'Pool Elite',
     badges,
     streakDays,
     latestSession: latestLog ? rewardsById.get(latestLog.id) : undefined,
