@@ -362,28 +362,32 @@ export default function TodaySession() {
       return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
     }
 
-    // Determine today's focus from weekly rotation
-    const dayOfWeekIndex = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
-    const adjustedIndex = dayOfWeekIndex === 0 ? 6 : dayOfWeekIndex - 1; // Convert to 0=Monday, ..., 6=Sunday
-    const todaysFocus = roiPlanner.weeklyRotation[adjustedIndex]?.toLowerCase() ?? '';
+    // Determine today's focus from FIXED weekly schedule template (not ROI planner's dynamic rotation)
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const today = dayNames[new Date().getDay()];
+    const todaysTemplate = weeklyScheduleTemplate.find((t) => t.day === today);
+    const todaysFocusArea = todaysTemplate?.focusArea?.toLowerCase() ?? '';
 
-    // Map focus type to slot priority
+    // Map focus area keywords to slot priorities
     const focusTypeMap: Record<string, string[]> = {
-      precision: ['weakness'], // Precision day prioritizes weakness/accuracy work
-      pressure: ['pressure'], // Pressure day prioritizes pressure scenarios
-      pattern: ['tournament'], // Pattern/runout day prioritizes tournament/complex work
-      safety: ['tournament'], // Safety day prioritizes complex defense work
-      kick: ['tournament'], // Kick/bank day prioritizes complex work
-      'match sim': ['pressure'], // Match simulation prioritizes pressure
-      reload: ['weakness'], // Reload day prioritizes weakness review
-      'mental': ['pressure'], // Mental day prioritizes pressure
-      'recovery': ['pressure'], // Recovery emphasizes mental/pressure resilience
+      'stroke mechanics': ['weakness'], // Fundamentals → accuracy/weakness work
+      'cue ball control': ['pressure'], // Cue control → precision under pressure
+      'follow & stun': ['pressure'], // Cue control → precision
+      'draw & sidespin': ['tournament'], // Complex multi-shot work
+      'pattern recognition': ['tournament'], // Pattern/runout work
+      'run-out': ['tournament'], // Runout work
+      'safety play': ['tournament'], // Safety/defensive work → complex scenarios
+      'kicking': ['tournament'], // Kicking work → complex scenarios
+      'cue ball precision': ['tournament'], // Precision shots
+      'pressure shots': ['tournament'], // Pressure work → tournament
+      'match play': ['pressure'], // Match play → competitive pressure
+      'mental reset': ['weakness'], // Recovery/mental → reset/weakness review
     };
 
-    // Find which focus keywords match today's rotation
+    // Find which focus keywords match today's schedule
     let prioritySlot = 'weakness'; // Default
     for (const [keyword, slots] of Object.entries(focusTypeMap)) {
-      if (todaysFocus.includes(keyword)) {
+      if (todaysFocusArea.includes(keyword)) {
         prioritySlot = slots[0] ?? 'weakness';
         break;
       }
@@ -415,16 +419,32 @@ export default function TodaySession() {
     const finalDrills = reorderedPrescription.map((prescription, index) => {
       const resolved = resolveForApp(prescription.label, prescription.app);
       
-      // Map skill domain based on the prescription slot + drill context
+      // Map skill domain based on the prescription slot + today's focus area
       let skillDomain = getSkillDomainForDrillLabel(resolved.label, resolved.app);
       
-      // Override with slot-based heuristic for pressure/tournament slots
-      if (prescription.slot === 'pressure') {
-        skillDomain = 'pressure'; // Pressure scenarios = mental game
-      } else if (prescription.slot === 'tournament' && resolved.label.toLowerCase().includes('position')) {
-        skillDomain = 'position-play'; // Tournament runout work often focuses on position
-      } else if (prescription.slot === 'weakness' && resolved.label.toLowerCase().includes('position')) {
-        skillDomain = 'position-play'; // Position work as weakness focus
+      // Use focus area to guide skill assignment
+      if (todaysFocusArea.includes('safety') || todaysFocusArea.includes('kick')) {
+        // Safety & Kicking day → defense skills
+        skillDomain = 'defense';
+      } else if (todaysFocusArea.includes('stroke mechanics') || todaysFocusArea.includes('fundamentals')) {
+        // Stroke mechanics day → accuracy
+        skillDomain = 'accuracy';
+      } else if (todaysFocusArea.includes('draw') || todaysFocusArea.includes('sidespin') || todaysFocusArea.includes('spin')) {
+        // Spin work → position-play
+        skillDomain = 'position-play';
+      } else if (todaysFocusArea.includes('pattern') || todaysFocusArea.includes('run-out')) {
+        // Pattern/runout day → pattern-mastery
+        skillDomain = 'pattern-mastery';
+      } else if (todaysFocusArea.includes('cue ball')) {
+        // Cue ball control → position-play
+        skillDomain = 'position-play';
+      } else if (todaysFocusArea.includes('pressure') || todaysFocusArea.includes('match play')) {
+        // Pressure/match play → depends on the drill
+        if (resolved.label.toLowerCase().includes('safety')) {
+          skillDomain = 'defense';
+        } else {
+          skillDomain = 'pressure';
+        }
       }
 
       const result = {
