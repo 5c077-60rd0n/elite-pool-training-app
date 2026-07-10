@@ -400,6 +400,42 @@ export default function TodaySession() {
     const desiredOrder: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
     const adaptiveFallbackApps: DrillApp[] = ['DrillRoom', 'Bullseye', 'WPB'];
 
+    // Helper to validate that a drill label belongs to the specified app
+    function isDrillValidForApp(label: string, app: DrillApp): boolean {
+      const normalizedLabel = label.toLowerCase();
+      
+      // WPB-specific drills that must stay in WPB
+      if (normalizedLabel.includes('progressive rotation') || 
+          normalizedLabel.includes('position play') ||
+          normalizedLabel.includes('runout') ||
+          normalizedLabel.includes('l-drill') ||
+          normalizedLabel.includes('buffet') ||
+          normalizedLabel.includes('queue') ||
+          normalizedLabel.includes('defense') ||
+          normalizedLabel.includes('jump shot') ||
+          normalizedLabel.includes('safety') ||
+          normalizedLabel.includes('pressure')) {
+        return app === 'WPB';
+      }
+      
+      // Bullseye position play categories must stay in Bullseye
+      const bullseyeKeywords = ['follow', 'draw', 'stun', 'sidespin', 'finesse', 'hard set', 'cheating', 'rail-first', 'thin cut'];
+      if (bullseyeKeywords.some(kw => normalizedLabel.includes(kw))) {
+        return app === 'Bullseye';
+      }
+      
+      // DrillRoom shotmaking/speed control must stay in DrillRoom
+      if (normalizedLabel.includes('shotmaking') ||
+          normalizedLabel.includes('speed control') ||
+          normalizedLabel.includes('center-ball') ||
+          normalizedLabel.includes('straight shot')) {
+        return app === 'DrillRoom';
+      }
+      
+      // Default: accept for any app
+      return true;
+    }
+
     const adaptiveCandidates: DrillCandidate[] = (adaptiveDailyPlan?.prescribedDrills ?? []).map((label, index) => ({
       label,
       app: trackerAppByName.get(normalize(label)) ?? adaptiveFallbackApps[index] ?? 'DrillRoom',
@@ -414,7 +450,7 @@ export default function TodaySession() {
     const usedLabels = new Set<string>();
 
     return desiredOrder.map((app, index) => {
-      const picked = candidatePool.find((candidate) => candidate.app === app && !usedLabels.has(normalize(candidate.label)));
+      const picked = candidatePool.find((candidate) => candidate.app === app && isDrillValidForApp(candidate.label, app) && !usedLabels.has(normalize(candidate.label)));
       if (picked) {
         usedLabels.add(normalize(picked.label));
         const resolved = resolveForApp(picked.label, app);
