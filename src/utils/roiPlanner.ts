@@ -55,6 +55,7 @@ export interface RoiPlannerSnapshot {
     expectedOutcome: string;
   };
   prescription: RoiPrescriptionDrill[];
+  weeklyRotation: string[];
   checklist: string[];
   travelTemplates: RoiTravelTemplate[];
   weeklyAutoFocus: RoiWeeklyAutoFocus;
@@ -414,6 +415,7 @@ export function buildRoiPlannerSnapshot(args: {
         rationale: upcoming ? `Aligned with ${upcoming.name} in ${upcoming.daysOut} days.` : 'Keeps match-readiness progressing without event lock.',
       },
     ],
+    weeklyRotation,
     checklist: [
       'Run each prescribed drill before any optional work.',
       'Log result quality immediately after each drill block.',

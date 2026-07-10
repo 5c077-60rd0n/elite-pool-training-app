@@ -362,8 +362,56 @@ export default function TodaySession() {
       return { app, category: parsed?.category ?? 'General', label: parsed?.label ?? rawLabel };
     }
 
-    // Use ROI planner prescription directly - no adaptive layer
-    return roiPlanner.prescription.map((prescription, index) => {
+    // Determine today's focus from weekly rotation
+    const dayOfWeekIndex = new Date().getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
+    const adjustedIndex = dayOfWeekIndex === 0 ? 6 : dayOfWeekIndex - 1; // Convert to 0=Monday, ..., 6=Sunday
+    const todaysFocus = roiPlanner.weeklyRotation[adjustedIndex]?.toLowerCase() ?? '';
+
+    // Map focus type to slot priority
+    const focusTypeMap: Record<string, string[]> = {
+      precision: ['weakness'], // Precision day prioritizes weakness/accuracy work
+      pressure: ['pressure'], // Pressure day prioritizes pressure scenarios
+      pattern: ['tournament'], // Pattern/runout day prioritizes tournament/complex work
+      safety: ['tournament'], // Safety day prioritizes complex defense work
+      'match sim': ['pressure'], // Match simulation prioritizes pressure
+      reload: ['weakness'], // Reload day prioritizes weakness review
+      'mental': ['pressure'], // Mental day prioritizes pressure
+      'recovery': ['pressure'], // Recovery emphasizes mental/pressure resilience
+    };
+
+    // Find which focus keywords match today's rotation
+    let prioritySlot = 'weakness'; // Default
+    for (const [keyword, slots] of Object.entries(focusTypeMap)) {
+      if (todaysFocus.includes(keyword)) {
+        prioritySlot = slots[0] ?? 'weakness';
+        break;
+      }
+    }
+
+    // Reorder prescription to prioritize today's focus, then fill remaining slots with different apps
+    const prescription = roiPlanner.prescription;
+    const priorityDrill = prescription.find((p) => p.slot === prioritySlot);
+    const otherDrills = prescription.filter((p) => p.slot !== prioritySlot);
+
+    // Sort other drills to use different apps
+    const usedApps = new Set<string>();
+    if (priorityDrill) {
+      usedApps.add(priorityDrill.app);
+    }
+
+    const reorderedPrescription = priorityDrill ? [priorityDrill] : [];
+    const sortedOthers = otherDrills.sort((a, b) => {
+      const aUsed = usedApps.has(a.app) ? 1 : 0;
+      const bUsed = usedApps.has(b.app) ? 1 : 0;
+      return aUsed - bUsed; // Prioritize unused apps
+    });
+
+    for (const drill of sortedOthers) {
+      reorderedPrescription.push(drill);
+      usedApps.add(drill.app);
+    }
+
+    return reorderedPrescription.map((prescription, index) => {
       const resolved = resolveForApp(prescription.label, prescription.app);
       return {
         step: index + 1,
@@ -373,7 +421,7 @@ export default function TodaySession() {
         skillDomain: getSkillDomainForDrillLabel(resolved.label, resolved.app),
       };
     });
-  }, [roiPlanner.prescription]);
+  }, [roiPlanner.prescription, roiPlanner.weeklyRotation]);
 
   const adhdSessionMode = useMemo(
     () => getAdhdSessionMode(logs, today),
