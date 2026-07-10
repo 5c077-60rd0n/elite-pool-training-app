@@ -1542,41 +1542,6 @@ export default function TodaySession() {
             <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Bullseye</p>
             <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
               <NumberStepperField
-                label="Attempts"
-                value={drillRoomAttempts}
-                min={0}
-                step={1}
-                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
-              />
-              <NumberStepperField
-                label="Session Score"
-                value={drillRoomScore}
-                min={0}
-                step={0.1}
-                decimals={1}
-                onChange={(next) => setDrillRoomScore(Math.max(0, next))}
-              />
-              <NumberStepperField
-                label="Pocketing %"
-                value={drillRoomPocketingPct}
-                min={0}
-                max={100}
-                step={1}
-                onChange={(next) => setDrillRoomPocketingPct(clampPct(next))}
-              />
-              <NumberStepperField
-                label="Positioning %"
-                value={drillRoomPositioningPct}
-                min={0}
-                max={100}
-                step={1}
-                onChange={(next) => setDrillRoomPositioningPct(clampPct(next))}
-              />
-            </div>
-
-            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">DrillRoom</p>
-            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <NumberStepperField
                 label="Successful Attempts"
                 value={bullseyeSuccessfulAttempts}
                 min={0}
@@ -1613,6 +1578,41 @@ export default function TodaySession() {
                 max={100}
                 step={1}
                 onChange={(next) => setBullseyeLongRangePct(clampPct(next))}
+              />
+            </div>
+
+            <p className="mt-4 text-xs uppercase tracking-[0.08em] text-cue-300">DrillRoom</p>
+            <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <NumberStepperField
+                label="Attempts"
+                value={drillRoomAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Session Score"
+                value={drillRoomScore}
+                min={0}
+                step={0.1}
+                decimals={1}
+                onChange={(next) => setDrillRoomScore(Math.max(0, next))}
+              />
+              <NumberStepperField
+                label="Pocketing %"
+                value={drillRoomPocketingPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setDrillRoomPocketingPct(clampPct(next))}
+              />
+              <NumberStepperField
+                label="Positioning %"
+                value={drillRoomPositioningPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setDrillRoomPositioningPct(clampPct(next))}
               />
             </div>
 
@@ -1654,17 +1654,17 @@ export default function TodaySession() {
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
               <NumberStepperField
                 label="Bullseye attempts"
-                value={drillRoomAttempts}
-                min={0}
-                step={1}
-                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
-              />
-              <NumberStepperField
-                label="DrillRoom attempts"
                 value={bullseyeTotalAttempts}
                 min={0}
                 step={1}
                 onChange={(next) => setBullseyeTotalAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="DrillRoom attempts"
+                value={drillRoomAttempts}
+                min={0}
+                step={1}
+                onChange={(next) => setDrillRoomAttempts(Math.max(0, Math.round(next)))}
               />
               <NumberStepperField
                 label="WPB minutes"
