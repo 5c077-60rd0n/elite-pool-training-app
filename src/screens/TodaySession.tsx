@@ -373,6 +373,7 @@ export default function TodaySession() {
       pressure: ['pressure'], // Pressure day prioritizes pressure scenarios
       pattern: ['tournament'], // Pattern/runout day prioritizes tournament/complex work
       safety: ['tournament'], // Safety day prioritizes complex defense work
+      kick: ['tournament'], // Kick/bank day prioritizes complex work
       'match sim': ['pressure'], // Match simulation prioritizes pressure
       reload: ['weakness'], // Reload day prioritizes weakness review
       'mental': ['pressure'], // Mental day prioritizes pressure
@@ -411,16 +412,32 @@ export default function TodaySession() {
       usedApps.add(drill.app);
     }
 
-    return reorderedPrescription.map((prescription, index) => {
+    const finalDrills = reorderedPrescription.map((prescription, index) => {
       const resolved = resolveForApp(prescription.label, prescription.app);
-      return {
+      
+      // Map skill domain based on the prescription slot + drill context
+      let skillDomain = getSkillDomainForDrillLabel(resolved.label, resolved.app);
+      
+      // Override with slot-based heuristic for pressure/tournament slots
+      if (prescription.slot === 'pressure') {
+        skillDomain = 'pressure'; // Pressure scenarios = mental game
+      } else if (prescription.slot === 'tournament' && resolved.label.toLowerCase().includes('position')) {
+        skillDomain = 'position-play'; // Tournament runout work often focuses on position
+      } else if (prescription.slot === 'weakness' && resolved.label.toLowerCase().includes('position')) {
+        skillDomain = 'position-play'; // Position work as weakness focus
+      }
+
+      const result = {
         step: index + 1,
         app: resolved.app,
         category: resolved.category,
         label: resolved.label,
-        skillDomain: getSkillDomainForDrillLabel(resolved.label, resolved.app),
+        skillDomain,
       };
+      return result;
     });
+
+    return finalDrills;
   }, [roiPlanner.prescription, roiPlanner.weeklyRotation]);
 
   const adhdSessionMode = useMemo(
