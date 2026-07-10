@@ -186,22 +186,35 @@ export default function TodaySession() {
     const todaysTemplate = weeklyScheduleTemplate.find((t) => t.day === today);
     const todaysFocusArea = todaysTemplate?.focusArea?.toLowerCase() ?? '';
 
-    // Map focus area to skill domain
+    // Map focus area to skill domain (one elite skill per day)
     const focusDaysSkillMap: Record<string, string> = {
+      'elite accuracy': 'accuracy',
       'stroke mechanics': 'accuracy',
-      'fundamentals': 'accuracy',
+      'shotmaking': 'accuracy',
+      'elite position play': 'position-play',
       'cue ball control': 'position-play',
       'follow': 'position-play',
       'stun': 'position-play',
       'draw': 'position-play',
       'sidespin': 'position-play',
+      'elite pattern mastery': 'pattern-mastery',
+      'pattern recognition': 'pattern-mastery',
       'pattern': 'pattern-mastery',
       'run-out': 'pattern-mastery',
-      'safety': 'defense',
-      'kick': 'defense',
-      'precision': 'accuracy',
-      'pressure': 'pressure',
+      'runout': 'pattern-mastery',
+      'elite defense': 'defense',
+      'safety play': 'defense',
+      'containment': 'defense',
+      'elite pressure': 'pressure',
+      'tournament': 'pressure',
       'match play': 'pressure',
+      'competitive': 'pressure',
+      'elite banks': 'banks-kicks',
+      'banks and kicks': 'banks-kicks',
+      'specialty': 'banks-kicks',
+      'elite jumping': 'jumping',
+      'jump shot': 'jumping',
+      'integration': 'jumping',
     };
 
     // Find what skill domain today's focus maps to
