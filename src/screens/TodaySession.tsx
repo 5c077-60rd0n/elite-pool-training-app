@@ -205,9 +205,9 @@ export default function TodaySession() {
     
     const skillDomainDrillSuggestions: Record<string, { app: DrillApp; category: string; label: string }[]> = {
       'accuracy': [
-        { app: 'DrillRoom', category: 'Shotmaking', label: 'Shotmaking Progressions' },
-        { app: 'DrillRoom', category: 'Speed Control', label: 'Speed Control Drills' },
-        { app: 'DrillRoom', category: 'Cue Direction', label: 'Cue Direction Mastery' },
+        { app: 'DrillRoom', category: 'Shotmaking', label: 'Shotmaking' },
+        { app: 'DrillRoom', category: 'Speed Control', label: 'Speed Control' },
+        { app: 'DrillRoom', category: 'Cue Direction', label: 'Cue Direction' },
       ],
       'position-play': [
         { app: 'Bullseye', category: 'Follow', label: 'Follow Drills (20-38)' },
@@ -222,22 +222,22 @@ export default function TodaySession() {
       'defense': [
         { app: 'WPB', category: 'Defense', label: 'Consecutive Containing Safes' },
         { app: 'WPB', category: 'Defense', label: 'Build-A-Wall' },
-        { app: 'WPB', category: 'Defense', label: 'Safety Strategy Drills' },
+        { app: 'DrillRoom', category: 'Safety', label: 'Safety' },
       ],
       'pressure': [
         { app: 'DrillRoom', category: 'Challenge', label: '2 BALLS INFINITE' },
         { app: 'DrillRoom', category: 'Challenge', label: 'GOLF POOL' },
-        { app: 'DrillRoom', category: 'Challenge', label: 'Pressure Scenarios' },
+        { app: 'DrillRoom', category: 'Challenge', label: 'CENTERFIELD INFINITE' },
       ],
       'banks-kicks': [
-        { app: 'DrillRoom', category: 'Cue Direction', label: 'Direction Banking' },
-        { app: 'DrillRoom', category: 'Cue Direction', label: 'Banking Fundamentals' },
-        { app: 'DrillRoom', category: 'Cue Direction', label: 'Kick Accuracy Systems' },
+        { app: 'Bullseye', category: 'Sliding Banks', label: 'Sliding Banks' },
+        { app: 'Bullseye', category: 'Rolling Banks', label: 'Rolling Banks' },
+        { app: 'Bullseye', category: 'Rail-First', label: 'Rail-First' },
       ],
       'jumping': [
         { app: 'WPB', category: 'Jump Shots', label: 'Elevation Accuracy Training' },
         { app: 'WPB', category: 'Jump Shots', label: 'Jump Scratch Shots' },
-        { app: 'WPB', category: 'Jump Shots', label: 'Consecutive Jump Shots' },
+        { app: 'WPB', category: 'Jump Shots', label: 'Consecutive Short Jump Shots' },
       ],
     };
 

@@ -473,17 +473,17 @@ export const weeklyScheduleTemplate: DailyTemplate[] = [
   },
   {
     day: 'Saturday',
-    focusArea: 'Elite Banks & Kicks - Bank Systems & Cue Direction',
-    primaryApp: 'DrillRoom',
+    focusArea: 'Elite Banks & Kicks - Banking Systems',
+    primaryApp: 'Bullseye',
     sessionLengthLabel: '~80 min',
-    keyDrills: ['Direction Banking', 'Cue Direction Mastery', 'Bank Systems', 'Kick Accuracy'],
+    keyDrills: ['Sliding Banks', 'Rolling Banks', 'Rail-First'],
   },
   {
     day: 'Sunday',
     focusArea: 'Elite Jumping - Jump Shot Integration',
     primaryApp: 'WPB',
     sessionLengthLabel: '~60 min',
-    keyDrills: ['Elevation Accuracy Training', 'Jump Scratch Shots', 'Consecutive Jump Shots', 'Integration Play'],
+    keyDrills: ['Elevation Accuracy Training', 'Jump Scratch Shots', 'Consecutive Short Jump Shots', 'Consecutive Long Jump Shots'],
   },
 ];
 
