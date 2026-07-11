@@ -469,20 +469,39 @@ export default function TodaySession() {
   const liveElapsedSeconds = timerAccumulatedSeconds + (timerRunning && timerStartedAt
     ? Math.max(0, Math.floor((nowMs - Date.parse(timerStartedAt)) / 1000))
     : 0);
-  const allAppsCompleted = drillRoomCompleted && bullseyeCompleted && wpbCompleted;
+  
+  // Determine which apps are actually required for today based on assigned drills
+  const requiredAppsForToday = useMemo(() => {
+    const apps = new Set<'DrillRoom' | 'Bullseye' | 'WPB'>();
+    todaysExactDrills.forEach((drill) => {
+      apps.add(drill.app);
+    });
+    return apps;
+  }, [todaysExactDrills]);
+  
+  // Check only the required apps for today are completed
+  const todayAppsCompleted = useMemo(() => {
+    if (requiredAppsForToday.size === 0) return true; // No drills assigned, so technically satisfied
+    if (requiredAppsForToday.has('DrillRoom') && !drillRoomCompleted) return false;
+    if (requiredAppsForToday.has('Bullseye') && !bullseyeCompleted) return false;
+    if (requiredAppsForToday.has('WPB') && !wpbCompleted) return false;
+    return true;
+  }, [requiredAppsForToday, drillRoomCompleted, bullseyeCompleted, wpbCompleted]);
+  
   const dataConfidenceNudges = useMemo(() => {
     const nudges: string[] = [];
-    if (!allAppsCompleted) nudges.push('3-app completion strip');
+    if (!todayAppsCompleted) nudges.push('skill-focused app drills');
     if (wpbLesson === 'Yes' && !wpbModuleName.trim()) nudges.push('WPB module name');
-    if (bullseyeCategory === 'Mixed') nudges.push('Bullseye category');
+    if (bullseyeCategory === 'Mixed' && requiredAppsForToday.has('Bullseye')) nudges.push('Bullseye category');
     if (!notes.trim()) nudges.push('Session notes');
     return nudges;
   }, [
-    allAppsCompleted,
+    todayAppsCompleted,
     bullseyeCategory,
     notes,
     wpbLesson,
     wpbModuleName,
+    requiredAppsForToday,
   ]);
 
   const primaryTimerActionLabel = timerRunning
@@ -643,8 +662,9 @@ export default function TodaySession() {
     const before = getTrackerGamificationSnapshot(logs);
     const missingCoreFields = dataConfidenceNudges.filter((item) => item !== 'Session notes');
 
-    if (!allAppsCompleted) {
-      setSaveMessage('Complete all three app checkboxes before saving the session.');
+    if (!todayAppsCompleted) {
+      const requiredAppsList = Array.from(requiredAppsForToday).join(', ');
+      setSaveMessage(`Complete today's required app drills (${requiredAppsList}) before saving.`);
       return;
     }
 
@@ -906,14 +926,24 @@ export default function TodaySession() {
       || wpbAvgPracticeMinutes > 0
       || wpbHighestScore > 0;
 
-    if (!allAppsCompleted) {
-      setSaveMessage('Finish check failed: mark DrillRoom, Bullseye, and WPB complete first.');
+    if (!todayAppsCompleted) {
+      const requiredAppsList = Array.from(requiredAppsForToday).join(', ');
+      setSaveMessage(`Finish check failed: mark required apps complete first (${requiredAppsList}).`);
       scrollToSection(quickLogSectionRef);
       return;
     }
 
-    if (!hasDrillRoomEvidence || !hasBullseyeEvidence || !hasWpbEvidence) {
-      setSaveMessage('Finish check failed: add at least one evidence signal for each app in App Stats Capture.');
+    // Check only required apps have evidence
+    const hasRequiredEvidence = Array.from(requiredAppsForToday).every((app) => {
+      if (app === 'DrillRoom') return hasDrillRoomEvidence;
+      if (app === 'Bullseye') return hasBullseyeEvidence;
+      if (app === 'WPB') return hasWpbEvidence;
+      return false;
+    });
+
+    if (!hasRequiredEvidence) {
+      const requiredAppsList = Array.from(requiredAppsForToday).join(', ');
+      setSaveMessage(`Finish check failed: add evidence for today's apps (${requiredAppsList}) in App Stats.`);
       scrollToSection(appStatsSectionRef);
       return;
     }
@@ -1196,38 +1226,45 @@ export default function TodaySession() {
         <p className="mt-2 text-sm text-chalk-300">In ADHD mode, fill essentials first, then confirm each app drill below before saving.</p>
 
         <div className="mt-3 rounded-2xl border border-cue-600/35 bg-cue-950/15 p-3">
-          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Mandatory three-app completion</p>
+          <p className="text-xs uppercase tracking-[0.08em] text-cue-300">Today's skill-focused drills</p>
+          <p className="mt-1 text-xs text-chalk-400">{todaysExactDrills.length > 0 ? `${Array.from(requiredAppsForToday).join(' + ')} focused session` : 'No specific drills assigned today'}</p>
           <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
-              <input
-                type="checkbox"
-                checked={drillRoomCompleted}
-                onChange={(event) => setDrillRoomCompleted(event.target.checked)}
-                className="h-4 w-4"
-              />
-              DrillRoom done
-            </label>
-            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
-              <input
-                type="checkbox"
-                checked={bullseyeCompleted}
-                onChange={(event) => setBullseyeCompleted(event.target.checked)}
-                className="h-4 w-4"
-              />
-              Bullseye done
-            </label>
-            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
-              <input
-                type="checkbox"
-                checked={wpbCompleted}
-                onChange={(event) => setWpbCompleted(event.target.checked)}
-                className="h-4 w-4"
-              />
-              WPB done
-            </label>
+            {requiredAppsForToday.has('DrillRoom') && (
+              <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+                <input
+                  type="checkbox"
+                  checked={drillRoomCompleted}
+                  onChange={(event) => setDrillRoomCompleted(event.target.checked)}
+                  className="h-4 w-4"
+                />
+                DrillRoom done
+              </label>
+            )}
+            {requiredAppsForToday.has('Bullseye') && (
+              <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+                <input
+                  type="checkbox"
+                  checked={bullseyeCompleted}
+                  onChange={(event) => setBullseyeCompleted(event.target.checked)}
+                  className="h-4 w-4"
+                />
+                Bullseye done
+              </label>
+            )}
+            {requiredAppsForToday.has('WPB') && (
+              <label className="flex min-h-11 items-center gap-2 rounded-xl border border-felt-600 bg-felt-800/70 px-3 text-sm text-ivory-100">
+                <input
+                  type="checkbox"
+                  checked={wpbCompleted}
+                  onChange={(event) => setWpbCompleted(event.target.checked)}
+                  className="h-4 w-4"
+                />
+                WPB done
+              </label>
+            )}
           </div>
-          {!allAppsCompleted ? (
-            <p className="mt-2 text-xs text-chalk-300">Check all three after table work. Save is locked until this strip is complete.</p>
+          {!todayAppsCompleted ? (
+            <p className="mt-2 text-xs text-chalk-300">Mark today's assigned app drills complete. Save is locked until you check them off.</p>
           ) : null}
         </div>
 
@@ -1631,9 +1668,9 @@ export default function TodaySession() {
         ) : null}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Button className="w-full" type="button" variant="secondary" onClick={finishSessionFast}>Finish Session (Auto Check + Save)</Button>
-          <Button className="w-full" onClick={saveSessionLog} disabled={!allAppsCompleted}>Save Today's Log</Button>
+          <Button className="w-full" onClick={saveSessionLog} disabled={!todayAppsCompleted}>Save Today's Log</Button>
         </div>
-        {!allAppsCompleted ? <p className="mt-2 text-sm text-chalk-300">Complete DrillRoom, Bullseye, and WPB checkboxes to unlock save.</p> : null}
+        {!todayAppsCompleted && requiredAppsForToday.size > 0 ? <p className="mt-2 text-sm text-chalk-300">Complete {Array.from(requiredAppsForToday).join(', ')} checkboxes to unlock save.</p> : null}
         {alreadyLogged ? <p className="mt-2 text-sm text-cue-300">Today's session is already logged.</p> : null}
         {saveMessage ? <p className="mt-2 text-sm text-cue-300">{saveMessage}</p> : null}
       </Card>
