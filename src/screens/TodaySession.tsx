@@ -199,33 +199,52 @@ export default function TodaySession() {
 
     const todaysSkillDomain = dayToSkillDomainMap[today] ?? '';
 
-    // Return suggested drills based on app and skill domain
+    // Return suggested drills based on skill domain
     type DrillApp = 'DrillRoom' | 'Bullseye' | 'WPB';
     
-    const appDrillSuggestions: Record<DrillApp, { category: string; label: string }[]> = {
-      DrillRoom: [
-        { category: 'Shotmaking', label: 'Shotmaking Progressions' },
-        { category: 'Speed Control', label: 'Speed Control Drills' },
-        { category: 'Challenge', label: '2 BALLS INFINITE / GOLF POOL' },
+    const skillDomainDrillSuggestions: Record<string, { app: DrillApp; category: string; label: string }[]> = {
+      'accuracy': [
+        { app: 'DrillRoom', category: 'Shotmaking', label: 'Shotmaking Progressions' },
+        { app: 'DrillRoom', category: 'Speed Control', label: 'Speed Control Drills' },
+        { app: 'DrillRoom', category: 'Cue Direction', label: 'Cue Direction Mastery' },
       ],
-      Bullseye: [
-        { category: 'Follow', label: 'Follow Drills (20-38)' },
-        { category: 'Stun', label: 'Stun Mastery (45-60)' },
-        { category: 'Draw / Sidespin', label: 'Draw & Sidespin Control' },
+      'position-play': [
+        { app: 'Bullseye', category: 'Follow', label: 'Follow Drills (20-38)' },
+        { app: 'Bullseye', category: 'Stun', label: 'Stun Mastery (45-60)' },
+        { app: 'Bullseye', category: 'Draw / Sidespin', label: 'Draw & Sidespin Control' },
       ],
-      WPB: [
-        { category: 'Position Play & Runouts', label: 'L-Drills / Progressive Rotation' },
-        { category: 'Defense', label: 'Containing Safes / Build-A-Wall' },
-        { category: 'Jump Shots', label: 'Jump Shot Accuracy Training' },
+      'pattern-mastery': [
+        { app: 'WPB', category: 'Position Play & Runouts', label: 'L-Drills / Progressive Rotation' },
+        { app: 'WPB', category: 'Position Play & Runouts', label: 'The Buffet Line' },
+        { app: 'WPB', category: 'Position Play & Runouts', label: 'Queue Drills' },
+      ],
+      'defense': [
+        { app: 'WPB', category: 'Defense', label: 'Consecutive Containing Safes' },
+        { app: 'WPB', category: 'Defense', label: 'Build-A-Wall' },
+        { app: 'WPB', category: 'Defense', label: 'Safety Strategy Drills' },
+      ],
+      'pressure': [
+        { app: 'DrillRoom', category: 'Challenge', label: '2 BALLS INFINITE' },
+        { app: 'DrillRoom', category: 'Challenge', label: 'GOLF POOL' },
+        { app: 'DrillRoom', category: 'Challenge', label: 'Pressure Scenarios' },
+      ],
+      'banks-kicks': [
+        { app: 'DrillRoom', category: 'Cue Direction', label: 'Direction Banking' },
+        { app: 'DrillRoom', category: 'Cue Direction', label: 'Banking Fundamentals' },
+        { app: 'DrillRoom', category: 'Cue Direction', label: 'Kick Accuracy Systems' },
+      ],
+      'jumping': [
+        { app: 'WPB', category: 'Jump Shots', label: 'Elevation Accuracy Training' },
+        { app: 'WPB', category: 'Jump Shots', label: 'Jump Scratch Shots' },
+        { app: 'WPB', category: 'Jump Shots', label: 'Consecutive Jump Shots' },
       ],
     };
 
-    const app = todaysTemplate.primaryApp as DrillApp;
-    const suggestions = appDrillSuggestions[app] ?? [];
+    const suggestions = skillDomainDrillSuggestions[todaysSkillDomain] ?? [];
 
     return suggestions.map((suggestion, index) => ({
       step: index + 1,
-      app,
+      app: suggestion.app,
       category: suggestion.category,
       label: suggestion.label,
       skillDomain: todaysSkillDomain,
