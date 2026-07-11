@@ -93,6 +93,7 @@ export interface DailySessionLog {
   jumpShotAttempts: number;
   jumpShotSuccessPct: number;
   safetyAttempts: number;
+  safetySuccessPct: number;
   notes: string;
   appStats?: SessionAppStatsCapture;
   coachTags?: string[];

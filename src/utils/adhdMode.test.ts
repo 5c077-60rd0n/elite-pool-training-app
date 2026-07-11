@@ -26,6 +26,7 @@ function log(id: string, date: string, lengthMinutes = 60): DailySessionLog {
     jumpShotAttempts: 0,
     jumpShotSuccessPct: 0,
     safetyAttempts: 0,
+    safetySuccessPct: 0,
     notes: '',
     createdAt: `${date}T10:00:00.000Z`,
     updatedAt: `${date}T10:00:00.000Z`,

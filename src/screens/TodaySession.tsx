@@ -149,6 +149,7 @@ export default function TodaySession() {
   const [jumpShotAttempts, setJumpShotAttempts] = useState(0);
   const [jumpShotSuccessPct, setJumpShotSuccessPct] = useState(0);
   const [safetyAttempts, setSafetyAttempts] = useState(0);
+  const [safetySuccessPct, setSafetySuccessPct] = useState(0);
   const [drillRoomCompleted, setDrillRoomCompleted] = useState(false);
   const [bullseyeCompleted, setBullseyeCompleted] = useState(false);
   const [wpbCompleted, setWpbCompleted] = useState(false);
@@ -738,6 +739,7 @@ export default function TodaySession() {
       jumpShotAttempts: Math.max(0, Math.round(jumpShotAttempts)),
       jumpShotSuccessPct: clampPct(jumpShotSuccessPct),
       safetyAttempts: Math.max(0, Math.round(safetyAttempts)),
+      safetySuccessPct: clampPct(safetySuccessPct),
       notes,
       appStats:
         drillRoomAttempts > 0
@@ -1512,6 +1514,14 @@ export default function TodaySession() {
                 min={0}
                 step={1}
                 onChange={(next) => setSafetyAttempts(Math.max(0, Math.round(next)))}
+              />
+              <NumberStepperField
+                label="Success %"
+                value={safetySuccessPct}
+                min={0}
+                max={100}
+                step={1}
+                onChange={(next) => setSafetySuccessPct(clampPct(next))}
               />
             </div>
 
